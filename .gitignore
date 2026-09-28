@@ -229,3 +229,5 @@ nbs/.ipynb_checkpoints/
 # the images the tutorials save next to themselves
 nbs/tutorials/neomme-images/
 nbs/tutorials/protein-decisions/
+nbs/tutorials/modernvbert-images/
+nbs/tutorials/compare-images/

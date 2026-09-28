@@ -33,7 +33,7 @@ jev = Decider.load("my-jev")          # the same answers from the exported folde
 jev.predict(state, questions)         # choice / score / noul, probabilities, confidence
 ```
 
-`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state with NeoMME; `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; `sysone.gliner` drives GLiNER2 models through their own package.
+`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state with NeoMME, and `sysone.modernvbert` does the same with ModernVBERT; `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; `sysone.gliner` drives GLiNER2 models through their own package.
 
 ## What it answers
 
@@ -58,19 +58,19 @@ learn.predict(state, questions)
 ```
 {'department': {'type': 'choice',
   'choice': 'technical',
-  'probabilities': {'billing': 0.4999, 'technical': 0.5001},
+  'probabilities': {'billing': 0.5, 'technical': 0.5},
   'confidence': 0.0,
-  'answer_confidence': 0.5001},
+  'answer_confidence': 0.5},
  'urgency': {'type': 'score',
   'score': 1.0001,
   'legend': {'0': 'not urgent', '1': 'soon', '2': 'critical'},
-  'probabilities': {'0': 0.3332, '1': 0.3334, '2': 0.3334},
+  'probabilities': {'0': 0.3333, '1': 0.3333, '2': 0.3334},
   'confidence': 0.0,
   'answer_confidence': 0.3334},
  'churn_risk': {'type': 'noul',
-  'noul': 0.5001,
-  'confidence': 0.5001,
-  'answer_confidence': 0.5001}}
+  'noul': 0.5,
+  'confidence': 0.5,
+  'answer_confidence': 0.5}}
 ```
 
 ## Validated so far
@@ -89,6 +89,7 @@ Measured on 2026-09-26 and 27 on an M3 Pro (MPS, fp32), with the code in this re
 | RLCD | equal to the loss in Laya's fine-tuning notebook, pasted, under the same seed |
 | NeoMME image rows | the image part, ids and two-axis positions, identical to NeoMME's processor |
 | NeoMME-260M on real images, frozen, a head on its anchors | a 10-way digit choice from 100 MNIST images: 0.41 (chance 0.10), and 0.57 with the digits at 112 px; a hot-dog noul from 80 photos: 0.74 (chance 0.50); with LoRA, 0.33 and 0.72. Both took standardising NeoMME's vectors, and LoRA the plain scorer (the [images tutorial](nbs/tutorials/neomme_images.ipynb), with every output; the multimodal notebook, section 7) |
+| ModernVBERT on the same images and recipes, frozen, a head on its anchors | the digit choice: 0.84, where NeoMME scored 0.31; the hot-dog noul: 0.94, where NeoMME scored 0.74; with LoRA on the text tower, 0.84 and 0.96. A probe on its image vectors reads 0.92 and 0.98 (the [ModernVBERT tutorial](nbs/tutorials/modernvbert_images.ipynb); the two encoders side by side in the [comparison](nbs/tutorials/neomme_vs_modernvbert.ipynb)) |
 | ProtST-ESM1b loaded from its tensors alone (`sysone.protein`, no remote code), zero-shot on 600 DeepLoc test proteins | a 10-way location choice: 0.418 with ProtST's label texts as options, against 0.300 for the majority class, and 0.270 to 0.345 with other wordings; a membrane noul: 0.758, against 0.578 |
 | The protein application: a pair head on ProtST's frozen towers, trained from vectors cached once for 1,200 proteins | 0.828 on the location choice, 0.906 on the membrane noul, 0.896 on four-way shortlists. At a 90% target, thresholds on the head's calibrated confidence act on 70% of the location questions, and the act head's on 57% (the [protein tutorial](nbs/tutorials/protein_decisions.ipynb), 13 minutes on the laptop) |
 
@@ -100,13 +101,13 @@ Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's noteb
 pip install git+https://github.com/sgaseretto/sysonelib
 ```
 
-Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME), `sysone[gliner]` (the `gliner2` package), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[plots]`.
+Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), `sysone[gliner]` (the `gliner2` package), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[plots]`.
 
 ## How it is organised
 
 | Layer | Modules | Holds |
 | --- | --- | --- |
-| Applications | `sysone.text`, `sysone.multimodal`, `sysone.protein`, `sysone.gliner` | `decision_learner` presets per modality: ModernBERT-large, NeoMME-260M, ProtST, GLiNER2 |
+| Applications | `sysone.text`, `sysone.multimodal`, `sysone.modernvbert`, `sysone.protein`, `sysone.gliner` | `decision_learner` presets per modality: ModernBERT-large, NeoMME-260M, ModernVBERT, ProtST, GLiNER2 |
 | High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.zeroshot`, `sysone.evaluate` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, zero-shot deciders (`SimilarityDecider`, `VerbalizerDecider`), evaluation |
 | Mid-level | `sysone.template`, `sysone.models`, `sysone.losses`, `sysone.cache`, `sysone.datasets` | `RowTemplate`, `RowBuilder`, transforms and side streams, `EncoderSpec`, `DecisionHead` (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, metrics and coverage, `FeatureCache`, converters |
 | Low-level | `sysone.core` | `Question`, `Answer`, `Row`, `Batch`, the answer-schema filler |
@@ -116,6 +117,8 @@ Around them: `sysone.cloud` (Kaggle and Colab jobs) and `sysone.cli` (`sysone tr
 ## Tutorials
 
 - [NeoMME on images](nbs/tutorials/neomme_images.ipynb) trains the multimodal application on 100 MNIST digits (a 10-way choice) and 80 food photos (a hot-dog noul). Its outputs show every step: the rows the encoder reads and the image patches in them, the training curves, the answers image by image, and the confusions. It compares the default head, the linear head and LoRA, and measures what the image size changes.
+- [ModernVBERT on images](nbs/tutorials/modernvbert_images.ipynb) runs the same two tasks on ModernVBERT, with the same records and recipes. Its outputs show the rows with the image as one 512-pixel tile of 64 image tokens, the three ways to train, the geometry of its vectors, and what more tiles change.
+- [NeoMME and ModernVBERT, side by side](nbs/tutorials/neomme_vs_modernvbert.ipynb) trains both encoders on identical inputs, and compares their accuracy, calibration and cost, and where each one is wrong.
 - [ProtST as a decision model](nbs/tutorials/protein_decisions.ipynb) asks three typed questions about each of 600 held-out proteins: a 10-way location choice, a membrane noul, and a four-way shortlist that lacks the right answer a third of the time. It answers them zero-shot with ProtST, comparing four ways to write the options. Then it trains a head on the frozen towers from 1,200 proteins and compares the two, compartment by compartment. It ends with when to act and when to escalate: Laya's act head against thresholds on the head's own confidence.
 
 ## Reading the notebooks
@@ -137,6 +140,8 @@ Read in order, the notebooks build the library up from its core, and each one ex
 | NeoMME's processor cannot build a decision row; what else did not work | [multimodal](nbs/20_neomme.ipynb#what-did-not-work-and-what-to-watch) |
 | One channel carries 97% of NeoMME's vector norms: heads barely learned until they standardised their input, and LoRA with Laya's two-layer head collapsed on small tasks | [multimodal](nbs/20_neomme.ipynb#two-small-image-tasks-on-the-real-checkpoint) |
 | A float16 feature cache quantises that channel, so `validate` and the `Decider` disagreed on the same model's calibration | [multimodal](nbs/20_neomme.ipynb#a-head-only-run) |
+| ModernVBERT's processor enlarges every image to 2,048 px, so a 28-px digit takes 17 tiles and 1,127 tokens; at 1,536 px, a batch of 8 rows is 80 tiles, and it held 8 GB of GPU memory | [modernvbert](nbs/23_modernvbert.ipynb#a-head-only-run) |
+| ModernVBERT's anchors have a dominant channel too, 58% of each vector's length, and standardising them lifts the digits from 0.67 to 0.84 | [ModernVBERT tutorial](nbs/tutorials/modernvbert_images.ipynb#does-modernvbert-need-standardising) |
 | NeoMME reads MNIST digits better at 56–112 px than at 224, and a seeded split of stock photos leaves shoots on both sides | [images tutorial](nbs/tutorials/neomme_images.ipynb#one-more-setting-the-image-size) |
 | The published Mind2Web converter misses ARIA labels, field values and `<select>` labels | [screens](nbs/21_screens.ipynb) |
 | ProtST-BinaryLocalization labels membrane-bound proteins 0, which its card doesn't say | [protein tutorial](nbs/tutorials/protein_decisions.ipynb#the-data) |

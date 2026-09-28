@@ -27,6 +27,7 @@ from .template import RowTemplate, RowBuilder
 FAMILIES = {
     "modernbert": ("laya", r".*\.attn\.(Wqkv|Wo)"),
     "neomme": ("neomme", ["q_proj", "k_proj", "v_proj", "o_proj"]),
+    "modernvbert": ("modernvbert", r"text_model\.layers\.\d+\.attn\.(Wqkv|Wo)"),     # the text tower's attention; the image tower stays frozen
     "deberta-v2": ("laya", ["query_proj", "key_proj", "value_proj", "attention.output.dense"]),
     "bert": ("auto", ["query", "key", "value", "attention.output.dense"]),
     "roberta": ("auto", ["query", "key", "value", "attention.output.dense"]),

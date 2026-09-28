@@ -60,6 +60,8 @@ def build_processor_rows(builder:RowBuilder, record:dict, skip_errors:bool=False
                         spans=spans, answerable=q.answerable(gold.get(qid))))
     return rows
 
+PROCESSOR_ROWS["NeoMMEProcessor"] = build_processor_rows
+
 # %% ../nbs/20_neomme.ipynb #a33eef42
 def _neomme_kwargs(kw:dict) -> dict:
     kw = dict(kw)

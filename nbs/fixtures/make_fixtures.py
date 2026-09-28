@@ -11,6 +11,9 @@
   <doc> 5, <img> 6, <query> 7, <row> 8; nothing added around the text), NeoMME's image processor,
   and a randomly initialised 2-layer, 64-wide NeoMME, saved as a processor plus a model.
 - `shot.png`: a 64 × 48 "screenshot" with three coloured buttons, 2 × 2 patches of 32 px.
+- `tiny-modernvbert/`: an Idefics3 processor (64-pixel tiles, up to 2 × 2 of them plus the global image) over the tiny ModernBERT
+  tokenizer with ModernVBERT's image tokens added, and a randomly initialised ModernVBERT: a 2-layer, 64-wide ModernBERT beside a
+  2-layer, 32-wide SigLIP, 4 image tokens per tile. Built offline from `tiny-modernbert/`: `python nbs/fixtures/make_fixtures.py modernvbert`.
 - `tiny-protst/`: a randomly initialised two-tower model laid out as the Hub port of ProtST is
   (`protein_model.esm`, `protein_model.protein_mlp`, `text_model.bert`, `text_model.text_mlp`, `logit_scale`),
   a 2-layer, 32-wide ESM and BERT, with ESM's 33-token protein tokenizer and a small uncased WordPiece text
@@ -174,8 +177,33 @@ def tiny_protst(out):
     return model
 
 
+MODERNVBERT_TOKENS = ["<fake_token_around_image>", "<image>", "<end_of_utterance>", "<global-img>"] + \
+                     [f"<row_{i}_col_{j}>" for i in range(1, 7) for j in range(1, 7)]
+
+
+def tiny_modernvbert(out):
+    "A random ModernVBERT (tiny ModernBERT + tiny SigLIP) with an Idefics3 processor over the tiny ModernBERT tokenizer"
+    from transformers import (AutoTokenizer, Idefics3ImageProcessor, Idefics3Processor, ModernBertConfig, ModernVBertConfig,
+                              ModernVBertModel, SiglipVisionConfig)
+    tok = AutoTokenizer.from_pretrained(HERE / "tiny-modernbert")
+    tok.add_special_tokens({"additional_special_tokens": MODERNVBERT_TOKENS})
+    ip = Idefics3ImageProcessor(size={"longest_edge": 128}, max_image_size={"longest_edge": 64}, image_mean=[0.5] * 3, image_std=[0.5] * 3)
+    proc = Idefics3Processor(image_processor=ip, tokenizer=tok, image_seq_len=4)     # (64 / 16)² patches, pixel-shuffled by 2: 4
+    tc = ModernBertConfig(vocab_size=len(tok), hidden_size=64, intermediate_size=96, num_hidden_layers=2, num_attention_heads=2,
+                          max_position_embeddings=1024, global_attn_every_n_layers=2, local_attention=64, pad_token_id=tok.pad_token_id,
+                          bos_token_id=tok.cls_token_id, eos_token_id=tok.sep_token_id, cls_token_id=tok.cls_token_id, sep_token_id=tok.sep_token_id)
+    vc = SiglipVisionConfig(hidden_size=32, intermediate_size=64, num_hidden_layers=2, num_attention_heads=2, image_size=64, patch_size=16)
+    cfg = ModernVBertConfig(text_config=tc, vision_config=vc, image_token_id=tok.convert_tokens_to_ids("<image>"), pixel_shuffle_factor=2)
+    torch.manual_seed(0)
+    model = ModernVBertModel(cfg)
+    model.save_pretrained(out); proc.save_pretrained(out)
+    return proc, model
+
+
 if __name__ == "__main__":
     import sys
+    if sys.argv[1:] == ["modernvbert"]:
+        tiny_modernvbert(HERE / "tiny-modernvbert"); print("wrote", HERE / "tiny-modernvbert"); raise SystemExit
     if sys.argv[1:] == ["protst"]:
         tiny_protst(HERE / "tiny-protst"); print("wrote", HERE / "tiny-protst"); raise SystemExit
     ds = tiny_records()
@@ -184,4 +212,5 @@ if __name__ == "__main__":
     tiny_neomme(ds, HERE/"tiny-neomme")
     screenshot(HERE/"shot.png")
     tiny_protst(HERE/"tiny-protst")
+    tiny_modernvbert(HERE/"tiny-modernvbert")
     print("wrote", sorted(p.name for p in HERE.iterdir()))
