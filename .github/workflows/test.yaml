@@ -1,0 +1,29 @@
+name: CI
+on: [workflow_dispatch, pull_request, push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install the project and its dev group
+        run: uv sync --frozen
+      - name: The library is the notebooks' export
+        run: |
+          uv run nbdev-export
+          git diff --exit-code sysone/ || (echo "sysone/ is out of date: run nbdev-export and commit" && exit 1)
+      - name: "Run every notebook (offline: the tests use nbs/fixtures only)"
+        env:
+          HF_HUB_OFFLINE: "1"
+          HF_DATASETS_OFFLINE: "1"
+        run: uv run nbdev-test --n-workers 2
+      - name: The docs build can run the notebooks (nbdev re-runs every import cell, skipping the rest)
+        env:
+          HF_HUB_OFFLINE: "1"
+          HF_DATASETS_OFFLINE: "1"
+        run: uv run python -c "from nbdev.serve import proc_nbs; proc_nbs(n_workers=2)"
+      - name: Notebooks are clean
+        run: |
+          uv run nbdev-clean
+          git diff --exit-code nbs/ || (echo "notebooks are not clean: run nbdev-clean and commit" && exit 1)

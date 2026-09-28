@@ -1,0 +1,15 @@
+{
+  "backend": "tokenizers",
+  "document_token": "<doc>",
+  "eos_token": "<eos>",
+  "extra_special_tokens": [],
+  "image_token": "<img>",
+  "mask_token": "<mask>",
+  "model_max_length": 16384,
+  "pad_token": "<pad>",
+  "processor_class": "NeoMMEProcessor",
+  "query_token": "<query>",
+  "row_token": "<row>",
+  "tokenizer_class": "TokenizersBackend",
+  "unk_token": "<unk>"
+}

@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sysone"
+dynamic = ["version"]
+description = "Jevify BERT-like encoders with sysone"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Sebastian Gonzalez Aseretto", email = "sgaseretto@gmail.com"}]
+keywords = ["nbdev", "typed-decisions", "encoder", "zero-shot", "calibration", "laya", "jev", "modernbert"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.8",
+    "transformers>=5.0",
+    "peft>=0.20",
+    "accelerate>=1.0",
+    "datasets>=4.0",
+    "huggingface_hub>=1.0",
+    "safetensors>=0.5",
+    "numpy>=2.0",
+    "fastcore>=2.2.30",
+    "typer>=0.15",
+]
+
+[project.optional-dependencies]
+multimodal = ["transformers>=5.17", "pillow>=10.0", "torchvision>=0.20"]
+serve = ["fastapi>=0.110", "uvicorn>=0.30"]
+laya = ["laya>=0.3.20"]
+plots = ["matplotlib>=3.8"]
+shortlist = ["sentence-transformers>=5.0"]
+browser = ["beautifulsoup4>=4.12"]
+gliner = ["gliner2>=2.0", "peft>=0.20"]
+onnx = ["onnx>=1.20", "onnxscript>=0.5", "onnxruntime>=1.20"]
+cloud = ["kaggle>=2.0", "google-colab-cli>=0.7; python_version >= '3.12'"]
+
+[project.urls]
+Repository = "https://github.com/sgaseretto/sysonelib"
+Documentation = "https://sgaseretto.github.io/sysonelib/"
+
+[project.scripts]
+sysone = "sysone.cli:main"
+
+[project.entry-points.nbdev]
+sysone = "sysone._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "sysone.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["sysone", "sysone.*"]
+
+[dependency-groups]
+dev = [
+    "nbdev>=3.3.24",
+    "jupyterlab>=4.6.4",
+    "laya>=0.3.20",
+    "pillow>=10.0",
+    "torchvision>=0.20",
+    "matplotlib>=3.8",
+    "fastapi>=0.110",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "onnx>=1.20",
+    "onnxscript>=0.5",
+    "onnxruntime>=1.20",
+    "tensordiagram>=0.2.1",
+]
+# the docs site: `uv sync --group docs && uv run nbdev-docs` (Quarto comes as a Python wheel)
+docs = [
+    "quarto-cli>=1.6",
+]
+
+[tool.nbdev]
+title = "sysone"
+tst_flags = "notest slow"
+cell_timeout = 900

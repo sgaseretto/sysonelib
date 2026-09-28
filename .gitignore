@@ -216,3 +216,16 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# nbdev
+_docs/
+_proc/
+.quarto/
+.last_checked
+.gitconfig
+*.bak
+nbs/.ipynb_checkpoints/
+.sysone/
+# the images the tutorials save next to themselves
+nbs/tutorials/neomme-images/
+nbs/tutorials/protein-decisions/

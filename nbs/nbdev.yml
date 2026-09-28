@@ -1,0 +1,14 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "sysone"
+  site-url: "https://sgaseretto.github.io/sysonelib"
+  description: "Jevify BERT-like encoders with sysone"
+  repo-branch: main
+  repo-url: "https://github.com/sgaseretto/sysonelib"
+
+format-links:
+  - html
+  - format: commonmark
+    text: Markdown

@@ -1,0 +1,37 @@
+name: Deploy to GitHub Pages
+
+# The docs build in the same locked environment as the tests (uv sync), with Quarto from the `docs`
+# dependency group. nbdev-docs re-runs the notebooks' import cells, so their dependencies must be the
+# dev group's, which the pip install of answerdotai/workflows/quarto-ghp3 (`pip install -e ".[dev]"`) would miss.
+
+permissions:
+  contents: write
+  pages: write
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install the project, its dev group and Quarto
+        run: uv sync --frozen --group docs
+      - name: "Build the docs (offline: the notebooks keep their outputs and use nbs/fixtures only)"
+        env:
+          HF_HUB_OFFLINE: "1"
+          HF_DATASETS_OFFLINE: "1"
+        run: uv run nbdev-docs --n-workers 1   # serial: Quarto renders the Markdown copies' diagrams with a headless Chrome on one fixed port
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force_orphan: true
+          publish_dir: ./_docs
+          publish_branch: gh-pages
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
