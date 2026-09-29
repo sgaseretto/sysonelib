@@ -1,4 +1,4 @@
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # The public names, imported on first use so that `import sysone.core` stays light and no module
 # imports another before it exists.

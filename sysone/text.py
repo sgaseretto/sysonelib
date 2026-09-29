@@ -23,6 +23,6 @@ MULTILINGUAL = "jhu-clsp/mmBERT-base"
 
 def decision_learner(data:TypedDecisions, encoder:str=ENCODER, train="head", cache="auto", head:str|None=None, **kw) -> Learner:
     "A text `Learner`: ModernBERT-large, and with `train='head'` a frozen encoder training from cached anchor vectors"
-    if cache == "auto": cache = "masks" if train == "head" and head in (None, "mlp", "linear") and not kw.get("head_layers") else None
+    if cache == "auto": cache = "masks" if train == "head" and head in (None, "mlp", "linear", "gliner2") and not kw.get("head_layers") else None
     head = head or ("mlp" if cache == "masks" else "laya")
     return _decision_learner(data, encoder, train=train, cache=cache, head=head, **kw)

@@ -28,6 +28,7 @@ dependencies = [
     "numpy>=2.0",
     "fastcore>=2.2.30",
     "typer>=0.15",
+    "plum-dispatch>=2.10",
 ]
 
 [project.optional-dependencies]

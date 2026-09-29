@@ -33,7 +33,7 @@ jev = Decider.load("my-jev")          # the same answers from the exported folde
 jev.predict(state, questions)         # choice / score / noul, probabilities, confidence
 ```
 
-`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state with NeoMME, and `sysone.modernvbert` does the same with ModernVBERT; `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; `sysone.gliner` drives GLiNER2 models through their own package.
+`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state, with NeoMME by default or with ModernVBERT (`decision_learner(data, "ModernVBERT/modernvbert")`); `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; a GLiNER2 checkpoint is a text encoder like any other (`head="gliner2"` starts from its classifier), while `sysone.gliner` drives whole GLiNER2 models through their own package.
 
 ## What it answers
 
@@ -58,13 +58,13 @@ learn.predict(state, questions)
 ```
 {'department': {'type': 'choice',
   'choice': 'technical',
-  'probabilities': {'billing': 0.5, 'technical': 0.5},
+  'probabilities': {'billing': 0.4999, 'technical': 0.5001},
   'confidence': 0.0,
-  'answer_confidence': 0.5},
+  'answer_confidence': 0.5001},
  'urgency': {'type': 'score',
-  'score': 1.0001,
+  'score': 1.0002,
   'legend': {'0': 'not urgent', '1': 'soon', '2': 'critical'},
-  'probabilities': {'0': 0.3333, '1': 0.3333, '2': 0.3334},
+  'probabilities': {'0': 0.3332, '1': 0.3334, '2': 0.3334},
   'confidence': 0.0,
   'answer_confidence': 0.3334},
  'churn_risk': {'type': 'noul',
@@ -107,10 +107,12 @@ Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for Neo
 
 | Layer | Modules | Holds |
 | --- | --- | --- |
-| Applications | `sysone.text`, `sysone.multimodal`, `sysone.modernvbert`, `sysone.protein`, `sysone.gliner` | `decision_learner` presets per modality: ModernBERT-large, NeoMME-260M, ModernVBERT, ProtST, GLiNER2 |
-| High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.zeroshot`, `sysone.evaluate` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, zero-shot deciders (`SimilarityDecider`, `VerbalizerDecider`), evaluation |
+| Applications | `sysone.text`, `sysone.multimodal`, `sysone.protein` | `decision_learner` per kind of input, with the encoder's own defaults: text (ModernBERT-large by default; mmBERT, Laya's checkpoint, GLiNER2 checkpoints), images and text (NeoMME-260M by default; ModernVBERT), proteins (ProtST) |
+| Encoder adapters | `sysone.multimodal` (NeoMME), `sysone.modernvbert`, `sysone.models` (GLiNER2's encoder) | the methods an encoder adds to sysone's generic functions (`processor_rows`, `default_image_side`, `prepare_processor`, `encoder_inputs`, `warm_start`), dispatched on its classes with plum |
+| Backends | `sysone.zeroshot`, `sysone.gliner` | answers in the same schema without sysone's learner: zero-shot deciders (`SimilarityDecider`, `VerbalizerDecider`), and GLiNER2 through its own package |
+| High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.evaluate` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, evaluation |
 | Mid-level | `sysone.template`, `sysone.models`, `sysone.losses`, `sysone.cache`, `sysone.datasets` | `RowTemplate`, `RowBuilder`, transforms and side streams, `EncoderSpec`, `DecisionHead` (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, metrics and coverage, `FeatureCache`, converters |
-| Low-level | `sysone.core` | `Question`, `Answer`, `Row`, `Batch`, the answer-schema filler |
+| Low-level | `sysone.core` | `Question`, `Answer`, `Row`, `Batch`, the answer-schema filler, sysone's dispatcher and `load_adapter` |
 
 Around them: `sysone.cloud` (Kaggle and Colab jobs) and `sysone.cli` (`sysone train | eval | predict | serve | run | jobs | publish`).
 
