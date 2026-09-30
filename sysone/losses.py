@@ -142,7 +142,7 @@ def ece_score(conf, correct, bins:int=15) -> float:
 
 # %% ../nbs/04_losses.ipynb #ec58fba2
 def _decision(qt, p, g, label):
-    "One decision's metric values, as the notebook computes them"
+    "One decision's metric values, as the notebook computes them; the kind is the row's integer id, since tensors hold numbers, not classes"
     out = {}
     if qt == QTYPES["score"]:
         idx = np.arange(len(p))
@@ -264,13 +264,9 @@ def answer_metrics(cases) -> dict:
             if ok < 0: continue
             if ok == 1:
                 t, label = q.target(gold[qid])
-                if q.type == "noul": p = np.array([1 - a["noul"], a["noul"]])
-                else:   # answers in memory keep a label's own type; over JSON every key is a string
-                    pr = a["probabilities"]
-                    p = np.array([pr.get(k, pr.get(str(k), 1e-6)) for k in q.keys], dtype=np.float64)
-                if q.type != "noul": p = p / p.sum()
+                p = answer_probs(q, a)                          # the distribution the answer states, whatever its kind
                 d = _decision(q.qtype, p, np.asarray(t), label); ds.append(d); qts.append(q.qtype); right = d["correct"] > 0
-                pred = int(p[1] >= 0.5) if q.type == "noul" else int(p.argmax())
+                pred = answer_index(q, p)
                 g, pk = per_q.setdefault(qid, ([], [])); g.append(str(q.keys[label])); pk.append(str(q.keys[pred]))
             if isinstance(a.get("action"), dict): acts.append((a["action"]["act_probability"], a["action"].get("act"), right, ok))
     m = _summarise(ds, qts) | {"macro_f1": float(np.mean([macro_f1(g, p) for g, p in per_q.values()])) if per_q else float("nan")}

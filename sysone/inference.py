@@ -149,7 +149,7 @@ def _wide(self:Decider, questions:dict) -> dict:
     if not getattr(self, "chunk", None): return {}
     out = {}
     for qid, q in as_questions(questions).items():
-        if q.type == "choice" and q.k > self.chunk:
+        if isinstance(q, Choice) and q.k > self.chunk:
             n = math.ceil(q.k / self.chunk)
             out[qid] = [q.keys[c::n] for c in range(n)]
     return out

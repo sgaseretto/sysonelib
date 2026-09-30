@@ -508,7 +508,7 @@ def build(self:RowBuilder, state, question, gold=None, name="q") -> Row:
     q = Question.from_dict(question, name=name)
     return self.build_record({"state": state, "questions": {name: q.to_dict()}, "gold": {name: gold}})[0]
 
-# %% ../nbs/01_template.ipynb #fe0d721f
+# %% ../nbs/01_template.ipynb #7b4eea22
 class TokenStream:
     "A side stream tokenized by its own tokenizer; its ids and attention mask ride in every row of the record"
     def __init__(self,
@@ -547,7 +547,7 @@ def stream_from_json(d:dict, tokenizer):
     if d.get("kind", "tokens") != "tokens": raise ValueError(f"unknown stream kind {d.get('kind')!r}")
     return TokenStream(d["name"], tokenizer, d.get("max_len", 1024), d.get("crop", "right"))
 
-# %% ../nbs/01_template.ipynb #2f524cb4
+# %% ../nbs/01_template.ipynb #b518b2e5
 def _decode_ids(tok, ids):
     specials = set(getattr(tok, "all_special_ids", []))
     out, buf = [], []
@@ -578,7 +578,7 @@ def show(self:RowBuilder, record:dict, max_chars:int=300):
     "Print the rows of a record"
     for r in self.build_record(record): print(show_row(r, self.tok, max_chars), end="\n\n")
 
-# %% ../nbs/01_template.ipynb #8827cc09
+# %% ../nbs/01_template.ipynb #a5781eb2
 @patch
 def to_json(self:RowBuilder) -> dict:
     "The template, transforms and side streams, as written to `sysone.json`"

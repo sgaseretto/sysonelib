@@ -6,7 +6,7 @@ Docs: https://sgaseretto.github.io/sysonelib/zeroshot.html.md"""
 
 # %% auto #0
 __all__ = ['VERBALIZER_PROMPT', 'Embedder', 'SentenceTransformerEmbedder', 'CachedEmbedder', 'option_texts', 'SimilarityDecider',
-           'VerbalizerDecider']
+           'verbalizer_options', 'VerbalizerDecider']
 
 # %% ../nbs/11_zeroshot.ipynb #5d7e03f0
 import json
@@ -43,15 +43,23 @@ class CachedEmbedder(Embedder):
         if missing: self.memo.update(zip(missing, self.embedder(missing)))
         return np.stack([self.memo[x] for x in items])
 
-def option_texts(q:Question, prompt:str="{text}", negation:str="It is not the case that {text}") -> list:
-    "The texts a question's options are embedded as, in key order: a choice's descriptions (or keys), a score's levels, a noul's two sides"
-    if q.type == "noul":
-        crit = q.criteria or {}
-        f = crit.get("false") or negation.format(text=q.instructions[:1].lower() + q.instructions[1:])
-        t = crit.get("true") or q.instructions
-        return [prompt.format(text=render_criterion(f), key="false"), prompt.format(text=render_criterion(t), key="true")]
-    if q.type == "score": return [prompt.format(text=render_criterion(c), key=str(i)) for i, c in enumerate(q.criteria)]
+@dispatch
+def option_texts(q:Choice, *, prompt:str="{text}", negation:str="It is not the case that {text}") -> list:
+    "A choice's option texts, in key order: each label's description, or the label itself"
     return [prompt.format(text=render_criterion(v) if v not in (None, "") else str(k), key=str(k)) for k, v in q.criteria.items()]
+
+@dispatch
+def option_texts(q:Score, *, prompt:str="{text}", negation:str="It is not the case that {text}") -> list:
+    "A score's option texts: its levels' descriptions"
+    return [prompt.format(text=render_criterion(c), key=str(i)) for i, c in enumerate(q.criteria)]
+
+@dispatch
+def option_texts(q:Noul, *, prompt:str="{text}", negation:str="It is not the case that {text}") -> list:
+    "A noul's two texts, false then true: its criteria's, else the statement's negation and the statement"
+    crit = q.criteria or {}
+    f = crit.get("false") or negation.format(text=q.instructions[:1].lower() + q.instructions[1:])
+    t = crit.get("true") or q.instructions
+    return [prompt.format(text=render_criterion(f), key="false"), prompt.format(text=render_criterion(t), key="true")]
 
 def _parsed(s):
     "A state as stored or given: JSON text becomes the structure it encodes"
@@ -116,7 +124,7 @@ class SimilarityDecider:
 
     def option_vectors(self, q:Question) -> np.ndarray:
         "The embeddings of a question's option texts (each text embedded once, then remembered)"
-        texts = option_texts(q, self.prompt)
+        texts = option_texts(q, prompt=self.prompt)
         missing = list(dict.fromkeys(t for t in texts if t not in self._texts))
         if missing: self._texts |= dict(zip(missing, self.text_embedder(missing)))
         return np.stack([self._texts[t] for t in texts])
@@ -147,6 +155,21 @@ class SimilarityDecider:
 
 # %% ../nbs/11_zeroshot.ipynb #aa310bc9
 VERBALIZER_PROMPT = "{state}\nQuestion: {instructions}\n{options}\nAnswer: {mask}"
+
+@dispatch
+def verbalizer_options(q:Choice) -> tuple:
+    "A choice's verbalizers and option texts: letters, and `label: description`"
+    return [chr(65 + i) for i in range(q.k)], [str(k) if v in (None, "") else f"{k}: {render_criterion(v)}" for k, v in q.criteria.items()]
+
+@dispatch
+def verbalizer_options(q:Score) -> tuple:
+    "A score's verbalizers and option texts: its levels' digits, and their descriptions"
+    return [str(i) for i in range(q.k)], [render_criterion(c) for c in q.criteria]
+
+@dispatch
+def verbalizer_options(q:Noul) -> tuple:
+    "A noul's two sides as lettered options, for a tokenizer without one-token yes and no"
+    return ["A", "B"], q.options
 
 def _one_token(tok, words) -> int|None:
     "The id of the first of `words` the tokenizer keeps as one token, with a leading space or without"
@@ -182,14 +205,10 @@ class VerbalizerDecider:
 
     def verbalizers(self, q:Question) -> tuple:
         "(the options' text in the prompt, each option's verbalizer token id)"
-        if q.type == "noul":
+        if isinstance(q, Noul):
             ids = [_one_token(self.tokenizer, ["no", "No", "false", "False"]), _one_token(self.tokenizer, ["yes", "Yes", "true", "True"])]
             if all(i is not None for i in ids): return "Answer yes or no.", ids
-            marks, descr = ["A", "B"], q.options          # no one-token yes and no: the two sides as lettered options
-        else:
-            marks = [str(i) for i in range(q.k)] if q.type == "score" else [chr(65 + i) for i in range(q.k)]
-            descr = [render_criterion(c) for c in q.criteria] if q.type == "score" else \
-                    [str(k) if v in (None, "") else f"{k}: {render_criterion(v)}" for k, v in q.criteria.items()]
+        marks, descr = verbalizer_options(q)            # a noul without one-token yes and no: its sides as lettered options
         ids = [_one_token(self.tokenizer, [m, m.lower()]) for m in marks]
         if any(i is None for i in ids): raise ValueError(f"question {q.name!r}: a verbalizer is not one token of this tokenizer")
         return "Options: " + "; ".join(f"{m}. {d}" for m, d in zip(marks, descr)), ids

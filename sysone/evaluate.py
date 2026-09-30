@@ -121,8 +121,7 @@ def probe_confidence(model, records, margin:float=0.05) -> dict:
             q = Question.from_dict(qd, name=qid)
             t, label = q.target(r["gold"][qid])
             a = ans[qid]
-            pred = (1 if a["noul"] >= 0.5 else 0) if q.type == "noul" else q.keys.index(a["choice"]) if q.type == "choice" \
-                else int(np.argmax([a["probabilities"][k] for k in q.keys]))
+            pred = answer_index(q, answer_probs(q, a))
             conf.append(a["answer_confidence"]); right.append(pred == label)
     au = auroc(conf, right)
     return {"probe": "confidence", "passed": bool(au > 0.5 + margin), "auroc": au, "ece": ece_score(conf, right), "n": len(conf)}

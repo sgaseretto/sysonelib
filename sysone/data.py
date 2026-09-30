@@ -325,7 +325,7 @@ def _similar(self:RowSampler, texts:list, anchor:int) -> list:
 def _sample_question(self:RowSampler, q:Question, gold, rng):
     "A definition of `q` with k options: the gold one and k − 1 distractors"
     k = self.negatives
-    if q.type != "choice" or q.k <= k: return q.to_dict(), gold
+    if not isinstance(q, Choice) or q.k <= k: return q.to_dict(), gold
     keys = list(q.criteria)
     g = _gold_key(q, gold)
     gi = keys.index(g) if g in keys else rng.randrange(len(keys))
@@ -383,7 +383,7 @@ class Shortlist(Transform):
         state = render_state(record["state"])
         for qid, qd in record["questions"].items():
             q = Question.from_dict(qd, name=qid)
-            if q.type != "choice" or q.k <= max(self.k, self.min_options or 0): qs[qid] = qd; continue
+            if not isinstance(q, Choice) or q.k <= max(self.k, self.min_options or 0): qs[qid] = qd; continue
             e = self._embed([state] + q.options)
             order = np.argsort(-(e[1:] @ e[0]))[:self.k]
             keys = list(q.criteria)

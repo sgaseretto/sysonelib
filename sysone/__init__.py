@@ -3,7 +3,8 @@ __version__ = "0.3.0"
 # The public names, imported on first use so that `import sysone.core` stays light and no module
 # imports another before it exists.
 _LAZY = {
-    "Question": "core", "Answer": "core", "Row": "core", "Batch": "core", "fill_answer": "core", "collate": "core",
+    "Question": "core", "Choice": "core", "Score": "core", "Noul": "core", "Answer": "core", "Row": "core", "Batch": "core",
+    "fill_answer": "core", "collate": "core",
     "RowTemplate": "template", "RowBuilder": "template", "Transform": "template", "transform": "template",
     "Field": "template", "Regex": "template", "Truncate": "template", "Shuffle": "template", "Image": "template",
     "Lower": "template", "Stream": "template", "TokenStream": "template",

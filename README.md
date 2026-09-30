@@ -112,9 +112,11 @@ Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for Neo
 | Backends | `sysone.zeroshot`, `sysone.gliner` | answers in the same schema without sysone's learner: zero-shot deciders (`SimilarityDecider`, `VerbalizerDecider`), and GLiNER2 through its own package |
 | High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.evaluate` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, evaluation |
 | Mid-level | `sysone.template`, `sysone.models`, `sysone.losses`, `sysone.cache`, `sysone.datasets` | `RowTemplate`, `RowBuilder`, transforms and side streams, `EncoderSpec`, `DecisionHead` (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, metrics and coverage, `FeatureCache`, converters |
-| Low-level | `sysone.core` | `Question`, `Answer`, `Row`, `Batch`, the answer-schema filler, sysone's dispatcher and `load_adapter` |
+| Low-level | `sysone.core` | `Question` and its kinds (`Choice`, `Score`, `Noul`), `Answer`, `Row`, `Batch`, the answer schema's generic functions, sysone's dispatcher and `load_adapter` |
 
 Around them: `sysone.cloud` (Kaggle and Colab jobs) and `sysone.cli` (`sysone train | eval | predict | serve | run | jobs | publish`).
+
+Where behaviour depends on the kind of question or on the encoder, sysone uses generic functions: one name, a method per type, and the call picks the method that fits (multiple dispatch, with plum). The [core](nbs/00_core.ipynb#generic-functions-and-multiple-dispatch) notebook explains them from the ground up, with examples, and lists every one sysone has.
 
 ## Tutorials
 

@@ -20,15 +20,22 @@ from .data import TypedDecisions
 from .losses import fit_temperatures, answer_metrics
 
 # %% ../nbs/31_gliner_backend.ipynb #73e1fe1d
-def gliner_labels(q:Question):
-    "A question's GLiNER2 labels, their descriptions, and the answer key each label stands for"
-    if q.type == "choice":
-        labels = [str(k) for k in q.keys]
-        desc = {str(k): render_criterion(v) for k, v in q.criteria.items() if v not in (None, "")}
-        return labels, desc, list(q.keys)
-    if q.type == "score":
-        labels = [str(i) for i in range(q.k)]
-        return labels, {str(i): render_criterion(c) for i, c in enumerate(q.criteria)}, labels
+@dispatch
+def gliner_labels(q:Choice) -> tuple:
+    "A choice's GLiNER2 labels (its keys), their descriptions, and the answer key each label stands for"
+    labels = [str(k) for k in q.keys]
+    desc = {str(k): render_criterion(v) for k, v in q.criteria.items() if v not in (None, "")}
+    return labels, desc, list(q.keys)
+
+@dispatch
+def gliner_labels(q:Score) -> tuple:
+    "A score's GLiNER2 labels, its levels' indices, with their descriptions"
+    labels = [str(i) for i in range(q.k)]
+    return labels, {str(i): render_criterion(c) for i, c in enumerate(q.criteria)}, labels
+
+@dispatch
+def gliner_labels(q:Noul) -> tuple:
+    "A noul's GLiNER2 labels, yes then no, standing for true and false"
     crit = q.criteria or {}
     desc = {lab: render_criterion(crit[k]) for lab, k in (("yes", "true"), ("no", "false")) if crit.get(k) not in (None, "")}
     return ["yes", "no"], desc, ["true", "false"]
