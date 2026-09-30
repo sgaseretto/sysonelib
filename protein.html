@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="ProtST under the sysone head: its two towers loaded from tensors alone, zero-shot typed answers from its joint space, and the protein application, where the protein is a side stream beside a text row.">
+
+<title>protein – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="protein – sysone">
+<meta property="og:description" content="ProtST under the sysone head: its two towers loaded from tensors alone, zero-shot typed answers from its joint space, and the protein application, where the protein is a side stream beside a text row.">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="protein – sysone">
+<meta name="twitter:description" content="ProtST under the sysone head: its two towers loaded from tensors alone, zero-shot typed answers from its joint space, and the protein application, where the protein is a side stream beside a text row.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./protein.html">protein</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#load-and-inspect" id="toc-load-and-inspect" class="nav-link active" data-scroll-target="#load-and-inspect">1. Load and inspect</a></li>
+  <li><a href="#zero-shot" id="toc-zero-shot" class="nav-link" data-scroll-target="#zero-shot">2. Zero-shot</a></li>
+  <li><a href="#the-spec" id="toc-the-spec" class="nav-link" data-scroll-target="#the-spec">3. The spec</a></li>
+  <li><a href="#one-forward-pass" id="toc-one-forward-pass" class="nav-link" data-scroll-target="#one-forward-pass">4. One forward pass</a></li>
+  <li><a href="#a-head-only-run" id="toc-a-head-only-run" class="nav-link" data-scroll-target="#a-head-only-run">5. A head-only run</a></li>
+  <li><a href="#on-the-real-checkpoint" id="toc-on-the-real-checkpoint" class="nav-link" data-scroll-target="#on-the-real-checkpoint">6. On the real checkpoint</a></li>
+  <li><a href="#what-to-watch" id="toc-what-to-watch" class="nav-link" data-scroll-target="#what-to-watch">7. What to watch</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="protein.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">protein</h1>
+</div>
+
+<div>
+  <div class="description">
+    ProtST under the sysone head: its two towers loaded from tensors alone, zero-shot typed answers from its joint space, and the protein application, where the protein is a side stream beside a text row.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>This notebook adds a protein encoder the way the <a href="./neomme.html">multimodal</a> notebook added an image encoder: load it and look at it, check it against its reference, write the spec, run one forward pass, train a head, and write down what to watch.</p>
+<p><a href="https://arxiv.org/abs/2301.12040">ProtST</a> (Xu et al., ICML 2023) has two towers: ESM-1b, a protein language model (33 layers, width 1,280, 650M parameters), and PubMedBERT, a biomedical text encoder (12 layers, width 768). They were trained together on ProtDescribe, Swiss-Prot sequences paired with text about each protein’s function, location, family and name. Among the training objectives is a CLIP-style alignment. It pools each tower into one vector, projects both into a 512-wide space, and pulls a protein and its own description together there. That joint space is what sysone uses, in two ways:</p>
+<ul>
+<li><strong>Zero-shot.</strong> Embed the protein and each option’s text in the joint space. An option’s logit is ProtST’s logit scale times the cosine between the two. This is the <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#similaritydecider"><code>SimilarityDecider</code></a> of <a href="./zeroshot.html">zeroshot</a>, and it needs no training at all.</li>
+<li><strong>A decision model.</strong> The protein is a <em>side stream</em> (<a href="./template.html#side-stream-inputs">template</a>): ESM reads it and pools it to one vector. PubMedBERT reads a text row as for any sysone encoder (the question, and an anchor before each option). A pair head scores each option’s anchor against the protein’s vector. The towers don’t talk to each other (late fusion), so both can stay frozen and cached, and only the head trains. <a href="./models.html#cross-attention-from-a-side-stream">Cross-attention</a> is the other design, where the text attends to the protein inside the encoder.</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    P["a protein sequence"] --&gt; E["ESM-1b: the mean over&lt;br/&gt;residues, projected"]
+    Q["a typed question:&lt;br/&gt;its options' texts"] --&gt; B["PubMedBERT: the mean&lt;br/&gt;over tokens, projected"]
+    E --&gt; Z["zero-shot: scale × cosine&lt;br/&gt;per option"]
+    B --&gt; Z
+    Q --&gt; R["a text row: the question,&lt;br/&gt;an anchor per option"]
+    R --&gt; B2["PubMedBERT:&lt;br/&gt;a vector per anchor"]
+    E --&gt; H["pair head: each anchor&lt;br/&gt;against the protein"]
+    B2 --&gt; H
+    Z --&gt; J["÷ temperature, softmax:&lt;br/&gt;the Jev answer"]
+    H --&gt; J
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="load-and-inspect" class="level2">
+<h2 class="anchored" data-anchor-id="load-and-inspect">1. Load and inspect</h2>
+<p>The Hub port of ProtST, <a href="https://huggingface.co/MilaDeepGraph/ProtST-ESM1b">MilaDeepGraph/ProtST-ESM1b</a>, keeps the two towers and their projection heads, and not the fusion module used for multimodal mask prediction. Its tensors sit under <code>protein_model.esm</code> and <code>text_model.bert</code>. Each tower has two heads (dense → ReLU → out_proj, into the 512-wide space): <code>protein_mlp</code> and <code>text_mlp</code> for the pooled vector, and <code>residue_mlp</code> and <code>word_mlp</code> for each token’s vector. A scalar <code>logit_scale</code> completes the checkpoint. The repo ships its own modeling code, which transformers runs only with <code>trust_remote_code=True</code>.</p>
+<p>sysone doesn’t run that code. The towers are transformers’ own <code>EsmModel</code> and <code>BertModel</code>, so sysone builds them from the two configs inside <code>config.json</code> and reads only the tensors. It uses <code>model.safetensors</code> when the repo has one, and otherwise <code>pytorch_model.bin</code> through <code>torch.load(weights_only=True)</code>, which unpickles tensors and refuses anything else. The file is memory-mapped, so the 1.5 GB bf16 checkpoint is read as the towers are filled, not held in memory beside them. The towers are built straight from those tensors, not initialised at random first, and are float32 unless asked otherwise.</p>
+<p>The port has no tokenizer files. ProtST was trained with ESM-1b’s and PubMedBERT’s, and those are the defaults. A folder with <code>protein_tokenizer/</code> and <code>text_tokenizer/</code> inside, as the fixture has, brings its own.</p>
+<div id="f38ce365" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.488050+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.494140+00:00&quot;,&quot;total&quot;:0.006093322999987549}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L62" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protst_tokenizers" class="level3">
+<h3 class="anchored" data-anchor-id="protst_tokenizers">protst_tokenizers</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protst_tokenizers(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, protein:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, text:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The protein and the text tokenizer: the folder’s own (<code>protein_tokenizer/</code>, <code>text_tokenizer/</code>), else ESM-1b’s and PubMedBERT’s</em></p>
+</section>
+</div>
+<div id="e31785bf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.494218+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.496725+00:00&quot;,&quot;total&quot;:0.00250940799998034}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L53" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protst_tensors" class="level3">
+<h3 class="anchored" data-anchor-id="protst_tensors">protst_tensors</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protst_tensors(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The checkpoint’s tensors: <code>model.safetensors</code> if there is one, else <code>pytorch_model.bin</code> read with <code>weights_only=True</code> (tensors, no code), memory-mapped</em></p>
+</section>
+</div>
+<div id="37ab4c1b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.496799+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.499145+00:00&quot;,&quot;total&quot;:0.002349840000022141}}" data-execution_count="6">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L48" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protst_config" class="level3">
+<h3 class="anchored" data-anchor-id="protst_config">protst_config</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protst_config(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>types.SimpleNamespace:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The checkpoint’s configuration: its model type, and the ESM and BERT configs of its towers</em></p>
+</section>
+</div>
+<div id="c8ee0617" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.499219+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.501546+00:00&quot;,&quot;total&quot;:0.0023308840000026976}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L43" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="is_protst" class="level3">
+<h3 class="anchored" data-anchor-id="is_protst">is_protst</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_protst(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">bool</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Whether <code>id</code> (a folder or a Hub repo) holds a ProtST checkpoint: a config whose model_type is ‘protst’</em></p>
+</section>
+</div>
+<p>A tower is built by transformers’ <code>from_pretrained</code> from its config and its tensors, with no pooling layer (ProtST pools by a mean, below). The build checks that every weight the tower needs is in the checkpoint and that nothing is left over. A projection head becomes a <a href="https://sgaseretto.github.io/sysonelib/models.html#projmlp"><code>ProjMLP</code></a>, whose Linear → ReLU → Linear is exactly ProtST’s dense → ReLU → out_proj.</p>
+<div id="14ddf3c9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.505198+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.508060+00:00&quot;,&quot;total&quot;:0.0028649919999850226}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L109" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_protst" class="level3">
+<h3 class="anchored" data-anchor-id="load_protst">load_protst</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_protst(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, dtype:torch.dtype<span class="op">=</span>torch.float32,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    device:NoneType<span class="op">=</span><span class="va">None</span>, protein_tokenizer:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, text_tokenizer:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.ProtST:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>ProtST from a Hub repo or a folder: transformers’ ESM and BERT filled with the checkpoint’s tensors (its modeling code is not run)</em></p>
+</section>
+</div>
+<div id="627aed35" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.508135+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.510840+00:00&quot;,&quot;total&quot;:0.002708079000001362}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L90" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protst" class="level3">
+<h3 class="anchored" data-anchor-id="protst">ProtST</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ProtST(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    esm:torch.nn.modules.module.Module, bert:torch.nn.modules.module.Module, protein_proj:sysone.models.ProjMLP,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    text_proj:sysone.models.ProjMLP, logit_scale:<span class="bu">float</span>, protein_tokenizer, text_tokenizer, config:NoneType<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>ProtST’s two towers and the heads that project their pooled vectors into one space: ESM over proteins, BERT over text</em></p>
+</section>
+</div>
+<p>The fixture is a random two-tower model laid out as the Hub port is: a 2-layer, 32-wide ESM and BERT, heads into a 16-wide space, and ESM’s own 33-token protein tokenizer beside a small WordPiece text tokenizer (<code>python nbs/fixtures/make_fixtures.py protst</code> rebuilds it offline). It loads the way the real checkpoint does:</p>
+<div id="070fe043" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-protst"</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> load_protst(FIX)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="ba8827e6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>test_eq(is_protst(FIX), <span class="va">True</span>)<span class="op">;</span> test_eq(is_protst(<span class="st">"fixtures/tiny-modernbert"</span>), <span class="va">False</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>test_close(p.logit_scale, <span class="bu">float</span>(np.exp(<span class="fl">2.6592</span>)), eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>test_eq((p.protein_proj.dims, p.text_proj.dims), ([<span class="dv">32</span>, <span class="dv">32</span>, <span class="dv">16</span>], [<span class="dv">32</span>, <span class="dv">32</span>, <span class="dv">16</span>]))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>test_eq((p.protein_tokenizer.cls_token_id, p.protein_tokenizer.pad_token_id, p.protein_tokenizer.eos_token_id), (<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>test_eq(p.protein_tokenizer(<span class="st">"MKTAY"</span>)[<span class="st">"input_ids"</span>], [<span class="dv">0</span>] <span class="op">+</span> p.protein_tokenizer(<span class="st">"M K T A Y"</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>] <span class="op">+</span> [<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The real checkpoint, loaded the same way on an M3 Pro, gives <code>ProtST(MilaDeepGraph/ProtST-ESM1b · protein: ESM 33 × 1280 · text: BERT 12 × 768 · joint space 512 · scale 14.2 · 762.9M params · torch.float32 on mps:0)</code>. Every weight the two towers need is in the checkpoint and none is left over, down to ESM’s contact head, which sysone never calls. Once the file is in the cache, it loads in one to two seconds and holds 3.0 GB of float32 weights. The logit scale is 2.656, which is <span class="math inline">\(\ln(1/0.07)\)</span> rounded to bf16. That is where CLIP-style training starts the scale, so the port’s zero-shot logits are the cosine times 14.2.</p>
+</section>
+<section id="zero-shot" class="level2">
+<h2 class="anchored" data-anchor-id="zero-shot">2. Zero-shot</h2>
+<p>ProtST pools a protein as the mean of ESM’s last hidden states over its residues, leaving out <code>&lt;cls&gt;</code>, <code>&lt;eos&gt;</code> and padding, and projects the mean with <code>protein_mlp</code>. A text is pooled the same way over its tokens and projected with <code>text_mlp</code>. The port’s zero-shot example feeds a label’s text as <code>[CLS]</code> followed by its tokens, without a <code>[SEP]</code>, and sysone does the same. Both vectors are normalised, and an option’s logit is the scale times their cosine.</p>
+<p><a href="https://sgaseretto.github.io/sysonelib/models.html#sideencoder"><code>SideEncoder</code></a> already pools that way, so the two embedders are side encoders over ProtST’s towers and heads, and the decision model below reuses the same code. The protein embedder builds its input the way the <code>protein</code> stream does, cropping at the ends (see <a href="#the-spec">the spec</a>). Zero-shot and the decision model therefore read the same residues. It also batches proteins by length, so a batch is mostly residues rather than padding.</p>
+<div id="9605572e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.515247+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.517894+00:00&quot;,&quot;total&quot;:0.00265018999999711}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/evaluate.py#L67" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="zero_shot" class="level3">
+<h3 class="anchored" data-anchor-id="zero_shot">zero_shot</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_shot(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    protst:__main__.ProtST, prompt:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{text}</span><span class="st">'</span>, proteins:sysone.zeroshot.Embedder <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    texts:sysone.zeroshot.Embedder <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, state_key:<span class="bu">str</span><span class="op">=</span><span class="st">'sequence'</span>, max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">1024</span>, crop:<span class="bu">str</span><span class="op">=</span><span class="st">'ends'</span>, <span class="op">**</span>kw</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.zeroshot.SimilarityDecider:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A zero-shot decider on ProtST: an option’s logit is ProtST’s scale times the cosine between the protein’s embedding and the option text’s</em></p>
+</section>
+</div>
+<div id="a4b04ed7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.517969+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.520453+00:00&quot;,&quot;total&quot;:0.002487156000000823}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L158" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="textembedder" class="level3">
+<h3 class="anchored" data-anchor-id="textembedder">TextEmbedder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> TextEmbedder(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    protst:__main__.ProtST, max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">128</span>, batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">32</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Texts to ProtST’s text embeddings, as its zero-shot example makes them: [CLS] and the text’s tokens (no [SEP]), their mean, projected</em></p>
+</section>
+</div>
+<div id="449def58" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.520529+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.522976+00:00&quot;,&quot;total&quot;:0.0024498070000049665}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L147" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="proteinembedder" class="level3">
+<h3 class="anchored" data-anchor-id="proteinembedder">ProteinEmbedder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ProteinEmbedder(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    protst:__main__.ProtST, max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">1024</span>, crop:<span class="bu">str</span><span class="op">=</span><span class="st">'ends'</span>, batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">8</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Protein sequences to ProtST’s protein embeddings: ESM over the residues (cropped as the <code>protein</code> stream crops them), their mean, projected</em></p>
+</section>
+</div>
+<div id="bebab679" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.523050+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.525231+00:00&quot;,&quot;total&quot;:0.002184520999975348}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L126" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protein_specials" class="level3">
+<h3 class="anchored" data-anchor-id="protein_specials">protein_specials</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protein_specials(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    tok</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The ids a protein’s mean leaves out: its tokenizer’s cls, eos and pad</em></p>
+</section>
+</div>
+<div id="aa051d3c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.525305+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.527506+00:00&quot;,&quot;total&quot;:0.0022036760000219147}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L122" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="clean_sequence" class="level3">
+<h3 class="anchored" data-anchor-id="clean_sequence">clean_sequence</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_sequence(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    s</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A protein sequence as ESM’s tokenizer reads it: one-letter codes in capitals, no spaces</em></p>
+</section>
+</div>
+<p>To check the port’s protocol, here it is written from its modeling code: the tower, the mean over the non-special tokens, then the head’s two linear maps read straight from the checkpoint’s tensors. The embedders give the same unit vectors:</p>
+<div id="4545a696" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sd <span class="op">=</span> load_file(<span class="ss">f"</span><span class="sc">{</span>FIX<span class="sc">}</span><span class="ss">/model.safetensors"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hub_feature(model, head, ids, specials):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A pooled vector as the Hub port computes it: its tower, the mean over the non-special tokens, then its head (dense → ReLU → out_proj)"</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> model(input_ids<span class="op">=</span>ids, attention_mask<span class="op">=</span>torch.ones_like(ids)).last_hidden_state</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    keep <span class="op">=</span> <span class="op">~</span>torch.isin(ids, torch.tensor(specials))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    pooled <span class="op">=</span> (h <span class="op">*</span> keep[..., <span class="va">None</span>]).<span class="bu">sum</span>(<span class="dv">1</span>) <span class="op">/</span> (keep.<span class="bu">sum</span>(<span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> <span class="fl">1e-6</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.relu(pooled <span class="op">@</span> sd[head <span class="op">+</span> <span class="st">"dense.weight"</span>].T <span class="op">+</span> sd[head <span class="op">+</span> <span class="st">"dense.bias"</span>])</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.normalize(x <span class="op">@</span> sd[head <span class="op">+</span> <span class="st">"out_proj.weight"</span>].T <span class="op">+</span> sd[head <span class="op">+</span> <span class="st">"out_proj.bias"</span>], dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>seqs <span class="op">=</span> [<span class="st">"MKTAYIAKQRQISFVKSHFSRQ"</span>, <span class="st">"MSDNGPQNQRNAPRITFGGPSDSTGSNQNGERSGARSKQRRPQGLPNNTASWFTALTQHGK"</span>]</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>texts <span class="op">=</span> [<span class="st">"SUBCELLULAR LOCATION: Nucleus."</span>, <span class="st">"a membrane protein"</span>]</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    ref_p <span class="op">=</span> torch.cat([hub_feature(p.esm, <span class="st">"protein_model.protein_mlp."</span>, p.protein_tokenizer(s, return_tensors<span class="op">=</span><span class="st">"pt"</span>)[<span class="st">"input_ids"</span>], (<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>)) <span class="cf">for</span> s <span class="kw">in</span> seqs])</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    tt <span class="op">=</span> p.text_tokenizer</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    ref_t <span class="op">=</span> torch.cat([hub_feature(p.bert, <span class="st">"text_model.text_mlp."</span>, torch.tensor([[tt.cls_token_id] <span class="op">+</span> tt(t, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>]]),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>                                   (tt.cls_token_id, tt.sep_token_id, tt.pad_token_id)) <span class="cf">for</span> t <span class="kw">in</span> texts])</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>test_close(ProteinEmbedder(p)(seqs), ref_p.numpy(), eps<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>test_close(TextEmbedder(p)(texts), ref_t.numpy(), eps<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>test_close(ProteinEmbedder(p)([<span class="st">" "</span>.join(seqs[<span class="dv">0</span>]).lower()]), ref_p[:<span class="dv">1</span>].numpy(), eps<span class="op">=</span><span class="fl">1e-5</span>)     <span class="co"># spaced or lower-case, the same protein</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>test_eq((p.esm.training, p.bert.training), (<span class="va">False</span>, <span class="va">False</span>))                                    <span class="co"># the towers keep their mode</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: an embedder switched the shared text tower into training mode">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: an embedder switched the shared text tower into training mode
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The first <a href="https://sgaseretto.github.io/sysonelib/protein.html#_pooled"><code>_pooled</code></a> put its side encoder in eval mode for the pass and restored the encoder’s own mode afterwards. A module built on the spot starts in training mode, though, so “restoring” it switched the towers it wraps, which are ProtST’s shared towers, into training mode. PubMedBERT has dropout (0.1) and ESM has none, so the protein vectors stayed right while every later text embedding came out noisy. It showed up as zero-shot logits that disagreed with the Hub port’s protocol computed by hand, but only when the hand computation ran after an embedder. <a href="https://sgaseretto.github.io/sysonelib/protein.html#_pooled"><code>_pooled</code></a> now gives every module back its own mode, and the test above checks that both towers are still in eval mode.</p>
+</div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot</code></a> puts the two embedders under a <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#similaritydecider"><code>SimilarityDecider</code></a>. The state holds the protein under <code>sequence</code>, and each question’s options become texts through the prompt. A choice’s options become their descriptions (or their keys), and a noul’s become its two sides, <code>criteria={"false": …, "true": …}</code>. The fixture’s towers are random, so the answers below are meaningless. What matters is their shape: the Jev answers a trained sysone model would give.</p>
+<div id="4b449af6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>LOCS <span class="op">=</span> {<span class="st">"Nucleus"</span>: <span class="st">"SUBCELLULAR LOCATION: Nucleus."</span>, <span class="st">"Cytoplasm"</span>: <span class="st">"SUBCELLULAR LOCATION: Cytoplasm."</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Cell membrane"</span>: <span class="st">"SUBCELLULAR LOCATION: Cell membrane."</span>, <span class="st">"Extracellular"</span>: <span class="st">"SUBCELLULAR LOCATION: Secreted."</span>}</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>QS <span class="op">=</span> {<span class="st">"location"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Where in the cell is this protein?"</span>, <span class="st">"criteria"</span>: LOCS},</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">"membrane"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"The protein is bound to a membrane."</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"criteria"</span>: {<span class="st">"false"</span>: <span class="st">"a soluble protein"</span>, <span class="st">"true"</span>: <span class="st">"a membrane protein"</span>}}}</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> zero_shot(p)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ans <span class="op">=</span> zs.predict({<span class="st">"sequence"</span>: seqs[<span class="dv">0</span>]}, QS)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">sorted</span>(ans), ans[<span class="st">"location"</span>][<span class="st">"choice"</span>] <span class="kw">in</span> LOCS, <span class="dv">0</span> <span class="op">&lt;=</span> ans[<span class="st">"membrane"</span>][<span class="st">"noul"</span>] <span class="op">&lt;=</span> <span class="dv">1</span>), ([<span class="st">"location"</span>, <span class="st">"membrane"</span>], <span class="va">True</span>, <span class="va">True</span>))</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>cos <span class="op">=</span> ref_p[<span class="dv">0</span>] <span class="op">@</span> torch.cat([hub_feature(p.bert, <span class="st">"text_model.text_mlp."</span>, torch.tensor([[tt.cls_token_id] <span class="op">+</span> tt(t, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>]]),</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>                                        (tt.cls_token_id, tt.sep_token_id, tt.pad_token_id)) <span class="cf">for</span> t <span class="kw">in</span> LOCS.values()]).T</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>test_close(zs.row_logits([{<span class="st">"state"</span>: {<span class="st">"sequence"</span>: seqs[<span class="dv">0</span>]}}], [Question.from_dict(QS[<span class="st">"location"</span>], name<span class="op">=</span><span class="st">"location"</span>)])[<span class="dv">0</span>], p.logit_scale <span class="op">*</span> cos.detach().numpy(), eps<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>zs, ans</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-spec" class="level2">
+<h2 class="anchored" data-anchor-id="the-spec">3. The spec</h2>
+<p>The decision model reads two inputs. PubMedBERT reads the text row, built by the <code>auto</code> template (Laya’s layout on the tokenizer’s own <code>[CLS]</code>, <code>[SEP]</code> and <code>[MASK]</code>): the question, and an anchor before each option. ESM reads the <code>protein</code> stream, a <a href="https://sgaseretto.github.io/sysonelib/template.html#tokenstream"><code>TokenStream</code></a> on ESM’s tokenizer. ESM-1b has 1,026 positions and is trained on 1,024-token crops, so <code>protein_len</code> is at most 1,024 tokens, the two special tokens included. A longer protein is cropped at the <code>ends</code>: the stream keeps its start and its end and drops the middle. That’s where most of what a localization question turns on sits: N-terminal signal peptides and transit peptides, and C-terminal signals such as the peroxisomal SKL and the ER’s KDEL.</p>
+<p><a href="https://sgaseretto.github.io/sysonelib/protein.html#protst_spec"><code>protst_spec</code></a> builds the spec from a Hub id, a folder, or a <a href="https://sgaseretto.github.io/sysonelib/protein.html#protst"><code>ProtST</code></a> already loaded. The spec is cheap, since it reads only the config and the two tokenizers, and its loader builds the encoder when a learner asks for it. A spec made from a loaded <a href="https://sgaseretto.github.io/sysonelib/protein.html#protst"><code>ProtST</code></a> hands out that model’s own towers without loading them again, so a notebook can run zero-shot and train a head over one copy of the weights. Training the towers (LoRA, <code>full</code>) then changes that copy too, so for those regimes load a fresh one.</p>
+<p><code>sysone.protein</code> registers ProtST as an encoder source, so <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec.from_pretrained"><code>EncoderSpec.from_pretrained</code></a> recognises a ProtST checkpoint by its config, and an export that names the source loads it back. The family’s LoRA targets are the text tower’s attention projections, and the protein tower stays frozen. PubMedBERT is the small tower, and it’s the one reading the question.</p>
+<div id="ed1bb423" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.530632+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.533651+00:00&quot;,&quot;total&quot;:0.0030223969999951805}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L182" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="protst_spec" class="level3">
+<h3 class="anchored" data-anchor-id="protst_spec">protst_spec</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protst_spec(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    protst:__main__.ProtST <span class="op">|</span> <span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, protein_len:<span class="bu">int</span><span class="op">=</span><span class="dv">1024</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    crop:<span class="bu">str</span><span class="op">=</span><span class="st">'ends'</span>, protein_tokenizer:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, text_tokenizer:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.models.EncoderSpec:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The spec of ProtST: its text tokenizer for the row, a <code>protein</code> stream on its protein tokenizer, and the stream encoder, loaded when asked for</em></p>
+</section>
+</div>
+<div id="80af46a9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.533728+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.535976+00:00&quot;,&quot;total&quot;:0.0022511450000024524}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/protein.py#L178" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stream_encoder" class="level3">
+<h3 class="anchored" data-anchor-id="stream_encoder">stream_encoder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stream_encoder(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    protst:__main__.ProtST</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.models.StreamEncoder:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>ProtST as a stream encoder: BERT reads the row, and ESM reads the <code>protein</code> stream, pooled and projected as for zero-shot</em></p>
+</section>
+</div>
+<div id="bbf34f98" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> protst_spec(p)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>test_eq((spec.family, spec.width, spec.context, spec.source, <span class="bu">list</span>(spec.streams)), (<span class="st">"protst"</span>, <span class="dv">32</span>, <span class="dv">512</span>, <span class="st">"protst"</span>, [<span class="st">"protein"</span>]))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>test_eq(EncoderSpec.from_pretrained(FIX).source, <span class="st">"protst"</span>)             <span class="co"># recognised by its config</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: protst_spec(p, protein_len<span class="op">=</span><span class="dv">2</span>), contains<span class="op">=</span><span class="st">"no room"</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>spec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A record keeps the protein in its state. <code>Stream("sequence", "protein")</code> moves it out of the text and into the stream, and the protein application adds that transform when the data has none. Each row of a record carries the same protein ids, so several questions about one protein share one input:</p>
+<div id="63c5b6f9" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> {<span class="st">"id"</span>: <span class="st">"p0"</span>, <span class="st">"state"</span>: {<span class="st">"sequence"</span>: seqs[<span class="dv">1</span>]}, <span class="st">"questions"</span>: QS, <span class="st">"gold"</span>: {<span class="st">"location"</span>: <span class="st">"Nucleus"</span>, <span class="st">"membrane"</span>: <span class="va">False</span>}}</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> spec.builder(tfms<span class="op">=</span>[Stream(<span class="st">"sequence"</span>, <span class="st">"protein"</span>)]).build_record(rec)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(rows[<span class="dv">0</span>], spec.tokenizer, max_chars<span class="op">=</span><span class="dv">400</span>))</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>test_eq([<span class="bu">len</span>(r.extras[<span class="st">"protein_input_ids"</span>]) <span class="cf">for</span> r <span class="kw">in</span> rows], [<span class="bu">len</span>(seqs[<span class="dv">1</span>]) <span class="op">+</span> <span class="dv">2</span>] <span class="op">*</span> <span class="dv">2</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>test_eq(rows[<span class="dv">0</span>].extras[<span class="st">"protein_input_ids"</span>][:<span class="dv">3</span>], [<span class="dv">0</span>] <span class="op">+</span> p.protein_tokenizer(<span class="st">"MS"</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="one-forward-pass" class="level2">
+<h2 class="anchored" data-anchor-id="one-forward-pass">4. One forward pass</h2>
+<p>The stream encoder gives the text’s hidden states and the protein’s pooled vector, which the head reads as its query (<code>query="stream:protein"</code>). The protein vector is ProtST’s own protein embedding before it’s normalised. So the head starts from the representation zero-shot uses, and a cosine of 1 against the zero-shot embedder confirms that:</p>
+<div id="a020b19f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> collate(rows, spec.tokenizer.pad_token_id)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>se <span class="op">=</span> spec.load_encoder()</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> EncoderDecisionModel(se, DecisionHead(spec.width, layers<span class="op">=</span><span class="dv">0</span>, scorer<span class="op">=</span><span class="st">"pair"</span>, query<span class="op">=</span><span class="st">"stream:protein"</span>, query_width<span class="op">=</span><span class="dv">16</span>), spec).<span class="bu">eval</span>()</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>enc_in <span class="op">=</span> {k: b[k] <span class="cf">for</span> k <span class="kw">in</span> (<span class="st">"input_ids"</span>, <span class="st">"attention_mask"</span>, <span class="st">"protein_input_ids"</span>, <span class="st">"protein_attention_mask"</span>)}</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> se(<span class="op">**</span>enc_in)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> b.items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>test_eq((out.last_hidden_state.shape[<span class="dv">0</span>], out.stream_vectors[<span class="st">"protein"</span>].shape, logits.shape), (<span class="dv">2</span>, (<span class="dv">2</span>, <span class="dv">16</span>), (<span class="dv">2</span>, <span class="dv">4</span>)))</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>test_close(F.cosine_similarity(out.stream_vectors[<span class="st">"protein"</span>][:<span class="dv">1</span>], torch.tensor(ProteinEmbedder(p)([seqs[<span class="dv">1</span>]]))).item(), <span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>test_eq(se.text <span class="kw">is</span> p.bert <span class="kw">and</span> se.sides[<span class="st">"protein"</span>].model <span class="kw">is</span> p.esm, <span class="va">True</span>)          <span class="co"># the loaded ProtST's own towers</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>logits</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="a-head-only-run" class="level2">
+<h2 class="anchored" data-anchor-id="a-head-only-run">5. A head-only run</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a> is the protein application. The encoder is a Hub id, a folder, a loaded <a href="https://sgaseretto.github.io/sysonelib/protein.html#protst"><code>ProtST</code></a> or its spec. By default it adds the <code>protein</code> stream, freezes both towers, caches each row’s anchors and protein vector, and trains a pair head on the standardised vectors. The cache is float32. Two questions about one protein go through ESM once. The cache first encodes the distinct proteins in order of length, under <a href="https://sgaseretto.github.io/sysonelib/models.html#stream_memo"><code>stream_memo</code></a>, so the rows’ own batches find every protein already encoded.</p>
+<div id="503a1833" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.538345+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.541354+00:00&quot;,&quot;total&quot;:0.003011064999981272}}" data-execution_count="21">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/gliner.py#L212" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decision_learner" class="level3">
+<h3 class="anchored" data-anchor-id="decision_learner">decision_learner</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decision_learner(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    data:sysone.data.TypedDecisions, encoder:<span class="bu">str</span><span class="op">=</span><span class="st">'MilaDeepGraph/ProtST-ESM1b'</span>, train:<span class="bu">str</span><span class="op">=</span><span class="st">'head'</span>, cache:<span class="bu">str</span><span class="op">=</span><span class="st">'auto'</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    head:<span class="bu">str</span><span class="op">=</span><span class="st">'pair'</span>, query:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="st">'stream:protein'</span>, sequence_key:<span class="bu">str</span><span class="op">=</span><span class="st">'sequence'</span>, protein_len:<span class="bu">int</span><span class="op">=</span><span class="dv">1024</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    crop:<span class="bu">str</span><span class="op">=</span><span class="st">'ends'</span>, standardize:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, cache_dtype:<span class="bu">str</span><span class="op">=</span><span class="st">'float32'</span>, <span class="op">**</span>kw</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.learner.Learner:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A protein <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a>: ProtST with the protein as a side stream, a head that scores each option against the protein, cached features for frozen towers</em></p>
+</section>
+</div>
+<p>On the fixture, 40 proteins with a location (a choice of four) and a membrane noul. Each location draws half its residues from a pool of five amino acids, so even a random ESM’s mean carries the location:</p>
+<div id="cf466aa6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>AA, rng <span class="op">=</span> <span class="st">"ACDEFGHIKLMNPQRSTVWY"</span>, np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fixture_protein(i):</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> i <span class="op">%</span> <span class="dv">4</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    seq <span class="op">=</span> <span class="st">"M"</span> <span class="op">+</span> <span class="st">""</span>.join(rng.choice(<span class="bu">list</span>(AA[<span class="dv">5</span> <span class="op">*</span> c:<span class="dv">5</span> <span class="op">*</span> c <span class="op">+</span> <span class="dv">5</span>] <span class="cf">if</span> rng.random() <span class="op">&lt;</span> <span class="fl">0.5</span> <span class="cf">else</span> AA)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(rng.integers(<span class="dv">30</span>, <span class="dv">90</span>)))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"id"</span>: <span class="ss">f"p</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, <span class="st">"state"</span>: {<span class="st">"sequence"</span>: seq}, <span class="st">"questions"</span>: QS, <span class="st">"gold"</span>: {<span class="st">"location"</span>: <span class="bu">list</span>(LOCS)[c], <span class="st">"membrane"</span>: c <span class="op">==</span> <span class="dv">2</span>}}</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>precs <span class="op">=</span> [fixture_protein(i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>)]</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>pdata <span class="op">=</span> TypedDecisions.from_records(precs, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>cdir <span class="op">=</span> tempfile.mkdtemp()</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(pdata, p, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>cdir, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>calls <span class="op">=</span> []</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>hook <span class="op">=</span> p.esm.register_forward_pre_hook(<span class="kw">lambda</span> m, a, kw: calls.append(<span class="bu">tuple</span>(kw[<span class="st">"input_ids"</span>].shape)), with_kwargs<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>ctrain <span class="op">=</span> learn.dataset(<span class="st">"train"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>hook.remove()</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(ctrain), <span class="bu">sum</span>(n <span class="cf">for</span> n, _ <span class="kw">in</span> calls)), (<span class="dv">2</span> <span class="op">*</span> <span class="bu">len</span>(pdata.cases[<span class="st">"train"</span>]), <span class="bu">len</span>(pdata.cases[<span class="st">"train"</span>])))   <span class="co"># 2 rows per protein, 1 ESM pass</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>test_eq([L <span class="cf">for</span> _, L <span class="kw">in</span> calls], <span class="bu">sorted</span>(L <span class="cf">for</span> _, L <span class="kw">in</span> calls))                                                  <span class="co"># the proteins in order of length</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>test_eq((ctrain[<span class="dv">0</span>][<span class="st">"query"</span>].shape, ctrain[<span class="dv">0</span>][<span class="st">"anchors"</span>].shape[<span class="dv">1</span>]), ((<span class="dv">16</span>,), <span class="dv">32</span>))</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>learn</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="e7794336" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>learn.fit(<span class="dv">8</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>learn.calibrate(min_rows<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> learn.validate()</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>test_eq(m[<span class="st">"accuracy"</span>] <span class="op">&gt;</span> <span class="fl">0.5</span>, <span class="va">True</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">round</span>(m[k], <span class="dv">3</span>) <span class="cf">for</span> k <span class="kw">in</span> (<span class="st">"accuracy"</span>, <span class="st">"brier"</span>, <span class="st">"n"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The learner answers like any sysone model, and its export loads back as a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a>. A folder checkpoint, like the fixture, is bundled into the export. A Hub checkpoint whose towers didn’t train is referenced by id and source, and the loader rebuilds it through the registered <code>protst</code> source. <code>bundle=False</code> takes that path here:</p>
+<div id="c5ff7185" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> precs[<span class="dv">1</span>]</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> learn.predict(r[<span class="st">"state"</span>], r[<span class="st">"questions"</span>])</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bundle <span class="kw">in</span> (<span class="va">True</span>, <span class="va">False</span>):</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> learn.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"protein-jev"</span>, bundle<span class="op">=</span>bundle)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    jev <span class="op">=</span> Decider.load(out, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    test_eq(jev.predict(r[<span class="st">"state"</span>], r[<span class="st">"questions"</span>]), before)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    test_eq(json.loads((out <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"weights"</span>], <span class="st">"encoder"</span> <span class="cf">if</span> bundle <span class="cf">else</span> <span class="st">"hub"</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(q.name <span class="cf">for</span> q <span class="kw">in</span> (out <span class="op">/</span> <span class="st">"streams"</span>).iterdir()), [<span class="st">"protein"</span>])</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>before</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>An act head needs examples of questions it should not answer. Here a third of the proteins also get a <code>shortlist</code> question whose options leave out their true location, with the gold <code>{"answerable": False}</code>. The rest get a shortlist that includes it. <code>act=True</code> adds the head, the learner trains it beside the option loss, and <code>calibrate</code> sets the threshold at which it acts:</p>
+<div id="cb6104e0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> with_shortlist(r, i):</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    gold, others <span class="op">=</span> r[<span class="st">"gold"</span>][<span class="st">"location"</span>], [k <span class="cf">for</span> k <span class="kw">in</span> LOCS <span class="cf">if</span> k <span class="op">!=</span> r[<span class="st">"gold"</span>][<span class="st">"location"</span>]]</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    keep <span class="op">=</span> others[:<span class="dv">3</span>] <span class="cf">if</span> i <span class="op">%</span> <span class="dv">3</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> [gold] <span class="op">+</span> others[:<span class="dv">2</span>]</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which of these compartments holds the protein?"</span>, <span class="st">"criteria"</span>: {k: LOCS[k] <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">sorted</span>(keep)}}</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> r <span class="op">|</span> {<span class="st">"questions"</span>: r[<span class="st">"questions"</span>] <span class="op">|</span> {<span class="st">"shortlist"</span>: q},</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>                <span class="st">"gold"</span>: r[<span class="st">"gold"</span>] <span class="op">|</span> {<span class="st">"shortlist"</span>: {<span class="st">"answerable"</span>: <span class="va">False</span>} <span class="cf">if</span> i <span class="op">%</span> <span class="dv">3</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> gold}}</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>arecs <span class="op">=</span> [with_shortlist(r, i) <span class="cf">for</span> i, r <span class="kw">in</span> <span class="bu">enumerate</span>(precs)]</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>adata <span class="op">=</span> TypedDecisions.from_records(arecs, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>la <span class="op">=</span> decision_learner(adata, p, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, act<span class="op">=</span><span class="va">True</span>, cache_dir<span class="op">=</span>cdir, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>la.fit(<span class="dv">8</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>la.calibrate(min_rows<span class="op">=</span><span class="dv">4</span>, act_accuracy<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> la.predict(arecs[<span class="dv">0</span>][<span class="st">"state"</span>], arecs[<span class="dv">0</span>][<span class="st">"questions"</span>])</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">sorted</span>(a[<span class="st">"shortlist"</span>][<span class="st">"action"</span>]), la.model.head.act), ([<span class="st">"act"</span>, <span class="st">"act_probability"</span>], <span class="va">True</span>))</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"first"</span> <span class="kw">in</span> la.dataset(<span class="st">"train"</span>).column_names, <span class="va">True</span>)</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>a[<span class="st">"shortlist"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: peft needs a base-model prefix on a stream encoder">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: peft needs a base-model prefix on a stream encoder
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>peft treats any model with a <code>config.model_type</code> as a transformers model. On transformers 5 it then walks the model’s sub-models to adapt its targets to renamed modules, and reads the top model’s <code>base_model_prefix</code> for each nested one. <a href="https://sgaseretto.github.io/sysonelib/models.html#streamencoder"><code>StreamEncoder</code></a> borrows its text tower’s config, so peft took it for a transformers model and failed on the missing attribute. It now declares an empty prefix, since its towers sit at its top level.</p>
+</div>
+</div>
+<p>The LoRA regime puts adapters on the text tower alone, following the family’s targets. A fresh <a href="https://sgaseretto.github.io/sysonelib/protein.html#protst"><code>ProtST</code></a> is loaded for it, since adapters change the towers they wrap:</p>
+<div id="96fb6214" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>ll <span class="op">=</span> decision_learner(pdata, load_protst(FIX), train<span class="op">=</span><span class="st">"lora"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>trainable <span class="op">=</span> [n <span class="cf">for</span> n, q <span class="kw">in</span> ll.model.encoder.named_parameters() <span class="cf">if</span> q.requires_grad]</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>test_eq((ll.cache, <span class="bu">len</span>(trainable) <span class="op">&gt;</span> <span class="dv">0</span>, <span class="bu">all</span>(<span class="st">".text."</span> <span class="kw">in</span> n <span class="kw">and</span> <span class="st">"lora_"</span> <span class="kw">in</span> n <span class="cf">for</span> n <span class="kw">in</span> trainable)), (<span class="va">None</span>, <span class="va">True</span>, <span class="va">True</span>))</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>ll.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>test_eq(ll.model.encoder_trained, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="on-the-real-checkpoint" class="level2">
+<h2 class="anchored" data-anchor-id="on-the-real-checkpoint">6. On the real checkpoint</h2>
+<p>The <a href="./tutorials/protein_decisions.html">protein tutorial</a> runs the application on ProtST-ESM1b with every output shown, in 13 minutes on an M3 Pro. It trains on 1,200 proteins from DeepLoc’s localization set and asks each of 600 test proteins three questions:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Zero-shot ProtST</th>
+<th>Head on the frozen towers</th>
+<th>Baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Location, a choice of 10</td>
+<td>0.418 (ProtST’s label texts as options; 0.270 to 0.345 with other wordings)</td>
+<td>0.828</td>
+<td>0.300, always <em>nucleus</em></td>
+</tr>
+<tr class="even">
+<td>Membrane-bound, a noul</td>
+<td>0.758 (Swiss-Prot-style option texts)</td>
+<td>0.906</td>
+<td>0.578, always <em>soluble</em></td>
+</tr>
+<tr class="odd">
+<td>A shortlist of 4, a third without the right answer</td>
+<td>0.604 on the answerable ones</td>
+<td>0.896</td>
+<td>0.25, a guess</td>
+</tr>
+</tbody>
+</table>
+<p>The head trains in seconds on vectors cached once, and loses to zero-shot only on the three rarest compartments, which have 17 to 27 training examples each. For escalation, at a 90% target accuracy, thresholds on the head’s calibrated top probability act on 70% of the location questions and 31% of the shortlists, against 57% and 3% for the act head’s p(act).</p>
+</section>
+<section id="what-to-watch" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-watch">7. What to watch</h2>
+<ul>
+<li><strong>The port has no tokenizers.</strong> <a href="https://sgaseretto.github.io/sysonelib/protein.html#load_protst"><code>load_protst</code></a> falls back to ESM-1b’s and PubMedBERT’s, the ones ProtST was trained with. A checkpoint trained with others needs them named (<code>protein_tokenizer=</code>, <code>text_tokenizer=</code>).</li>
+<li><strong>Proteins over 1,022 residues are cropped.</strong> ESM-1b has 1,026 positions, and the stream crops at the ends by default. A task that turns on the middle of a long protein would need <code>crop</code> changed, or windows.</li>
+<li><strong>Zero-shot scores are relative.</strong> The cosines between a protein and short texts are small, and ProtST’s scale of 14.2 makes them logits. The option texts matter as much as the model does: the port’s template names (<em>SUBCELLULAR LOCATION: Nucleus.</em>) are the texts ProtST saw in training, and a fluent sentence is not. Calibrate on held-out records before you read the probabilities.</li>
+<li><strong>The towers are shared.</strong> A spec made from a loaded <a href="https://sgaseretto.github.io/sysonelib/protein.html#protst"><code>ProtST</code></a> reuses its modules, and so does every learner made from that spec. The head-only regime leaves them untouched, and LoRA or <code>full</code> training changes them for everyone holding them.</li>
+<li><strong>Acting on the act head.</strong> Laya’s act head learns from the rows the option head trains on, where the option head is right far more often than on new proteins, so its p(act) crowds near 1. In the tutorial, thresholds on the head’s own calibrated confidence acted on more questions at the same target accuracy. <code>learn.calibrate(act_score="confidence")</code> switches the rule, and the export carries it.</li>
+<li><strong>Memory.</strong> The float32 towers take 3.0 GB. ESM’s attention grows with the square of the protein’s length, so for 1,024-token proteins keep batches small (8 fits well in 18 GB of unified memory).</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

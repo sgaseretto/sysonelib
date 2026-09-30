@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Jevify BERT-like encoders with sysone">
+
+<title>sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="sysone">
+<meta property="og:description" content="Jevify BERT-like encoders with sysone">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="sysone">
+<meta name="twitter:description" content="Jevify BERT-like encoders with sysone">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">sysone</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-ten-lines" id="toc-the-ten-lines" class="nav-link active" data-scroll-target="#the-ten-lines">The ten lines</a></li>
+  <li><a href="#what-it-answers" id="toc-what-it-answers" class="nav-link" data-scroll-target="#what-it-answers">What it answers</a></li>
+  <li><a href="#validated-so-far" id="toc-validated-so-far" class="nav-link" data-scroll-target="#validated-so-far">Validated so far</a></li>
+  <li><a href="#install" id="toc-install" class="nav-link" data-scroll-target="#install">Install</a></li>
+  <li><a href="#how-it-is-organised" id="toc-how-it-is-organised" class="nav-link" data-scroll-target="#how-it-is-organised">How it is organised</a></li>
+  <li><a href="#tutorials" id="toc-tutorials" class="nav-link" data-scroll-target="#tutorials">Tutorials</a></li>
+  <li><a href="#reading-the-notebooks" id="toc-reading-the-notebooks" class="nav-link" data-scroll-target="#reading-the-notebooks">Reading the notebooks</a></li>
+  <li><a href="#developer-guide" id="toc-developer-guide" class="nav-link" data-scroll-target="#developer-guide">Developer guide</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">sysone</h1>
+</div>
+
+<div>
+  <div class="description">
+    Jevify BERT-like encoders with sysone
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>sysone turns a pretrained encoder into a Jev-style typed-decision model: give it a state and typed questions (<code>choice</code>, <code>score</code>, <code>noul</code>) and get calibrated probabilities from one forward pass, over any option set named at request time. It packages the recipe <a href="https://huggingface.co/convaiinnovations/laya">Laya</a> proved, an anchor token in front of every option, a small scorer on the anchors, proper-scoring-rule training and temperature calibration, as a fastai-shaped library: a one-line application API for the common case, and every layer below it reachable when the case is not common.</p>
+<p>Every answer is read off the anchor rows and the schema is filled by code, so there is nothing to parse and no output tokens; k options are k anchors, so a trained model is zero-shot over new label sets; and several questions are several rows of one batch.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    S["a state and&lt;br/&gt;typed questions"] --&gt; R["one row per question,&lt;br/&gt;an anchor before every option"]
+    R --&gt; E["the encoder:&lt;br/&gt;one forward pass"]
+    E --&gt; H["a small head scores&lt;br/&gt;each anchor"]
+    H --&gt; T["÷ a fitted temperature,&lt;br/&gt;softmax per row"]
+    T --&gt; A["answers in&lt;br/&gt;the Jev schema"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="the-ten-lines" class="level2">
+<h2 class="anchored" data-anchor-id="the-ten-lines">The ten lines</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.text <span class="im">import</span> TypedDecisions, decision_learner</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone <span class="im">import</span> Decider</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>data  <span class="op">=</span> TypedDecisions.from_hub(<span class="st">"LocalLLaMA/typed-decisions"</span>, valid<span class="op">=</span><span class="st">"test"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, <span class="st">"answerdotai/ModernBERT-large"</span>, train<span class="op">=</span><span class="st">"head"</span>)  <span class="co"># frozen encoder, cached features</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>learn.lr_find()                       <span class="co"># LR range test, suggests a value</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">4</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)       <span class="co"># warmup + cosine, head LR and encoder LR separately</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>learn.calibrate()                     <span class="co"># temperatures per type and option count, on the held-out slice</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>learn.predict(state, questions)       <span class="co"># the Jev answer schema from the model in memory, before any export</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>learn.export(<span class="st">"my-jev"</span>)                <span class="co"># head + sysone.json (template, budgets, temperatures), and Laya's format when it applies</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>jev <span class="op">=</span> Decider.load(<span class="st">"my-jev"</span>)          <span class="co"># the same answers from the exported folder, on CPU, CUDA or MPS</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>jev.predict(state, questions)         <span class="co"># choice / score / noul, probabilities, confidence</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>train="lora"</code>, <code>"mica"</code> or <code>"full"</code> trains the encoder too; <code>decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")</code> fine-tunes Laya’s own checkpoint as its notebook does; <code>sysone.multimodal</code> puts screenshots in the state, with ModernVBERT by default or with NeoMME (<code>decision_learner(data, "Hcompany/NeoMME-260M")</code>); <code>sysone.protein</code> asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; <code>sysone.zeroshot</code> answers without training, from a two-tower model’s similarity or a masked language model’s own prediction; a GLiNER2 checkpoint is a text encoder like any other (<code>head="gliner2"</code> starts from its classifier), while <code>sysone.gliner</code> drives whole GLiNER2 models through their own package.</p>
+</section>
+<section id="what-it-answers" class="level2">
+<h2 class="anchored" data-anchor-id="what-it-answers">What it answers</h2>
+<p>Three typed questions about one state, and the answers in the Jev schema. The model here is the fixture the notebooks test against, a random four-layer ModernBERT whose head trained for a few seconds, so its probabilities are close to uniform: what matters is the shape of the answers, one per question from one forward pass.</p>
+<div id="2d35b72a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json, logging, tempfile</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>logging.getLogger(<span class="st">"transformers"</span>).setLevel(logging.ERROR)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.text <span class="im">import</span> TypedDecisions, decision_learner</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_json(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, valid<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, <span class="st">"fixtures/tiny-modernbert"</span>, train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp())</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> {<span class="st">"from"</span>: <span class="st">"user@acme.com"</span>, <span class="st">"body"</span>: <span class="st">"I was charged twice for invoice 4411 and I am cancelling if this is not fixed today."</span>}</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>questions <span class="op">=</span> {<span class="st">"department"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which department should handle this?"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"criteria"</span>: {<span class="st">"billing"</span>: <span class="st">"invoices, refunds"</span>, <span class="st">"technical"</span>: <span class="st">"bugs, outages"</span>}},</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>             <span class="st">"urgency"</span>:    {<span class="st">"type"</span>: <span class="st">"score"</span>, <span class="st">"instructions"</span>: <span class="st">"How urgent is it?"</span>, <span class="st">"criteria"</span>: [<span class="st">"not urgent"</span>, <span class="st">"soon"</span>, <span class="st">"critical"</span>]},</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>             <span class="st">"churn_risk"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Does the user threaten to leave?"</span>}}</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>learn.predict(state, questions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.4', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.07593', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.4286', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.625', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0052', 'eval_samples_per_second': '4786', 'eval_steps_per_second': '382.9', 'epoch': '1'}
+{'loss': '0.7765', 'grad_norm': '0.005896', 'learning_rate': '0.002927', 'epoch': '1.111'}
+{'eval_loss': '1.191', 'eval_accuracy': '0.48', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.2599', 'eval_kl': '0.4433', 'eval_tv': '0.366', 'eval_ece': '0.1559', 'eval_score_mae': '0.8379', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.4286', 'eval_accuracy_score': '0.3', 'eval_accuracy_noul': '0.75', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0045', 'eval_samples_per_second': '5577', 'eval_steps_per_second': '446.2', 'epoch': '2'}
+{'loss': '1.045', 'grad_norm': '0.01068', 'learning_rate': '0.001036', 'epoch': '2.222'}
+{'eval_loss': '1.191', 'eval_accuracy': '0.48', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.2599', 'eval_kl': '0.4433', 'eval_tv': '0.366', 'eval_ece': '0.1559', 'eval_score_mae': '0.8379', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.4286', 'eval_accuracy_score': '0.3', 'eval_accuracy_noul': '0.75', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0044', 'eval_samples_per_second': '5678', 'eval_steps_per_second': '454.2', 'epoch': '3'}
+{'train_runtime': '0.0818', 'train_samples_per_second': '2385', 'train_steps_per_second': '330.2', 'train_loss': '0.9289', 'epoch': '3'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'department': {'type': 'choice',
+  'choice': 'technical',
+  'probabilities': {'billing': 0.4999, 'technical': 0.5001},
+  'confidence': 0.0,
+  'answer_confidence': 0.5001},
+ 'urgency': {'type': 'score',
+  'score': 1.0002,
+  'legend': {'0': 'not urgent', '1': 'soon', '2': 'critical'},
+  'probabilities': {'0': 0.3333, '1': 0.3333, '2': 0.3334},
+  'confidence': 0.0,
+  'answer_confidence': 0.3334},
+ 'churn_risk': {'type': 'noul',
+  'noul': 0.5,
+  'confidence': 0.5,
+  'answer_confidence': 0.5}}</code></pre>
+</div>
+</div>
+</section>
+<section id="validated-so-far" class="level2">
+<h2 class="anchored" data-anchor-id="validated-so-far">Validated so far</h2>
+<p>Measured between 2026-09-26 and 30 on an M3 Pro (MPS, fp32), with the code in this repository:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>What</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Laya’s published typed-decisions checkpoint, loaded with <code>Decider.load("convaiinnovations/laya/typed-decisions")</code>, on the 2,000 test decisions</td>
+<td><strong>0.766 accuracy</strong>, Laya’s reported number; the same answer as <code>laya.Agent</code> on 200 of 200 compared decisions</td>
+</tr>
+<tr class="even">
+<td>Laya’s multilingual checkpoint, <code>Decider.load("convaiinnovations/laya/multilingual")</code> (mmBERT’s tokenizer, <code>&lt;mask&gt;</code> anchors, 1024-token rows)</td>
+<td>the same probabilities as <code>laya.Agent</code> on 153 of 153 decisions, 30 test cases and a Spanish one</td>
+</tr>
+<tr class="odd">
+<td>Head-only ModernBERT-large, frozen, anchors cached (the ten lines above)</td>
+<td>0.504 accuracy, below the dataset card’s majority baseline (0.520): a frozen encoder never tuned for decisions carries little of the task. 12 minutes end to end, of which 58 s is training</td>
+</tr>
+<tr class="even">
+<td>Laya’s general checkpoint, <code>convaiinnovations/laya</code>, zero-shot on the same test split</td>
+<td>0.362 accuracy: it was not trained on these four workflows</td>
+</tr>
+<tr class="odd">
+<td>Laya’s general encoder, frozen, under a new head (<code>decision_learner(data, "convaiinnovations/laya", train="head")</code>)</td>
+<td>0.560 accuracy, against ModernBERT-large’s 0.504 under the same recipe: an encoder already trained on decisions gives a new head more to work with</td>
+</tr>
+<tr class="even">
+<td>GLiNER2.5-Decide’s encoder, frozen, under a new head (<code>decision_learner(data, "fastino/GLiNER2.5-Decide")</code>)</td>
+<td>0.645 accuracy under the same recipe, the best frozen encoder measured so far; its own classifier, copied into the head with no training, scores 0.476 (the <a href="./text.html#regimes-on-the-laptop">text notebook’s table</a>)</td>
+</tr>
+<tr class="odd">
+<td>Rows built by <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a> on Laya’s template</td>
+<td>token-for-token identical to Laya’s <code>build_sequence</code> on every fixture row, on ModernBERT-large’s tokenizer too</td>
+</tr>
+<tr class="even">
+<td>A sysone export in Laya’s format</td>
+<td>loads in <code>laya.Agent</code>, which returns the same answers; its logits match Laya’s <code>DecisionModel</code></td>
+</tr>
+<tr class="odd">
+<td>RLCD</td>
+<td>equal to the loss in Laya’s fine-tuning notebook, pasted, under the same seed</td>
+</tr>
+<tr class="even">
+<td>NeoMME image rows</td>
+<td>the image part, ids and two-axis positions, identical to NeoMME’s processor</td>
+</tr>
+<tr class="odd">
+<td>NeoMME-260M on real images, frozen, a head on its anchors</td>
+<td>a 10-way digit choice from 100 MNIST images: 0.41 (chance 0.10), and 0.57 with the digits at 112 px; a hot-dog noul from 80 photos: 0.74 (chance 0.50); with LoRA, 0.33 and 0.72. Both took standardising NeoMME’s vectors, and LoRA the plain scorer (the <a href="./tutorials/neomme_images.html">images tutorial</a>, with every output; the multimodal notebook, section 7)</td>
+</tr>
+<tr class="even">
+<td>ModernVBERT on the same images and recipes, frozen, a head on its anchors</td>
+<td>the digit choice: 0.84, where NeoMME scored 0.31; the hot-dog noul: 0.94, where NeoMME scored 0.74; with LoRA on the text tower, 0.84 and 0.96. A probe on its image vectors reads 0.92 and 0.98 (the <a href="./tutorials/modernvbert_images.html">ModernVBERT tutorial</a>; the two encoders side by side in the <a href="./tutorials/neomme_vs_modernvbert.html">comparison</a>)</td>
+</tr>
+<tr class="odd">
+<td>ProtST-ESM1b loaded from its tensors alone (<code>sysone.protein</code>, no remote code), zero-shot on 600 DeepLoc test proteins</td>
+<td>a 10-way location choice: 0.418 with ProtST’s label texts as options, against 0.300 for the majority class, and 0.270 to 0.345 with other wordings; a membrane noul: 0.758, against 0.578</td>
+</tr>
+<tr class="even">
+<td>The protein application: a pair head on ProtST’s frozen towers, trained from vectors cached once for 1,200 proteins</td>
+<td>0.828 on the location choice, 0.906 on the membrane noul, 0.896 on four-way shortlists. At a 90% target, thresholds on the head’s calibrated confidence act on 70% of the location questions, and the act head’s on 57% (the <a href="./tutorials/protein_decisions.html">protein tutorial</a>, 13 minutes on the laptop)</td>
+</tr>
+<tr class="odd">
+<td>GLiNER2.5-Decide zero-shot on Fastino’s own benchmark (its published development split: 17 domains, 1,700 rows)</td>
+<td>0.629 over every head as the dataset card scores it (the card reports 0.602 on its hidden test split), 0.685 over the 26 single-label heads. sysone’s GLiNER2 backend scores 0.693, and the encoder under the sysone head with the classifier copied in 0.684, giving the card’s label on 95% of the decisions</td>
+</tr>
+<tr class="even">
+<td>Heads trained on half of each domain, scored on the other half</td>
+<td>the copied classifier, trained: 0.684; a new head on the Decide encoder: 0.690; a new head on ModernBERT-large: 0.420 (the <a href="./tutorials/gliner_decide.html">GLiNER2.5-Decide tutorial</a>, 19 minutes on the laptop)</td>
+</tr>
+<tr class="odd">
+<td>Web pages as text: Mind2Web’s steps in JevForge’s records, a 12-way element choice on 8 held-out websites, frozen encoders under a new head</td>
+<td>NeoMME-260M 0.406, GLiNER2.5-Decide 0.393, ModernVBERT 0.384, ModernBERT-large 0.374, against 0.083 for guessing; GLiNER2’s classifier, zero-shot, 0.244 (the <a href="./tutorials/web_text.html">text tutorial</a>, an hour on the laptop)</td>
+</tr>
+<tr class="even">
+<td>Web pages as screenshots: a pilot on 467 Multimodal-Mind2Web steps, 191 of them on 9 held-out websites</td>
+<td>on the operation question, ModernVBERT with the screenshot 0.885 and NeoMME with it 0.812, against 0.801 for always CLICK; NeoMME without the screenshot 0.880. No head learned the 45-way element question from 276 steps: 0.14 to 0.21, against 0.12 for guessing (the <a href="./tutorials/web_screens.html">screens tutorial</a>, 32 minutes)</td>
+</tr>
+</tbody>
+</table>
+<p>Not yet run: the full fine-tune on Kaggle’s T4 pair that reproduces Laya’s notebook from its released checkpoint (written in the text notebook, launched with <code>sysone run</code>, which needs credentials), a full run of the screenshot comparison (the pilot’s 276 training steps were too few to learn the element question), and the zero-shot suites.</p>
+</section>
+<section id="install" class="level2">
+<h2 class="anchored" data-anchor-id="install">Install</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install git+https://github.com/sgaseretto/sysonelib</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Extras: <code>sysone[multimodal]</code> (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), <code>sysone[gliner]</code> (the <code>gliner2</code> package), <code>sysone[browser]</code> (the Mind2Web converters), <code>sysone[shortlist]</code> (sentence-transformers), <code>sysone[serve]</code> (FastAPI), <code>sysone[laya]</code> (Laya’s runtime, for its export-compatibility check), <code>sysone[cloud]</code> (the Kaggle and Colab CLIs), <code>sysone[plots]</code>.</p>
+</section>
+<section id="how-it-is-organised" class="level2">
+<h2 class="anchored" data-anchor-id="how-it-is-organised">How it is organised</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Modules</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Applications</td>
+<td><code>sysone.text</code>, <code>sysone.multimodal</code>, <code>sysone.protein</code></td>
+<td><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a> per kind of input, with the encoder’s own defaults: text (ModernBERT-large by default; mmBERT, Laya’s checkpoint, GLiNER2 checkpoints), images and text (ModernVBERT by default; NeoMME-260M), proteins (ProtST)</td>
+</tr>
+<tr class="even">
+<td>Encoder adapters</td>
+<td><code>sysone.multimodal</code> (NeoMME), <code>sysone.modernvbert</code>, <code>sysone.models</code> (GLiNER2’s encoder)</td>
+<td>the methods an encoder adds to sysone’s generic functions (<a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#default_image_side"><code>default_image_side</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a>, <a href="https://sgaseretto.github.io/sysonelib/models.html#encoder_inputs"><code>encoder_inputs</code></a>, <a href="https://sgaseretto.github.io/sysonelib/models.html#warm_start"><code>warm_start</code></a>), dispatched on its classes with plum</td>
+</tr>
+<tr class="odd">
+<td>Backends</td>
+<td><code>sysone.zeroshot</code>, <code>sysone.gliner</code></td>
+<td>answers in the same schema without sysone’s learner: zero-shot deciders (<a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#similaritydecider"><code>SimilarityDecider</code></a>, <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#verbalizerdecider"><code>VerbalizerDecider</code></a>), and GLiNER2 through its own package</td>
+</tr>
+<tr class="even">
+<td>High-level</td>
+<td><code>sysone.data</code>, <code>sysone.learner</code>, <code>sysone.inference</code>, <code>sysone.evaluate</code></td>
+<td><a href="https://sgaseretto.github.io/sysonelib/data.html#typeddecisions"><code>TypedDecisions</code></a>, <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a> (<code>lr_find</code>, <code>fit</code>, <code>fit_one_cycle</code>, <code>freeze</code>, <code>calibrate</code>, <code>export</code>), <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a>, evaluation</td>
+</tr>
+<tr class="odd">
+<td>Mid-level</td>
+<td><code>sysone.template</code>, <code>sysone.models</code>, <code>sysone.losses</code>, <code>sysone.cache</code>, <code>sysone.datasets</code></td>
+<td><a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate"><code>RowTemplate</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a>, transforms and side streams, <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec"><code>EncoderSpec</code></a>, <a href="https://sgaseretto.github.io/sysonelib/models.html#decisionhead"><code>DecisionHead</code></a> (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, metrics and coverage, <a href="https://sgaseretto.github.io/sysonelib/cache.html#featurecache"><code>FeatureCache</code></a>, converters</td>
+</tr>
+<tr class="even">
+<td>Low-level</td>
+<td><code>sysone.core</code></td>
+<td><a href="https://sgaseretto.github.io/sysonelib/core.html#question"><code>Question</code></a> and its kinds (<a href="https://sgaseretto.github.io/sysonelib/core.html#choice"><code>Choice</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#score"><code>Score</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#noul"><code>Noul</code></a>), <a href="https://sgaseretto.github.io/sysonelib/core.html#answer"><code>Answer</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#row"><code>Row</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#batch"><code>Batch</code></a>, the answer schema’s generic functions, sysone’s dispatcher and <a href="https://sgaseretto.github.io/sysonelib/core.html#load_adapter"><code>load_adapter</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>Around them: <code>sysone.cloud</code> (Kaggle and Colab jobs) and <code>sysone.cli</code> (<code>sysone train | eval | predict | serve | run | jobs | publish</code>).</p>
+<p>Where behaviour depends on the kind of question or on the encoder, sysone uses generic functions: one name, a method per type, and the call picks the method that fits (multiple dispatch, with plum). The <a href="./core.html#generic-functions-and-multiple-dispatch">core</a> notebook explains them from the ground up, with examples, and lists every one sysone has.</p>
+</section>
+<section id="tutorials" class="level2">
+<h2 class="anchored" data-anchor-id="tutorials">Tutorials</h2>
+<ul>
+<li><a href="./tutorials/neomme_images.html">NeoMME on images</a> trains the multimodal application on 100 MNIST digits (a 10-way choice) and 80 food photos (a hot-dog noul). Its outputs show every step: the rows the encoder reads and the image patches in them, the training curves, the answers image by image, and the confusions. It compares the default head, the linear head and LoRA, and measures what the image size changes.</li>
+<li><a href="./tutorials/modernvbert_images.html">ModernVBERT on images</a> runs the same two tasks on ModernVBERT, with the same records and recipes. Its outputs show the rows with the image as one 512-pixel tile of 64 image tokens, the three ways to train, the geometry of its vectors, and what more tiles change.</li>
+<li><a href="./tutorials/neomme_vs_modernvbert.html">NeoMME and ModernVBERT, side by side</a> trains both encoders on identical inputs, and compares their accuracy, calibration and cost, and where each one is wrong.</li>
+<li><a href="./tutorials/protein_decisions.html">ProtST as a decision model</a> asks three typed questions about each of 600 held-out proteins: a 10-way location choice, a membrane noul, and a four-way shortlist that lacks the right answer a third of the time. It answers them zero-shot with ProtST, comparing four ways to write the options. Then it trains a head on the frozen towers from 1,200 proteins and compares the two, compartment by compartment. It ends with when to act and when to escalate: Laya’s act head against thresholds on the head’s own confidence.</li>
+<li><a href="./tutorials/gliner_decide.html">GLiNER2.5-Decide under the sysone head</a> runs Fastino’s decision model on its own benchmark three ways: as the dataset card scores it, through sysone’s GLiNER2 backend, and with its encoder under the sysone head and its classifier copied in. It measures how closely they agree before any training, then trains heads on half of each domain and scores them on the other half, beside a new head on ModernBERT-large. On the way, it shows why a learning rate suggested by <code>lr_find</code> needs a look at its curve.</li>
+<li><a href="./tutorials/web_text.html">Web pages as text</a> takes Mind2Web’s browser steps in JevForge’s ready-made records, a choice among 12 page elements on websites the heads never saw. It compares four frozen encoders under the same head: ModernBERT-large, GLiNER2.5-Decide’s encoder, and the multimodal application’s NeoMME and ModernVBERT reading text alone.</li>
+<li><a href="./tutorials/web_screens.html">Web pages as screenshots</a> is a pilot on Multimodal-Mind2Web, 467 browser steps with their screenshots, streamed as 0.5 GB of a 13.6 GB set. It asks whether NeoMME or ModernVBERT reads the pages better and whether the screenshot helps at all. It explains how the rows were chosen, the crop and the row budgets, and what a full run would need.</li>
+</ul>
+</section>
+<section id="reading-the-notebooks" class="level2">
+<h2 class="anchored" data-anchor-id="reading-the-notebooks">Reading the notebooks</h2>
+<p>Read in order, the notebooks build the library up from its core, and each one explains its part with flow charts and with tensor diagrams drawn from the library’s own tensors (the <a href="./figures.html">figures</a> notebook draws them). Where the first implementation was wrong, or a reference implementation misbehaves, a <em>Finding</em> note says what happened, next to the evidence and the fix:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Finding</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Laya’s temperature fitter returns NaN on an underconfident model: LBFGS without a line search takes a secant step of −1,812 in log T at an inflection point</td>
+<td><a href="./losses.html#fitting-one">losses</a></td>
+</tr>
+<tr class="even">
+<td>RLCD’s noise pulls its optimum towards distributions sharper than the gold, in proportion to σ², which is why σ is annealed</td>
+<td><a href="./losses.html#what-the-pieces-do">losses</a></td>
+</tr>
+<tr class="odd">
+<td>A split by rows puts every held-out row’s state in training; sysone splits by case</td>
+<td><a href="./data.html#splits-by-case">data</a></td>
+</tr>
+<tr class="even">
+<td>Laya’s multilingual checkpoint anchors on <code>&lt;mask&gt;</code>, not <code>[MASK]</code></td>
+<td><a href="./template.html#laya-parity">template</a></td>
+</tr>
+<tr class="odd">
+<td>BERT’s LoRA target names match nothing in ModernBERT, and a plain <code>Wo</code> would also match its MLP</td>
+<td><a href="./models.html#regimes">models</a></td>
+</tr>
+<tr class="even">
+<td>Unfreezing thawed the matrices MiCA keeps frozen</td>
+<td><a href="./models.html#regimes">models</a></td>
+</tr>
+<tr class="odd">
+<td>A new <code>TrainingArguments</code> resets the accelerator of a live Trainer</td>
+<td><a href="./learner.html#running-the-trainer">learner</a></td>
+</tr>
+<tr class="even">
+<td>With length grouping, the Trainer shuffles evaluation rows too</td>
+<td><a href="./learner.html#predictions-and-metrics">learner</a></td>
+</tr>
+<tr class="odd">
+<td>An export after <code>freeze</code> dropped the trained encoder; bf16 checkpoints were served in bf16</td>
+<td><a href="./inference.html#laya-compatibility">inference</a></td>
+</tr>
+<tr class="even">
+<td>A sampled weights fingerprint misses most weight changes; the first cache served stale labels</td>
+<td><a href="./cache.html#the-key">cache</a></td>
+</tr>
+<tr class="odd">
+<td>NeoMME’s processor cannot build a decision row; what else did not work</td>
+<td><a href="./neomme.html#what-did-not-work-and-what-to-watch">multimodal</a></td>
+</tr>
+<tr class="even">
+<td>One channel carries 97% of NeoMME’s vector norms: heads barely learned until they standardised their input, and LoRA with Laya’s two-layer head collapsed on small tasks</td>
+<td><a href="./neomme.html#two-small-image-tasks-on-the-real-checkpoint">multimodal</a></td>
+</tr>
+<tr class="odd">
+<td>A float16 feature cache quantises that channel, so <code>validate</code> and the <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> disagreed on the same model’s calibration</td>
+<td><a href="./neomme.html#a-head-only-run">multimodal</a></td>
+</tr>
+<tr class="even">
+<td>ModernVBERT’s processor enlarges every image to 2,048 px, so a 28-px digit takes 17 tiles and 1,127 tokens; at 1,536 px, a batch of 8 rows is 80 tiles, and it held 8 GB of GPU memory</td>
+<td><a href="./modernvbert.html#a-head-only-run">modernvbert</a></td>
+</tr>
+<tr class="odd">
+<td>ModernVBERT’s anchors have a dominant channel too, 58% of each vector’s length, and standardising them lifts the digits from 0.67 to 0.84</td>
+<td><a href="./tutorials/modernvbert_images.html#does-modernvbert-need-standardising">ModernVBERT tutorial</a></td>
+</tr>
+<tr class="even">
+<td>NeoMME reads MNIST digits better at 56–112 px than at 224, and a seeded split of stock photos leaves shoots on both sides</td>
+<td><a href="./tutorials/neomme_images.html#one-more-setting-the-image-size">images tutorial</a></td>
+</tr>
+<tr class="odd">
+<td>The published Mind2Web converter misses ARIA labels, field values and <code>&lt;select&gt;</code> labels</td>
+<td><a href="./screens.html">screens</a></td>
+</tr>
+<tr class="even">
+<td>ProtST-BinaryLocalization labels membrane-bound proteins 0, which its card doesn’t say</td>
+<td><a href="./tutorials/protein_decisions.html#the-data">protein tutorial</a></td>
+</tr>
+<tr class="odd">
+<td>An embedder built on the spot switched ProtST’s shared text tower into training mode, and peft needs a <code>base_model_prefix</code> on a stream encoder</td>
+<td><a href="./protein.html#zero-shot">protein</a></td>
+</tr>
+<tr class="even">
+<td>Laya’s act head, trained on the rows the option head fits, ranked answers worse than the head’s own confidence, and one threshold for every question acted on no shortlist</td>
+<td><a href="./tutorials/protein_decisions.html#acting-or-escalating">protein tutorial</a></td>
+</tr>
+<tr class="odd">
+<td><code>gliner2</code> refuses an empty instruction, so the GLiNER2 backend stopped on questions without one; fixed, a question sent on its own gets the benchmark card’s answer on all 2,600 decisions</td>
+<td><a href="./gliner_backend.html#glinerdecider">gliner backend</a></td>
+</tr>
+<tr class="even">
+<td><code>lr_find</code>’s valley for the same new head on the same 850 rows was 1.4e-6 with one batch order and 6.6e-4 with another</td>
+<td><a href="./tutorials/gliner_decide.html#how-fast-to-train">GLiNER2.5-Decide tutorial</a></td>
+</tr>
+<tr class="odd">
+<td>Tiled images shrank a cached head’s training batch as well, so a sweep of image sizes compared batches of four rows with batches of one</td>
+<td><a href="./modernvbert.html#a-head-only-run">modernvbert</a></td>
+</tr>
+<tr class="even">
+<td>Image rows lost their case ids in the feature cache, so a per-case look at a multimodal learner’s predictions put every row under one empty id</td>
+<td><a href="./cache.html#featurecache">cache</a></td>
+</tr>
+<tr class="odd">
+<td>A Mind2Web question needs up to 1,500 tokens, so the multimodal presets cut each of 45 options to 8 tokens, and the screenshots are whole pages up to 40,000 pixels tall</td>
+<td><a href="./screens.html#on-real-rows">screens</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="developer-guide" class="level2">
+<h2 class="anchored" data-anchor-id="developer-guide">Developer guide</h2>
+<p>sysone is written as <a href="https://nbdev.fast.ai/">nbdev</a> notebooks: <code>nbs/</code> is the source, <code>sysone/</code> is generated by <code>nbdev-export</code> and never edited by hand, and the notebooks’ examples are the test suite, run against tiny fixtures (<code>nbs/fixtures/</code>) so the whole suite runs offline on a CPU.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync                               <span class="co"># the environment, with the package installed editable</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run nbdev-export                   <span class="co"># notebooks -&gt; sysone/</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run nbdev-test <span class="at">--n-workers</span> 4       <span class="co"># every notebook, top to bottom</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run nbdev-clean                    <span class="co"># before committing</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Cells marked <code>#| eval: false</code> need a GPU, a download or a network; the results of their last real run are pasted below them.</p>
+<p>The tensor diagrams are SVG files in <code>nbs/images/</code>, drawn by <code>nbs/90_figures.ipynb</code> from the library’s own functions with <a href="https://github.com/hardik-vala/tensordiagram">tensordiagram</a>; running that notebook (the test suite does) redraws them, byte for byte when nothing changed. The flow charts are <a href="https://mermaid.js.org/">Mermaid</a> text in the markdown cells, which Quarto renders. The docs site builds with Quarto, which comes as a Python wheel in the <code>docs</code> group:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--group</span> docs</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run nbdev-docs                     <span class="co"># the site in _docs/; nbdev-preview serves it while you edit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>nbdev’s docs build re-runs every cell that imports something, in a fresh kernel that skips the others, so keep imports in cells of their own: a cell that imports and also uses a name from an earlier cell breaks the build.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

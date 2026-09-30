@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Browser steps from Mind2Web as sysone decisions, in JevForge’s ready-made records: which of 12 page elements to act on, on websites the head never saw. Four frozen encoders under the same head, two text encoders and the multimodal application’s two encoders reading text alone, and GLiNER2’s classifier zero-shot.">
+
+<title>Web pages as text – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+<meta property="og:title" content="Web pages as text – sysone">
+<meta property="og:description" content="Browser steps from Mind2Web as sysone decisions, in JevForge’s ready-made records: which of 12 page elements to act on, on websites the head never saw. Four frozen encoders under the same head, two text encoders and the multimodal application’s two encoders reading text alone, and GLiNER2’s classifier zero-shot.">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="Web pages as text – sysone">
+<meta name="twitter:description" content="Browser steps from Mind2Web as sysone decisions, in JevForge’s ready-made records: which of 12 page elements to act on, on websites the head never saw. Four frozen encoders under the same head, two text encoders and the multimodal application’s two encoders reading text alone, and GLiNER2’s classifier zero-shot.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/gliner_decide.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/web_text.html">Web pages as text</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_text.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-records" id="toc-the-records" class="nav-link active" data-scroll-target="#the-records">The records</a></li>
+  <li><a href="#one-row" id="toc-one-row" class="nav-link" data-scroll-target="#one-row">One row</a></li>
+  <li><a href="#zero-shot-gliner2s-own-classifier" id="toc-zero-shot-gliner2s-own-classifier" class="nav-link" data-scroll-target="#zero-shot-gliner2s-own-classifier">Zero-shot: GLiNER2’s own classifier</a></li>
+  <li><a href="#four-encoders-one-recipe" id="toc-four-encoders-one-recipe" class="nav-link" data-scroll-target="#four-encoders-one-recipe">Four encoders, one recipe</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  <li><a href="#what-this-shows" id="toc-what-this-shows" class="nav-link" data-scroll-target="#what-this-shows">What this shows</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="web_text.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/gliner_decide.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/web_text.html">Web pages as text</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Web pages as text</h1>
+</div>
+
+<div>
+  <div class="description">
+    Browser steps from Mind2Web as sysone decisions, in JevForge’s ready-made records: which of 12 page elements to act on, on websites the head never saw. Four frozen encoders under the same head, two text encoders and the multimodal application’s two encoders reading text alone, and GLiNER2’s classifier zero-shot.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>A browser agent works one step at a time: given the task and the page, which element does it act on next? <a href="https://huggingface.co/datasets/osunlp/Mind2Web">Mind2Web</a> (CC-BY-4.0) recorded people doing tasks on real websites, step by step, and <a href="https://huggingface.co/datasets/AndeyTait/JevForge-Mind2Web">JevForge-Mind2Web</a> (CC-BY-4.0) turns 7,014 of those steps into Jev typed decisions:</p>
+<ul>
+<li>the <strong>state</strong> is the page as text: the task, the operation the person performed (click, type, select, hover), and 12 candidate elements, each described by its tag and attributes;</li>
+<li><strong><code>action</code></strong> is a <em>choice</em>: which of the 12 elements to act on (usually one is right);</li>
+<li><strong><code>is_target</code></strong> is a <em>noul</em>: a statement that one of the 12, sometimes the right one and more often not, is the element to act on.</li>
+</ul>
+<p>Its splits keep websites apart: the heads here train on steps from 49 websites and are scored on 8 others (the test split), and on 4 more (the <code>ood</code> split). That’s the question that matters for an agent: how well does it do on a site it has never seen?</p>
+<p>The question for sysone is which encoder to put under the head for this kind of decision. Four candidates, each frozen, with a head trained on its cached anchors:</p>
+<ul>
+<li><strong>ModernBERT-large</strong>, the text application’s default;</li>
+<li><strong>GLiNER2.5-Decide</strong>’s encoder, the best frozen encoder on typed-decisions (the <a href="../tutorials/gliner_decide.html">GLiNER2.5-Decide tutorial</a>);</li>
+<li><strong>NeoMME-260M</strong> and <strong>ModernVBERT</strong>, the multimodal application’s two encoders, here reading the page as text alone. Whether a screenshot helps them is the <a href="../tutorials/web_screens.html">screens tutorial</a>’s question; this one measures how well they read the text they’d get beside it.</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled" title="Jargon">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Jargon
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Element, candidate</strong>: a piece of the page an agent can act on, such as a link, a button or a text field. Each step here offers 12 candidates, one of them (rarely two) right.</li>
+<li><strong>Held-out websites</strong>: websites none of whose steps were used for training. Doing well on them means the head learned something about pages in general, not about particular sites.</li>
+<li><strong>Frozen encoder, cached anchors</strong>: only the head trains, so each anchor’s vector is computed once and stored, and training reads the stored vectors.</li>
+<li><strong>Standardised anchors</strong>: vectors shifted and scaled, channel by channel, to mean 0 and variance 1 on the training rows. The multimodal application does this by default, because its encoders’ vectors put most of their length in one channel (the <a href="../tutorials/neomme_vs_modernvbert.html#the-geometry-of-the-anchors">comparison tutorial</a>).</li>
+<li><strong>Brier score</strong>: the mean squared distance between the predicted probabilities and the gold distribution. Lower is better, and it rewards confidence only where it’s right.</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Running this notebook">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Running this notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The test suite skips this notebook (<code>skip_exec</code>). It downloads JevForge-Mind2Web (30 MB), and uses ModernBERT-large (1.6 GB), GLiNER2.5-Decide (1.95 GB), NeoMME-260M (526 MB) and ModernVBERT (1.2 GB). One encoder is in memory at a time. The whole run takes about an hour on an M3 Pro (MPS, fp32), 36 minutes of it in GLiNER2.5-Decide’s encoder, and the outputs below come from a run on 2026-09-30. It keeps its feature cache in <code>web-text/</code>, next to the notebook.</p>
+</div>
+</div>
+<div id="a951927b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gc, json, logging, random, resource, sys, time, warnings</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datasets, transformers</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> huggingface_hub <span class="im">import</span> snapshot_download</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers.trainer_callback <span class="im">import</span> PrinterCallback, ProgressCallback</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> TypedDecisions, as_cases</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sysone.text <span class="im">as</span> text_app</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sysone.multimodal <span class="im">as</span> multimodal_app</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fbe4a216" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>logging.getLogger(<span class="st">"transformers"</span>).setLevel(logging.ERROR)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>, message<span class="op">=</span><span class="vs">r"</span><span class="dv">.</span><span class="op">*</span><span class="vs">torch</span><span class="ch">\.</span><span class="vs">jit</span><span class="ch">\.</span><span class="vs">script"</span>, category<span class="op">=</span><span class="pp">FutureWarning</span>)   <span class="co"># DeBERTa-v2's modeling code on Python 3.14</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>datasets.disable_progress_bars()<span class="op">;</span> transformers.utils.logging.disable_progress_bar()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">200</span>)<span class="op">;</span> pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">20</span>)<span class="op">;</span> pd.set_option(<span class="st">"display.max_colwidth"</span>, <span class="dv">80</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>DECIDE <span class="op">=</span> <span class="st">"fastino/GLiNER2.5-Decide"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>work <span class="op">=</span> Path(<span class="st">"web-text"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>t_start <span class="op">=</span> time.time()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">"cuda"</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"mps"</span> <span class="cf">if</span> torch.backends.mps.is_available() <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"torch </span><span class="sc">{</span>torch<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> · transformers </span><span class="sc">{</span>transformers<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> · </span><span class="sc">{</span>device<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>torch 2.14.0 · transformers 5.17.0 · mps</code></pre>
+</div>
+</div>
+<div id="7f011066" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quiet(learn):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The learner, without the Trainer's per-step log lines in the outputs"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> cb <span class="kw">in</span> (PrinterCallback, ProgressCallback): learn.trainer.remove_callback(cb)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> learn</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> release():</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Hand back the memory of deleted models"</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    gc.collect()</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> torch.backends.mps.is_available(): torch.mps.empty_cache()</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> torch.cuda.is_available(): torch.cuda.empty_cache()</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> memory_line():</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The process's peak resident memory"</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"peak memory </span><span class="sc">{</span>resource<span class="sc">.</span>getrusage(resource.RUSAGE_SELF)<span class="sc">.</span>ru_maxrss <span class="op">/</span> (<span class="dv">2</span><span class="op">**</span><span class="dv">30</span> <span class="cf">if</span> sys.platform <span class="op">==</span> <span class="st">'darwin'</span> <span class="cf">else</span> <span class="dv">2</span><span class="op">**</span><span class="dv">20</span>)<span class="sc">:.1f}</span><span class="ss"> GB"</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> scores(learn, split, calibrated<span class="op">=</span><span class="va">True</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Accuracy on each question, and the Brier score, on a held-out split"</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> learn.validate(split, calibrated<span class="op">=</span>calibrated)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"element"</span>: m[<span class="st">"accuracy_choice"</span>], <span class="st">"is it the target?"</span>: m[<span class="st">"accuracy_noul"</span>], <span class="st">"Brier"</span>: m[<span class="st">"brier"</span>]}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="the-records" class="level2">
+<h2 class="anchored" data-anchor-id="the-records">The records</h2>
+<p>A JevForge record is close to sysone’s shape already: a request with the state and the questions, and the gold both as a label and as a distribution over the options.</p>
+<div id="bc78bffe" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>repo <span class="op">=</span> Path(snapshot_download(<span class="st">"AndeyTait/JevForge-Mind2Web"</span>, repo_type<span class="op">=</span><span class="st">"dataset"</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> {s: [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> (repo <span class="op">/</span> <span class="ss">f"data/</span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">.jsonl"</span>).read_text().splitlines()] <span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"train"</span>, <span class="st">"calibration"</span>, <span class="st">"test"</span>, <span class="st">"ood"</span>)}</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> raw[<span class="st">"test"</span>][<span class="dv">0</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> json.loads(r[<span class="st">"request"</span>][<span class="st">"state"</span>])</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"task: </span><span class="sc">{</span>st[<span class="st">'task'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"operation: </span><span class="sc">{</span>st[<span class="st">'operation'</span>]<span class="sc">}</span><span class="ss"> · website: </span><span class="sc">{</span>st[<span class="st">'website'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> e <span class="kw">in</span> st[<span class="st">"elements"</span>]: <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>e[<span class="st">'id'</span>]<span class="sc">:&gt;5}</span><span class="ss">  </span><span class="sc">{</span>e[<span class="st">'text'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>{<span class="st">"questions"</span>: {q: {<span class="st">"type"</span>: v[<span class="st">"type"</span>], <span class="st">"instructions"</span>: v[<span class="st">"instructions"</span>]} <span class="cf">for</span> q, v <span class="kw">in</span> r[<span class="st">"request"</span>][<span class="st">"questions"</span>].items()}, <span class="st">"gold"</span>: r[<span class="st">"gold"</span>]}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>task: rent a car in Brooklyn - Central, NY on from April 9 to April 15.
+operation: CLICK · website: united
+   e1  div
+   e2  li id=bookCarTab role=tab aria_label=heading level 3 Search and reserve a car
+   e3  div
+   e4  a title=Open United's LinkedIn profile in a new tab
+   e5  div
+   e6  li
+   e7  h2 id=favoritesModalHeader
+   e8  svg role=img aria_label=Save to favorites
+   e9  svg role=img aria_label=Save to favorites
+  e10  button role=link type=button
+  e11  li
+  e12  form id=mapSearchForm</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'questions': {'action': {'type': 'choice',
+   'instructions': 'Which page element should be interacted with next to make progress on the task?'},
+  'is_target': {'type': 'noul',
+   'instructions': "The page element described as 'a title=Open United's LinkedIn profile in a new tab' is a correct next interaction target for completing the task."}},
+ 'gold': {'action': 'e2', 'is_target': False}}</code></pre>
+</div>
+</div>
+<p>The state arrives as a JSON string, and the gold as a label beside a distribution. <code>to_record</code> parses the state and pairs each question’s label with its distribution, which is what sysone reads as a gold. A step with two right elements then has its target split between them.</p>
+<div id="7b6bee62" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> to_record(r) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A JevForge record in sysone's shape: the state, the questions, and each question's gold as a label and a distribution"</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    gold <span class="op">=</span> {q: {<span class="st">"label"</span>: <span class="bu">str</span>(g).lower() <span class="cf">if</span> <span class="bu">isinstance</span>(g, <span class="bu">bool</span>) <span class="cf">else</span> g, <span class="st">"probabilities"</span>: r[<span class="st">"targets"</span>][q]} <span class="cf">for</span> q, g <span class="kw">in</span> r[<span class="st">"gold"</span>].items()}</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"id"</span>: r[<span class="st">"id"</span>], <span class="st">"website"</span>: r[<span class="st">"source_group"</span>], <span class="st">"state"</span>: json.loads(r[<span class="st">"request"</span>][<span class="st">"state"</span>]),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"questions"</span>: r[<span class="st">"request"</span>][<span class="st">"questions"</span>], <span class="st">"gold"</span>: gold}</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>records <span class="op">=</span> {s: [to_record(r) <span class="cf">for</span> r <span class="kw">in</span> rs] <span class="cf">for</span> s, rs <span class="kw">in</span> raw.items()}</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({s: {<span class="st">"steps"</span>: <span class="bu">len</span>(rs), <span class="st">"websites"</span>: <span class="bu">len</span>({r[<span class="st">"website"</span>] <span class="cf">for</span> r <span class="kw">in</span> rs}),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"share where the noul is true"</span>: <span class="bu">round</span>(np.mean([r[<span class="st">"gold"</span>][<span class="st">"is_target"</span>][<span class="st">"label"</span>] <span class="op">==</span> <span class="st">"true"</span> <span class="cf">for</span> r <span class="kw">in</span> rs]), <span class="dv">2</span>)}</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>              <span class="cf">for</span> s, rs <span class="kw">in</span> records.items()}).T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">steps</th>
+<th data-quarto-table-cell-role="th">websites</th>
+<th data-quarto-table-cell-role="th">share where the noul is true</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">train</th>
+<td>4642.0</td>
+<td>49.0</td>
+<td>0.21</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">calibration</th>
+<td>400.0</td>
+<td>6.0</td>
+<td>0.26</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">test</th>
+<td>800.0</td>
+<td>8.0</td>
+<td>0.22</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">ood</th>
+<td>386.0</td>
+<td>4.0</td>
+<td>0.23</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>The heads train on 2,000 of the 4,642 training steps, drawn at random. That’s 4,000 decisions, plenty for a head on cached anchors, and it keeps the slowest encoder’s run under an hour. The calibration split fits the temperatures, and the test and <code>ood</code> splits are scored. Every encoder gets the same records.</p>
+<div id="a1333a60" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> random.Random(<span class="dv">0</span>).sample(records[<span class="st">"train"</span>], <span class="dv">2000</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_data() <span class="op">-&gt;</span> TypedDecisions:</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The same splits for every encoder: the training steps, the calibration split, and the two held-out splits"</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> TypedDecisions(train, valid<span class="op">=</span>records[<span class="st">"test"</span>], calib<span class="op">=</span>records[<span class="st">"calibration"</span>])</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    data.cases[<span class="st">"ood"</span>] <span class="op">=</span> as_cases(records[<span class="st">"ood"</span>])            <span class="co"># a second held-out split, scored with learn.validate("ood")</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>({r[<span class="st">'website'</span>] <span class="cf">for</span> r <span class="kw">in</span> train})<span class="sc">}</span><span class="ss"> websites in the training steps"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>49 websites in the training steps</code></pre>
+</div>
+</div>
+</section>
+<section id="one-row" class="level2">
+<h2 class="anchored" data-anchor-id="one-row">One row</h2>
+<p>Each question becomes one row. Here are the two rows of the first test step as the GLiNER2.5-Decide encoder reads them, in its <code>gliner</code> template: the question type, the instructions, an <code>[L]</code> anchor before each option, then the page.</p>
+<div id="05a2a5ad" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> make_data()</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> quiet(text_app.decision_learner(data, DECIDE, head<span class="op">=</span><span class="st">"gliner2"</span>, init_from<span class="op">=</span>DECIDE, cache_dir<span class="op">=</span>work))</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>learn.show_batch(<span class="dv">2</span>, split<span class="op">=</span><span class="st">"valid"</span>, max_chars<span class="op">=</span><span class="dv">360</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>([P] choice: Which page element should be interacted with next to make progress on the task? ([L] e1: div[L] e2: li id=bookCarTab role=tab aria_label=heading level 3 Search and reserve a car[L] e3: div[L] e4: a title=Open United's LinkedIn  …  "operation": "CLICK", "task": "rent a car in Brooklyn - Central, NY on from April 9 to April 15.", "website": "united"}
+markers [20, 25, 51, 56, 73, 78, 83, 96, 112, 128, 139, 144] · qtype choice · 508 tokens
+
+([P] noul: The page element described as 'a title=Open United's LinkedIn profile in a new tab' is a correct next interaction target for completing the task. ([L] false: The element is not a correct next target.[L] true: The element is a cor …  "operation": "CLICK", "task": "rent a car in Brooklyn - Central, NY on from April 9 to April 15.", "website": "united"}
+markers [37, 49] · qtype noul · 417 tokens
+</code></pre>
+</div>
+</div>
+</section>
+<section id="zero-shot-gliner2s-own-classifier" class="level2">
+<h2 class="anchored" data-anchor-id="zero-shot-gliner2s-own-classifier">Zero-shot: GLiNER2’s own classifier</h2>
+<p>With GLiNER2’s classifier copied into the head, the Decide encoder answers before any training, as the <a href="../tutorials/gliner_decide.html">GLiNER2.5-Decide tutorial</a> showed on Fastino’s own benchmark. The scores use no temperatures, since nothing is fitted:</p>
+<div id="ea9fd3e2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> time.time()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {<span class="st">"GLiNER2.5-Decide, its classifier, zero-shot"</span>: {s: scores(learn, s, calibrated<span class="op">=</span><span class="va">False</span>) <span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"valid"</span>, <span class="st">"ood"</span>)}}</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"the test and ood steps encoded and scored in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> learn, data<span class="op">;</span> release()</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>results</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>the test and ood steps encoded and scored in 11.9 min</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'GLiNER2.5-Decide, its classifier, zero-shot': {'valid': {'element': 0.24375,
+   'is it the target?': 0.38625,
+   'Brier': 0.695402393972732},
+  'ood': {'element': 0.3005181347150259,
+   'is it the target?': 0.31088082901554404,
+   'Brier': 0.6933096424542362}}}</code></pre>
+</div>
+</div>
+<p>With no training at all, GLiNER2’s classifier picks the right element on 24% of the test steps and 30% of the <code>ood</code> ones, three to four times better than guessing among 12 (8%). On the noul it does worse than always answering false, 39% and 31% right against 78% and 77%: it calls too many elements the target. Its scores come without fitted temperatures, and its Brier score shows it.</p>
+</section>
+<section id="four-encoders-one-recipe" class="level2">
+<h2 class="anchored" data-anchor-id="four-encoders-one-recipe">Four encoders, one recipe</h2>
+<p>Each encoder runs through its own application with that application’s defaults. The text application reads the anchors as they are and caches them in float16. The multimodal application standardises them and caches them in float32, for the reasons its notebooks give. The head is Laya’s scorer in both, and every head trains the same way: <code>fit_one_cycle(4, lr=1e-3)</code>, then temperatures fitted on the calibration split. The <a href="../tutorials/gliner_decide.html#how-fast-to-train">GLiNER2.5-Decide tutorial</a> explains why the rate is fixed rather than picked by <code>lr_find</code>.</p>
+<div id="f1d56372" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>ENCODERS <span class="op">=</span> {<span class="st">"ModernBERT-large"</span>: (text_app, <span class="st">"answerdotai/ModernBERT-large"</span>), <span class="st">"GLiNER2.5-Decide"</span>: (text_app, DECIDE),</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>            <span class="st">"NeoMME-260M"</span>: (multimodal_app, <span class="st">"Hcompany/NeoMME-260M"</span>), <span class="st">"ModernVBERT"</span>: (multimodal_app, <span class="st">"ModernVBERT/modernvbert"</span>)}</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>minutes <span class="op">=</span> {}</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, (app, encoder) <span class="kw">in</span> ENCODERS.items():</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> time.time()</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(<span class="dv">0</span>)                                     <span class="co"># the same starting head for every encoder, and on every run</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    learn <span class="op">=</span> quiet(app.decision_learner(make_data(), encoder, cache_dir<span class="op">=</span>work))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    learn.fit_one_cycle(<span class="dv">4</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)                          <span class="co"># the temperatures are fitted on the calibration split after it</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    results[<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, a new head"</span>] <span class="op">=</span> {s: scores(learn, s) <span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"valid"</span>, <span class="st">"ood"</span>)}</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    minutes[name] <span class="op">=</span> (time.time() <span class="op">-</span> t) <span class="op">/</span> <span class="dv">60</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>minutes[name]<span class="sc">:.1f}</span><span class="ss"> min · </span><span class="sc">{</span>memory_line()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">del</span> learn<span class="op">;</span> release()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>ModernBERT-large: 10.7 min · peak memory 4.0 GB
+GLiNER2.5-Decide: 24.2 min · peak memory 4.5 GB
+NeoMME-260M: 7.5 min · peak memory 4.5 GB
+ModernVBERT: 4.8 min · peak memory 4.5 GB</code></pre>
+</div>
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>Accuracy on the element choice and on the noul, and the Brier score, on the 8 test websites and on the 4 <code>ood</code> ones. The first row is what guessing gets: one element in 12, and <em>false</em> for every noul, since most nouls are about a wrong element.</p>
+<div id="31412bd1" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>guess <span class="op">=</span> {s: {<span class="st">"element"</span>: <span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, <span class="st">"is it the target?"</span>: np.mean([r[<span class="st">"gold"</span>][<span class="st">"is_target"</span>][<span class="st">"label"</span>] <span class="op">==</span> <span class="st">"false"</span> <span class="cf">for</span> r <span class="kw">in</span> records[k]]), <span class="st">"Brier"</span>: np.nan}</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>         <span class="cf">for</span> s, k <span class="kw">in</span> ((<span class="st">"valid"</span>, <span class="st">"test"</span>), (<span class="st">"ood"</span>, <span class="st">"ood"</span>))}</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> {<span class="st">"guessing"</span>: guess} <span class="op">|</span> results</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.concat({label: pd.DataFrame({name: r[split] <span class="cf">for</span> name, r <span class="kw">in</span> rows.items()}).T</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">for</span> split, label <span class="kw">in</span> ((<span class="st">"valid"</span>, <span class="st">"test websites"</span>), (<span class="st">"ood"</span>, <span class="st">"ood websites"</span>))}, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>table.style.<span class="bu">format</span>(<span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>, na_rep<span class="op">=</span><span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_15e57" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th colspan="3" id="T_15e57_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">test websites</th>
+<th colspan="3" id="T_15e57_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">ood websites</th>
+</tr>
+<tr class="even">
+<th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_15e57_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">element</th>
+<th id="T_15e57_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">is it the target?</th>
+<th id="T_15e57_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">Brier</th>
+<th id="T_15e57_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">element</th>
+<th id="T_15e57_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">is it the target?</th>
+<th id="T_15e57_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">Brier</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_15e57_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">guessing</th>
+<td id="T_15e57_row0_col0" class="data row0 col0">0.083</td>
+<td id="T_15e57_row0_col1" class="data row0 col1">0.776</td>
+<td id="T_15e57_row0_col2" class="data row0 col2"></td>
+<td id="T_15e57_row0_col3" class="data row0 col3">0.083</td>
+<td id="T_15e57_row0_col4" class="data row0 col4">0.769</td>
+<td id="T_15e57_row0_col5" class="data row0 col5"></td>
+</tr>
+<tr class="even">
+<th id="T_15e57_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">GLiNER2.5-Decide, its classifier, zero-shot</th>
+<td id="T_15e57_row1_col0" class="data row1 col0">0.244</td>
+<td id="T_15e57_row1_col1" class="data row1 col1">0.386</td>
+<td id="T_15e57_row1_col2" class="data row1 col2">0.695</td>
+<td id="T_15e57_row1_col3" class="data row1 col3">0.301</td>
+<td id="T_15e57_row1_col4" class="data row1 col4">0.311</td>
+<td id="T_15e57_row1_col5" class="data row1 col5">0.693</td>
+</tr>
+<tr class="odd">
+<th id="T_15e57_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">ModernBERT-large, a new head</th>
+<td id="T_15e57_row2_col0" class="data row2 col0">0.374</td>
+<td id="T_15e57_row2_col1" class="data row2 col1">0.790</td>
+<td id="T_15e57_row2_col2" class="data row2 col2">0.527</td>
+<td id="T_15e57_row2_col3" class="data row2 col3">0.399</td>
+<td id="T_15e57_row2_col4" class="data row2 col4">0.788</td>
+<td id="T_15e57_row2_col5" class="data row2 col5">0.518</td>
+</tr>
+<tr class="even">
+<th id="T_15e57_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">GLiNER2.5-Decide, a new head</th>
+<td id="T_15e57_row3_col0" class="data row3 col0">0.393</td>
+<td id="T_15e57_row3_col1" class="data row3 col1">0.776</td>
+<td id="T_15e57_row3_col2" class="data row3 col2">0.531</td>
+<td id="T_15e57_row3_col3" class="data row3 col3">0.417</td>
+<td id="T_15e57_row3_col4" class="data row3 col4">0.769</td>
+<td id="T_15e57_row3_col5" class="data row3 col5">0.532</td>
+</tr>
+<tr class="odd">
+<th id="T_15e57_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">NeoMME-260M, a new head</th>
+<td id="T_15e57_row4_col0" class="data row4 col0">0.406</td>
+<td id="T_15e57_row4_col1" class="data row4 col1">0.806</td>
+<td id="T_15e57_row4_col2" class="data row4 col2">0.513</td>
+<td id="T_15e57_row4_col3" class="data row4 col3">0.446</td>
+<td id="T_15e57_row4_col4" class="data row4 col4">0.780</td>
+<td id="T_15e57_row4_col5" class="data row4 col5">0.489</td>
+</tr>
+<tr class="even">
+<th id="T_15e57_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">ModernVBERT, a new head</th>
+<td id="T_15e57_row5_col0" class="data row5 col0">0.384</td>
+<td id="T_15e57_row5_col1" class="data row5 col1">0.766</td>
+<td id="T_15e57_row5_col2" class="data row5 col2">0.528</td>
+<td id="T_15e57_row5_col3" class="data row5 col3">0.446</td>
+<td id="T_15e57_row5_col4" class="data row5 col4">0.769</td>
+<td id="T_15e57_row5_col5" class="data row5 col5">0.514</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<ul>
+<li><strong>The four encoders are close on the element.</strong> On the test websites the new heads score between 0.374 and 0.406, and on the <code>ood</code> ones between 0.399 and 0.446. One standard error is about 0.017 on 800 test steps and 0.025 on 386 <code>ood</code> steps, so only the widest gap stands out: NeoMME-260M (0.406 and 0.446) against ModernBERT-large (0.374 and 0.399). Every head is about five times better than guessing, and far from solving the task.</li>
+<li><strong>GLiNER2.5-Decide’s lead doesn’t carry over.</strong> It was the best frozen encoder on typed-decisions (0.645) and on Fastino’s own benchmark, but here it sits in the middle, at 0.393 and 0.417. Its template also has less room: DeBERTa-v3 reads 512 positions, and the <code>gliner</code> template writes these rows longer than Laya’s does, so 7% of the test rows have their page cut to fit, against under 1% for ModernBERT-large.</li>
+<li><strong>The noul stays near the prior.</strong> About one statement in five is true, and no head moves far from always answering false: between 0.766 and 0.806 on the test websites, against 0.776. A head on frozen anchors learns little about one named element from 2,000 examples. The element choice, which weighs all 12 at once, is where the heads learn something.</li>
+<li><strong>The multimodal encoders read web text well.</strong> NeoMME-260M, reading the page as text with its application’s defaults, has the best element accuracy on the test websites and ties ModernVBERT on the <code>ood</code> ones, and it has the lowest Brier score on both.</li>
+</ul>
+<div id="f02d1758" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>pd.Series(minutes, name<span class="op">=</span><span class="st">"minutes, encoding and training included"</span>).<span class="bu">round</span>(<span class="dv">1</span>).to_frame()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">minutes, encoding and training included</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">ModernBERT-large</th>
+<td>10.7</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">GLiNER2.5-Decide</th>
+<td>24.2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">NeoMME-260M</th>
+<td>7.5</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">ModernVBERT</th>
+<td>4.8</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>GLiNER2.5-Decide’s encoder is by far the slowest: 24 minutes for the training and calibration rows, 36 in all with the zero-shot cell’s encoding of the test rows, where NeoMME-260M took 7.5 minutes and ModernVBERT 4.8 for everything. DeBERTa-v3-large is the largest of the four, and it has no fused attention kernel in transformers, so it runs the slower eager path.</p>
+</section>
+<section id="what-this-shows" class="level2">
+<h2 class="anchored" data-anchor-id="what-this-shows">What this shows</h2>
+<ul>
+<li><strong>On web pages as text, the encoder matters less than on generic decisions.</strong> On typed-decisions the frozen encoders spread over 14 points, from 0.504 to 0.645 (the <a href="../text.html#regimes-on-the-laptop">text notebook</a>); here the trained heads spread over 3 to 5.</li>
+<li><strong>NeoMME-260M is the best frozen encoder here, and one of the cheapest.</strong> It leads on the test websites, ties on the <code>ood</code> ones, and costs 7.5 minutes for the whole run. For the multimodal application that means its text side is no weakness; whether its image side helps is the <a href="../tutorials/web_screens.html">screens tutorial</a>’s question.</li>
+<li><strong>GLiNER2.5-Decide’s encoder isn’t worth its cost for web pages.</strong> It trails NeoMME by one to three points at nearly five times the encoding time. Its strength is decisions phrased as questions over ordinary text, where it leads by eight points or more.</li>
+<li><strong>What would move these numbers.</strong> Training the encoder itself (<code>train="lora"</code>), or all 4,642 training steps. A frozen encoder with a head reaches about 0.40 on a 12-way element choice, and a web agent needs much more.</li>
+</ul>
+<div id="f65e64b3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"the whole notebook: </span><span class="sc">{</span>(time.time() <span class="op">-</span> t_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> minutes · </span><span class="sc">{</span>memory_line()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>the whole notebook: 59.3 minutes · peak memory 4.5 GB</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

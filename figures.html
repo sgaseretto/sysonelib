@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="How the tensor diagrams in these notebooks are drawn: each one is built from the library’s own functions, with tensordiagram, and written to nbs/images/.">
+
+<title>figures – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="figures – sysone">
+<meta property="og:description" content="How the tensor diagrams in these notebooks are drawn: each one is built from the library’s own functions, with tensordiagram, and written to nbs/images/.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/batch.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="figures – sysone">
+<meta name="twitter:description" content="How the tensor diagrams in these notebooks are drawn: each one is built from the library’s own functions, with tensordiagram, and written to nbs/images/.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/batch.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./figures.html">figures</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#helpers" id="toc-helpers" class="nav-link active" data-scroll-target="#helpers">Helpers</a></li>
+  <li><a href="#a-batch-of-rows" id="toc-a-batch-of-rows" class="nav-link" data-scroll-target="#a-batch-of-rows">A batch of rows</a></li>
+  <li><a href="#the-gather-at-the-anchors" id="toc-the-gather-at-the-anchors" class="nav-link" data-scroll-target="#the-gather-at-the-anchors">The gather at the anchors</a></li>
+  <li><a href="#the-type-embedding-broadcast-over-a-row" id="toc-the-type-embedding-broadcast-over-a-row" class="nav-link" data-scroll-target="#the-type-embedding-broadcast-over-a-row">The type embedding, broadcast over a row</a></li>
+  <li><a href="#the-masked-softmax" id="toc-the-masked-softmax" class="nav-link" data-scroll-target="#the-masked-softmax">The masked softmax</a></li>
+  <li><a href="#a-row-and-its-budgets" id="toc-a-row-and-its-budgets" class="nav-link" data-scroll-target="#a-row-and-its-budgets">A row and its budgets</a></li>
+  <li><a href="#labels-packed-for-the-trainer" id="toc-labels-packed-for-the-trainer" class="nav-link" data-scroll-target="#labels-packed-for-the-trainer">Labels packed for the Trainer</a></li>
+  <li><a href="#what-a-feature-cache-stores" id="toc-what-a-feature-cache-stores" class="nav-link" data-scroll-target="#what-a-feature-cache-stores">What a feature cache stores</a></li>
+  <li><a href="#neommes-two-axis-positions" id="toc-neommes-two-axis-positions" class="nav-link" data-scroll-target="#neommes-two-axis-positions">NeoMME’s two-axis positions</a></li>
+  <li><a href="#rlcds-noise-draws" id="toc-rlcds-noise-draws" class="nav-link" data-scroll-target="#rlcds-noise-draws">RLCD’s noise draws</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="figures.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">figures</h1>
+</div>
+
+<div>
+  <div class="description">
+    How the tensor diagrams in these notebooks are drawn: each one is built from the library’s own functions, with <a href="https://github.com/hardik-vala/tensordiagram">tensordiagram</a>, and written to <code>nbs/images/</code>.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>The notebooks explain the tensor operations with diagrams: a batch of rows, the gather at the anchors, the type embedding broadcast over a row, the labels packed for the Trainer. Every diagram is drawn here, from tensors that the library itself produces (<a href="https://sgaseretto.github.io/sysonelib/core.html#collate"><code>collate</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a>, <a href="https://sgaseretto.github.io/sysonelib/models.html#decisionhead"><code>DecisionHead</code></a>), so a diagram cannot drift from the code it explains: when the code changes, running this notebook redraws them, and the checks next to each figure fail if the picture no longer matches the computation. Nothing here is exported; the notebooks embed the SVG files with a link back to the section that drew them.</p>
+<p>tensordiagram draws one tensor at a time as SVG, without system libraries; everything around the tensors (labels, arrows, brackets, hatching for padding) is composed with <a href="https://chalk-diagrams.github.io">chalk</a>, the drawing library tensordiagram is built on. The helpers below are what that composition needs.</p>
+<section id="helpers" class="level2">
+<h2 class="anchored" data-anchor-id="helpers">Helpers</h2>
+<p>A few facts about the two libraries shape the helpers. Chalk’s text has no size of its own, so a label gets an explicit box, or layouts overlap it. A 3-D tensor’s envelope covers only its front faces, so a figure sizes its own background to include the top and side faces. Cells are not named, so arrows need cell coordinates: tensordiagram centres 2-D cell (r, c) at (c, r), and a 3-D cell (r, c, k) has its front face centred at (c + ½ + ½k, r + ½ − ½k).</p>
+<div id="96e4a1cd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>INK, INK2, MUTED <span class="op">=</span> <span class="st">"#0b0b0b"</span>, <span class="st">"#52514e"</span>, <span class="st">"#898781"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>SEGMENTS <span class="op">=</span> {<span class="st">"special"</span>: <span class="st">"#c3c2b7"</span>, <span class="st">"question"</span>: <span class="st">"#86b6ef"</span>, <span class="st">"anchor"</span>: <span class="st">"#eb6834"</span>, <span class="st">"option"</span>: <span class="st">"#f4b89b"</span>, <span class="st">"state"</span>: <span class="st">"#8fd6b8"</span>, <span class="st">"pad"</span>: <span class="st">"#ffffff"</span>}</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PAL <span class="op">=</span> <span class="bu">dict</span>(blue<span class="op">=</span><span class="st">"#2a78d6"</span>, orange<span class="op">=</span><span class="st">"#eb6834"</span>, aqua<span class="op">=</span><span class="st">"#1baf7a"</span>, yellow<span class="op">=</span><span class="st">"#eda100"</span>, violet<span class="op">=</span><span class="st">"#4a3aa7"</span>, grey<span class="op">=</span><span class="st">"#c3c2b7"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tint(hexc, t<span class="op">=</span><span class="fl">0.7</span>):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"`hexc` mixed with white (t = 1 is the colour itself)"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    r, g, b <span class="op">=</span> (<span class="bu">int</span>(hexc[i:i <span class="op">+</span> <span class="dv">2</span>], <span class="dv">16</span>) <span class="cf">for</span> i <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> <span class="kw">lambda</span> c: <span class="bu">round</span>(c <span class="op">*</span> t <span class="op">+</span> <span class="dv">255</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> t))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"#</span><span class="sc">%02x%02x%02x</span><span class="st">"</span> <span class="op">%</span> (m(r), m(g), m(b))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> text_w(s, size): <span class="cf">return</span> <span class="fl">0.62</span> <span class="op">*</span> size <span class="op">*</span> <span class="bu">max</span>(<span class="bu">len</span>(s), <span class="dv">1</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> label(s, size<span class="op">=</span><span class="fl">0.45</span>, color<span class="op">=</span>INK, x<span class="op">=</span><span class="dv">0</span>, y<span class="op">=</span><span class="dv">0</span>, align<span class="op">=</span><span class="st">"c"</span>):</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Text at (x, y), centred or starting ('l') or ending ('r') there, with an explicit box"</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> text_w(s, size)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> text(s, size).fill_color(Color(color)).line_width(<span class="dv">0</span>).with_envelope(rectangle(w, <span class="fl">1.3</span> <span class="op">*</span> size))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t.translate(x <span class="op">+</span> {<span class="st">"c"</span>: <span class="dv">0</span>, <span class="st">"l"</span>: w <span class="op">/</span> <span class="dv">2</span>, <span class="st">"r"</span>: <span class="op">-</span>w <span class="op">/</span> <span class="dv">2</span>}[align], y)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> seg(p, q, color<span class="op">=</span>INK, w<span class="op">=</span><span class="va">None</span>, dash<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> make_path([<span class="bu">tuple</span>(p), <span class="bu">tuple</span>(q)]).line_color(Color(color))</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> w <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>: d <span class="op">=</span> d.line_width(w)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d.dashing(<span class="bu">list</span>(dash) <span class="cf">if</span> dash <span class="cf">else</span> [], <span class="dv">0</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> arrow(p, q, color<span class="op">=</span>INK, head<span class="op">=</span><span class="fl">0.22</span>, w<span class="op">=</span><span class="va">None</span>, dash<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A straight arrow from p to q with a filled head"</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    p, q <span class="op">=</span> P2(<span class="op">*</span>p), P2(<span class="op">*</span>q)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> (q <span class="op">-</span> p) <span class="op">/</span> (q <span class="op">-</span> p).length<span class="op">;</span> n <span class="op">=</span> P2(<span class="op">-</span>u.y, u.x)<span class="op">;</span> base <span class="op">=</span> q <span class="op">-</span> u <span class="op">*</span> head <span class="op">*</span> <span class="fl">1.6</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    tip <span class="op">=</span> make_path([<span class="bu">tuple</span>(q), <span class="bu">tuple</span>(base <span class="op">+</span> n <span class="op">*</span> head <span class="op">*</span> <span class="fl">0.6</span>), <span class="bu">tuple</span>(base <span class="op">-</span> n <span class="op">*</span> head <span class="op">*</span> <span class="fl">0.6</span>), <span class="bu">tuple</span>(q)], closed<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> seg(p, base, color, w, dash) <span class="op">+</span> tip.fill_color(Color(color)).line_color(Color(color)).line_width(<span class="dv">0</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hatch(x0, y0, x1, y1, color<span class="op">=</span>MUTED, step<span class="op">=</span><span class="fl">0.33</span>):</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="co">"45° hatching clipped to a rectangle: padded or masked cells"</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    W, H, out, c <span class="op">=</span> x1 <span class="op">-</span> x0, y1 <span class="op">-</span> y0, [], <span class="op">-</span>(y1 <span class="op">-</span> y0) <span class="op">+</span> step</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> c <span class="op">&lt;</span> W <span class="op">-</span> <span class="fl">1e-9</span>:</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        sx, sy, ex, ey <span class="op">=</span> x0 <span class="op">+</span> c, y1, x0 <span class="op">+</span> c <span class="op">+</span> H, y0</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> sx <span class="op">&lt;</span> x0: sy, sx <span class="op">=</span> y1 <span class="op">-</span> (x0 <span class="op">-</span> sx), x0</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ex <span class="op">&gt;</span> x1: ey, ex <span class="op">=</span> y0 <span class="op">+</span> (ex <span class="op">-</span> x1), x1</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        out.append(seg((sx, sy), (ex, ey), color))<span class="op">;</span> c <span class="op">+=</span> step</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> concat(out)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hbracket(x0, x1, y, txt, below<span class="op">=</span><span class="va">True</span>, color<span class="op">=</span>INK2, size<span class="op">=</span><span class="fl">0.42</span>, gap<span class="op">=</span><span class="fl">0.32</span>):</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="co">"|-----| from x0 to x1 at height y, labelled under (or over) it"</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> <span class="fl">0.14</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> concat([seg((x0, y), (x1, y), color), seg((x0, y <span class="op">-</span> t), (x0, y <span class="op">+</span> t), color), seg((x1, y <span class="op">-</span> t), (x1, y <span class="op">+</span> t), color),</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>                   label(txt, size, color, (x0 <span class="op">+</span> x1) <span class="op">/</span> <span class="dv">2</span>, y <span class="op">+</span> (gap <span class="op">+</span> size <span class="op">/</span> <span class="dv">2</span>) <span class="op">*</span> (<span class="dv">1</span> <span class="cf">if</span> below <span class="cf">else</span> <span class="op">-</span><span class="dv">1</span>))])</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Placed:</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A tensor diagram placed at (x, y): cell 0's centre for 1-D and 2-D, the front-top-left corner for 3-D"</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d, x<span class="op">=</span><span class="fl">0.0</span>, y<span class="op">=</span><span class="fl">0.0</span>): <span class="va">self</span>.d, <span class="va">self</span>.x, <span class="va">self</span>.y, <span class="va">self</span>.shape <span class="op">=</span> d, x, y, <span class="bu">tuple</span>(d.tensor_shape)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">@property</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> dia(<span class="va">self</span>): <span class="cf">return</span> <span class="va">self</span>.d.to_chalk_diagram().dashing([], <span class="dv">0</span>).translate(<span class="va">self</span>.x, <span class="va">self</span>.y)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> cell(<span class="va">self</span>, <span class="op">*</span>i):</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>        <span class="co">"Centre of cell i (its front face, for 3-D)"</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.shape) <span class="op">==</span> <span class="dv">1</span>: <span class="cf">return</span> P2(<span class="va">self</span>.x, <span class="va">self</span>.y <span class="op">+</span> i[<span class="dv">0</span>])</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.shape) <span class="op">==</span> <span class="dv">2</span>: <span class="cf">return</span> P2(<span class="va">self</span>.x <span class="op">+</span> i[<span class="dv">1</span>], <span class="va">self</span>.y <span class="op">+</span> i[<span class="dv">0</span>])</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>        r, c, k <span class="op">=</span> i</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> P2(<span class="va">self</span>.x <span class="op">+</span> c <span class="op">+</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> k, <span class="va">self</span>.y <span class="op">+</span> r <span class="op">+</span> <span class="fl">0.5</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> k)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> cell_box(<span class="va">self</span>, <span class="op">*</span>i): p <span class="op">=</span> <span class="va">self</span>.cell(<span class="op">*</span>i)<span class="op">;</span> <span class="cf">return</span> (p.x <span class="op">-</span> <span class="fl">.5</span>, p.y <span class="op">-</span> <span class="fl">.5</span>, p.x <span class="op">+</span> <span class="fl">.5</span>, p.y <span class="op">+</span> <span class="fl">.5</span>)</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">@property</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> bbox(<span class="va">self</span>):</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>        <span class="co">"Visual extents (x0, y0, x1, y1), including a 3-D tensor's top and side faces"</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="va">self</span>.shape</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">==</span> <span class="dv">1</span>: <span class="cf">return</span> (<span class="va">self</span>.x <span class="op">-</span> <span class="fl">.5</span>, <span class="va">self</span>.y <span class="op">-</span> <span class="fl">.5</span>, <span class="va">self</span>.x <span class="op">+</span> <span class="fl">.5</span>, <span class="va">self</span>.y <span class="op">+</span> s[<span class="dv">0</span>] <span class="op">-</span> <span class="fl">.5</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">==</span> <span class="dv">2</span>: <span class="cf">return</span> (<span class="va">self</span>.x <span class="op">-</span> <span class="fl">.5</span>, <span class="va">self</span>.y <span class="op">-</span> <span class="fl">.5</span>, <span class="va">self</span>.x <span class="op">+</span> s[<span class="dv">1</span>] <span class="op">-</span> <span class="fl">.5</span>, <span class="va">self</span>.y <span class="op">+</span> s[<span class="dv">0</span>] <span class="op">-</span> <span class="fl">.5</span>)</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>        R, C, D <span class="op">=</span> s</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (<span class="va">self</span>.x, <span class="va">self</span>.y <span class="op">-</span> <span class="fl">.5</span> <span class="op">*</span> D, <span class="va">self</span>.x <span class="op">+</span> C <span class="op">+</span> <span class="fl">.5</span> <span class="op">*</span> D, <span class="va">self</span>.y <span class="op">+</span> R)</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> union(<span class="op">*</span>bbs): <span class="cf">return</span> (<span class="bu">min</span>(b[<span class="dv">0</span>] <span class="cf">for</span> b <span class="kw">in</span> bbs), <span class="bu">min</span>(b[<span class="dv">1</span>] <span class="cf">for</span> b <span class="kw">in</span> bbs), <span class="bu">max</span>(b[<span class="dv">2</span>] <span class="cf">for</span> b <span class="kw">in</span> bbs), <span class="bu">max</span>(b[<span class="dv">3</span>] <span class="cf">for</span> b <span class="kw">in</span> bbs))</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> figure(parts, extents, pad<span class="op">=</span><span class="fl">0.4</span>):</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The parts over a white background that covers `extents`, which fixes the drawing's bounds"</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>    x0, y0, x1, y1 <span class="op">=</span> extents</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>    back <span class="op">=</span> rectangle(x1 <span class="op">-</span> x0 <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> pad, y1 <span class="op">-</span> y0 <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> pad).fill_color(Color(<span class="st">"#ffffff"</span>)).line_width(<span class="dv">0</span>).translate((x0 <span class="op">+</span> x1) <span class="op">/</span> <span class="dv">2</span>, (y0 <span class="op">+</span> y1) <span class="op">/</span> <span class="dv">2</span>)</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> back <span class="op">+</span> concat(parts)</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>IMAGES <span class="op">=</span> Path(<span class="st">"images"</span>)</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> save(d, name, px_per_unit<span class="op">=</span><span class="dv">30</span>):</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Write images/&lt;name&gt;.svg with chalk's pure-Python backend, with a viewBox so it scales down in a narrow page"</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>    IMAGES.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>    height <span class="op">=</span> <span class="bu">int</span>(<span class="bu">round</span>(d.get_envelope().height <span class="op">*</span> px_per_unit))</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> tempfile.TemporaryDirectory() <span class="im">as</span> tmp:</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>        d.render_svg(<span class="ss">f"</span><span class="sc">{</span>tmp<span class="sc">}</span><span class="ss">/f.svg"</span>, height<span class="op">=</span>height, draw_height<span class="op">=</span><span class="dv">400</span>)</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>        svg <span class="op">=</span> Path(<span class="ss">f"</span><span class="sc">{</span>tmp<span class="sc">}</span><span class="ss">/f.svg"</span>).read_text()</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>    h, w <span class="op">=</span> re.search(<span class="vs">r'&lt;svg</span><span class="pp">[^&gt;]</span><span class="op">*?</span><span class="vs">height="</span><span class="kw">(</span><span class="dv">\d</span><span class="op">+</span><span class="kw">)</span><span class="vs">"</span><span class="pp">[^&gt;]</span><span class="op">*?</span><span class="vs">width="</span><span class="kw">(</span><span class="dv">\d</span><span class="op">+</span><span class="kw">)</span><span class="vs">"'</span>, svg).groups()</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>    svg <span class="op">=</span> svg.replace(<span class="st">"&lt;svg "</span>, <span class="ss">f'&lt;svg viewBox="0 0 </span><span class="sc">{</span>w<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">" '</span>, <span class="dv">1</span>)</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>    (IMAGES <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">.svg"</span>).write_text(svg)</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"images/</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">.svg: </span><span class="sc">{</span>w<span class="sc">}</span><span class="ss"> × </span><span class="sc">{</span>h<span class="sc">}</span><span class="ss"> px, </span><span class="sc">{</span><span class="bu">len</span>(svg) <span class="op">//</span> <span class="dv">1024</span><span class="sc">}</span><span class="ss"> kB"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="a-batch-of-rows" class="level2">
+<h2 class="anchored" data-anchor-id="a-batch-of-rows">A batch of rows</h2>
+<p>Used in <a href="./core.html#batches">core</a>. Three questions over three states, built by the fixture’s <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a> on Laya’s template and padded by <a href="https://sgaseretto.github.io/sysonelib/core.html#collate"><code>collate</code></a>: every row is one question, with its own length and its own number of options.</p>
+<div id="7d9fb5dd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> AutoTokenizer.from_pretrained(<span class="st">"fixtures/tiny-modernbert"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>builder <span class="op">=</span> RowBuilder(tok, <span class="st">"laya"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> [builder.build(<span class="st">"refund me"</span>, {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Refund?"</span>, <span class="st">"criteria"</span>: {<span class="st">"false"</span>: <span class="st">"no"</span>, <span class="st">"true"</span>: <span class="st">"yes"</span>}}),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        builder.build(<span class="st">"app crashes"</span>, {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Team?"</span>, <span class="st">"criteria"</span>: [<span class="st">"billing"</span>, <span class="st">"tech"</span>, <span class="st">"sales"</span>]}),</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        builder.build(<span class="st">"asap"</span>, {<span class="st">"type"</span>: <span class="st">"score"</span>, <span class="st">"instructions"</span>: <span class="st">"Urgent?"</span>, <span class="st">"criteria"</span>: [<span class="st">"no"</span>, <span class="st">"yes"</span>]})]</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>batch <span class="op">=</span> collate(rows, tok.pad_token_id)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">tuple</span>(v.shape) <span class="cf">for</span> k, v <span class="kw">in</span> batch.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'input_ids': (3, 32),
+ 'attention_mask': (3, 32),
+ 'marker_pos': (3, 3),
+ 'marker_mask': (3, 3),
+ 'qtype': (3,),
+ 'spans': (3, 3, 2),
+ 'answerable': (3,)}</code></pre>
+</div>
+</div>
+<p>Each position is labelled with the part of the row it belongs to, read off the row itself: the opening token, the question up to the first separator, each anchor and the option text behind it, the state after the second separator, and the closing token.</p>
+<div id="b2a2154e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> segments(row):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The segment of every position of a Laya-template row"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    out, stage <span class="op">=</span> [], <span class="st">"question"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, t <span class="kw">in</span> <span class="bu">enumerate</span>(row.ids):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> t <span class="op">==</span> tok.sep_token_id:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>            out.append(<span class="st">"special"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> t <span class="op">==</span> tok.sep_token_id: stage <span class="op">=</span> {<span class="st">"question"</span>: <span class="st">"options"</span>, <span class="st">"options"</span>: <span class="st">"state"</span>}.get(stage, stage)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> i <span class="kw">in</span> row.markers: out.append(<span class="st">"anchor"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>: out.append({<span class="st">"options"</span>: <span class="st">"option"</span>}.get(stage, stage))</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>B, L <span class="op">=</span> batch[<span class="st">"input_ids"</span>].shape</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>seg_of <span class="op">=</span> np.full((B, L), <span class="st">"pad"</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r, row <span class="kw">in</span> <span class="bu">enumerate</span>(rows): seg_of[r, :row.n_tokens] <span class="op">=</span> segments(row)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>test_eq([[j <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(L) <span class="cf">if</span> seg_of[r, j] <span class="op">==</span> <span class="st">"anchor"</span>] <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(B)], [row.markers <span class="cf">for</span> row <span class="kw">in</span> rows])</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>short <span class="op">=</span> <span class="kw">lambda</span> t: {<span class="st">"[CLS]"</span>: <span class="st">"C"</span>, <span class="st">"[SEP]"</span>: <span class="st">"S"</span>, <span class="st">"[MASK]"</span>: <span class="st">"M"</span>, <span class="st">"[PAD]"</span>: <span class="st">""</span>}.get(t, t.replace(<span class="st">"Ġ"</span>, <span class="st">""</span>)[:<span class="dv">4</span>])</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>names <span class="op">=</span> np.full((B, L), <span class="st">""</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r, row <span class="kw">in</span> <span class="bu">enumerate</span>(rows):</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j, t <span class="kw">in</span> <span class="bu">enumerate</span>(row.ids): names[r, j] <span class="op">=</span> short(tok.convert_ids_to_tokens(t))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="afac4031" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ids <span class="op">=</span> Placed(td.to_diagram(batch[<span class="st">"input_ids"</span>].numpy()).fill_color(<span class="kw">lambda</span> i, v: SEGMENTS[seg_of[i]]).fill_values(<span class="bu">format</span><span class="op">=</span><span class="kw">lambda</span> i, v: names[i]), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mp <span class="op">=</span> Placed(td.to_diagram(batch[<span class="st">"marker_pos"</span>].numpy()).fill_color(<span class="kw">lambda</span> i, v: SEGMENTS[<span class="st">"anchor"</span>] <span class="cf">if</span> batch[<span class="st">"marker_mask"</span>][i] <span class="cf">else</span> <span class="st">"#ffffff"</span>).fill_values(), <span class="dv">0</span>, <span class="fl">5.2</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mm <span class="op">=</span> Placed(td.to_diagram(batch[<span class="st">"marker_mask"</span>].<span class="bu">int</span>().numpy()).fill_color(<span class="kw">lambda</span> i, v: <span class="st">"#ffffff"</span>).fill_values(), <span class="fl">5.0</span>, <span class="fl">5.2</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [ids.dia, mp.dia, mm.dia]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(B):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    parts.append(label(<span class="ss">f"row </span><span class="sc">{</span>r<span class="sc">}</span><span class="ss"> · </span><span class="sc">{</span>QTYPE_NAMES[rows[r].qtype]<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.4</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, r, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(batch[<span class="st">"marker_mask"</span>].shape[<span class="dv">1</span>]):</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> batch[<span class="st">"marker_mask"</span>][r, k]: parts <span class="op">+=</span> [hatch(<span class="op">*</span>mp.cell_box(r, k), color<span class="op">=</span>INK2), hatch(<span class="op">*</span>mm.cell_box(r, k), color<span class="op">=</span>INK2)]</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [hbracket(<span class="op">-</span><span class="fl">0.5</span>, L <span class="op">-</span> <span class="fl">0.5</span>, B <span class="op">-</span> <span class="fl">0.1</span>, <span class="ss">f"input_ids (batch = </span><span class="sc">{</span>B<span class="sc">}</span><span class="ss">, L = </span><span class="sc">{</span>L<span class="sc">}</span><span class="ss">): padded to the longest row"</span>),</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"marker_pos (batch, K)"</span>, <span class="fl">0.4</span>, INK, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">4.3</span>, align<span class="op">=</span><span class="st">"l"</span>), label(<span class="st">"marker_mask (batch, K)"</span>, <span class="fl">0.4</span>, INK, <span class="fl">4.5</span>, <span class="fl">4.3</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> <span class="fl">10.5</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, col <span class="kw">in</span> SEGMENTS.items():</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    parts <span class="op">+=</span> [rectangle(<span class="fl">0.7</span>, <span class="fl">0.7</span>).fill_color(Color(col)).line_color(Color(INK2)).translate(x, <span class="fl">5.7</span>), label(name, <span class="fl">0.4</span>, INK2, x <span class="op">+</span> <span class="fl">0.55</span>, <span class="fl">5.7</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    x <span class="op">+=</span> <span class="fl">1.2</span> <span class="op">+</span> text_w(name, <span class="fl">0.4</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>save(figure(parts, union(ids.bbox, mp.bbox, mm.bbox, (<span class="op">-</span><span class="fl">5.6</span>, <span class="op">-</span><span class="fl">0.5</span>, L, <span class="fl">7.4</span>))), <span class="st">"batch"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/batch.svg: 1152 × 270 px, 111 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/batch.svg" class="img-fluid"></p>
+</section>
+<section id="the-gather-at-the-anchors" class="level2">
+<h2 class="anchored" data-anchor-id="the-gather-at-the-anchors">The gather at the anchors</h2>
+<p>Used in <a href="./models.html#decisionhead">models</a>. The head reads one vector per option: the encoder’s output at that option’s anchor. For a batch that is one <code>torch.gather</code> along the sequence axis, with <code>marker_pos</code> repeated over the width; a padded option slot points at position 0 and gathers a vector that <code>marker_mask</code> then hides. The gather drawn is the head’s own, so scoring the gathered vectors equals the head’s forward pass:</p>
+<div id="560f3f4c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>Bh, Lh, D <span class="op">=</span> <span class="dv">2</span>, <span class="dv">8</span>, <span class="dv">4</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> torch.arange(Bh <span class="op">*</span> Lh <span class="op">*</span> D, dtype<span class="op">=</span>torch.float32).reshape(Bh, Lh, D) <span class="op">/</span> <span class="dv">10</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>marker_pos, marker_mask <span class="op">=</span> torch.tensor([[<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">6</span>], [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">0</span>]]), torch.tensor([[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>]]).<span class="bu">bool</span>()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>qtype <span class="op">=</span> torch.tensor([QTYPES[<span class="st">"choice"</span>], QTYPES[<span class="st">"noul"</span>]])</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>gathered <span class="op">=</span> torch.gather(h, <span class="dv">1</span>, marker_pos[:, :, <span class="va">None</span>].expand(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, D))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>head <span class="op">=</span> DecisionHead(D, layers<span class="op">=</span><span class="dv">0</span>).<span class="bu">eval</span>()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>test_close(head.score(gathered <span class="op">+</span> head.type_emb(qtype)[:, <span class="va">None</span>, :], marker_mask), head(h, torch.ones(Bh, Lh), marker_pos, marker_mask, qtype))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>test_eq(gathered[<span class="dv">1</span>, <span class="dv">2</span>], h[<span class="dv">1</span>, <span class="dv">0</span>])        <span class="co"># the padded slot gathers position 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="f5e810a7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>KCOL <span class="op">=</span> [PAL[<span class="st">"blue"</span>], PAL[<span class="st">"orange"</span>], PAL[<span class="st">"aqua"</span>]]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>col_k <span class="op">=</span> <span class="kw">lambda</span> b, k: PAL[<span class="st">"grey"</span>] <span class="cf">if</span> <span class="kw">not</span> marker_mask[b, k] <span class="cf">else</span> KCOL[k]</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> src(i, v):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    b, l, _ <span class="op">=</span> i</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(marker_pos.shape[<span class="dv">1</span>]):</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> marker_pos[b, k] <span class="op">==</span> l <span class="kw">and</span> marker_mask[b, k]: <span class="cf">return</span> tint(col_k(b, k), <span class="fl">.85</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"#f3f2ee"</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>H <span class="op">=</span> Placed(td.to_diagram(h).fill_color(src), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>O <span class="op">=</span> Placed(td.to_diagram(gathered).fill_color(<span class="kw">lambda</span> i, v: tint(col_k(i[<span class="dv">0</span>], i[<span class="dv">1</span>]), <span class="fl">.85</span>)), <span class="fl">15.2</span>, <span class="dv">0</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [H.dia, O.dia]</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T_, n, nm <span class="kw">in</span> ((H, Lh, <span class="st">"L"</span>), (O, marker_pos.shape[<span class="dv">1</span>], <span class="st">"K"</span>)):</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> <span class="bu">range</span>(n): parts.append(label(<span class="bu">str</span>(c), <span class="fl">0.3</span>, MUTED, T_.x <span class="op">+</span> c <span class="op">+</span> <span class="fl">.5</span>, Bh <span class="op">+</span> <span class="fl">0.35</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(Bh): parts.append(label(<span class="ss">f"b=</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.34</span>, INK2, T_.x <span class="op">-</span> <span class="fl">0.25</span>, b <span class="op">+</span> <span class="fl">.5</span>, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    parts.append(hbracket(T_.x, T_.x <span class="op">+</span> n, Bh <span class="op">+</span> <span class="fl">0.8</span>, <span class="ss">f"</span><span class="sc">{</span>nm<span class="sc">}</span><span class="ss"> = </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss">"</span>, size<span class="op">=</span><span class="fl">0.38</span>))</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    parts <span class="op">+=</span> [seg((T_.x <span class="op">-</span> <span class="fl">.18</span>, <span class="op">-</span><span class="fl">.18</span>), (T_.x <span class="op">-</span> <span class="fl">.18</span> <span class="op">+</span> <span class="fl">.5</span> <span class="op">*</span> D, <span class="op">-</span><span class="fl">.18</span> <span class="op">-</span> <span class="fl">.5</span> <span class="op">*</span> D), INK2), label(<span class="ss">f"width = </span><span class="sc">{</span>D<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.36</span>, INK2, T_.x <span class="op">-</span> <span class="fl">0.4</span>, <span class="op">-</span><span class="fl">.25</span> <span class="op">*</span> D <span class="op">-</span> <span class="fl">.35</span>, align<span class="op">=</span><span class="st">"r"</span>)]</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [label(<span class="st">"h: the encoder's output (batch, L, width)"</span>, <span class="fl">0.45</span>, INK, H.x, <span class="op">-</span><span class="fl">3.0</span>, align<span class="op">=</span><span class="st">"l"</span>),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"anchors (batch, K, width)"</span>, <span class="fl">0.45</span>, INK, O.x, <span class="op">-</span><span class="fl">3.0</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>ax0, ax1 <span class="op">=</span> H.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.6</span>, O.x <span class="op">-</span> <span class="fl">1.6</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [arrow((ax0, <span class="fl">1.0</span>), (ax1, <span class="fl">1.0</span>), INK2, head<span class="op">=</span><span class="fl">0.25</span>), label(<span class="st">"gather(1, marker_pos)"</span>, <span class="fl">0.36</span>, INK, (ax0 <span class="op">+</span> ax1) <span class="op">/</span> <span class="dv">2</span>, <span class="fl">0.45</span>)]</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>mp2 <span class="op">=</span> Placed(td.to_diagram(marker_pos.numpy()).fill_color(<span class="kw">lambda</span> i, v: tint(col_k(<span class="op">*</span>i), <span class="fl">.85</span>)).fill_values(font_size<span class="op">=</span><span class="fl">0.4</span>), <span class="fl">3.0</span>, <span class="fl">5.4</span>)</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>mm2 <span class="op">=</span> Placed(td.to_diagram(marker_mask.<span class="bu">int</span>().numpy()).fill_color(<span class="kw">lambda</span> i, v: <span class="st">"#ffffff"</span>).fill_values(font_size<span class="op">=</span><span class="fl">0.4</span>), <span class="fl">8.0</span>, <span class="fl">5.4</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [mp2.dia, mm2.dia, hatch(<span class="op">*</span>mp2.cell_box(<span class="dv">1</span>, <span class="dv">2</span>), color<span class="op">=</span>INK2), hatch(<span class="op">*</span>mm2.cell_box(<span class="dv">1</span>, <span class="dv">2</span>), color<span class="op">=</span>INK2),</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"marker_pos (batch, K)"</span>, <span class="fl">0.38</span>, INK, mp2.x <span class="op">-</span> <span class="fl">0.5</span>, <span class="fl">4.45</span>, align<span class="op">=</span><span class="st">"l"</span>), label(<span class="st">"marker_mask (batch, K)"</span>, <span class="fl">0.38</span>, INK, mm2.x <span class="op">-</span> <span class="fl">0.5</span>, <span class="fl">4.45</span>, align<span class="op">=</span><span class="st">"l"</span>),</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"anchors[b, k, :] = h[b, marker_pos[b, k], :]; the padded slot (b = 1, k = 2) gathers h[1, 0, :], and marker_mask hides it"</span>, <span class="fl">0.34</span>, INK2, mp2.x <span class="op">-</span> <span class="fl">0.5</span>, <span class="fl">7.3</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>save(figure(parts, union(H.bbox, O.bbox, (H.x <span class="op">-</span> <span class="fl">2.4</span>, <span class="op">-</span><span class="fl">3.4</span>, O.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.3</span>, <span class="fl">7.7</span>))), <span class="st">"anchor_gather"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/anchor_gather.svg: 924 × 357 px, 140 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/anchor_gather.svg" class="img-fluid"></p>
+</section>
+<section id="the-type-embedding-broadcast-over-a-row" class="level2">
+<h2 class="anchored" data-anchor-id="the-type-embedding-broadcast-over-a-row">The type embedding, broadcast over a row</h2>
+<p>Used in <a href="./models.html#decisionhead">models</a>. Before its layers, the head adds a learned vector for the question’s type to every position of the row: one row of <code>type_emb.weight</code> per example, picked by <code>qtype</code>, given a length-1 sequence axis with <code>[:, None, :]</code> and broadcast along the row’s length, so no copy is made. This is how one head answers three kinds of question: the same anchors read differently when the row is a score rather than a choice.</p>
+<div id="48bbb488" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Bt, Lt, Dt <span class="op">=</span> <span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">4</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> torch.tensor([[<span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.4</span>, <span class="fl">0.0</span>], [<span class="op">-</span><span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>], [<span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="op">-</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.4</span>]])    <span class="co"># type_emb.weight: choice, score, noul</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>qt <span class="op">=</span> torch.tensor([QTYPES[<span class="st">"choice"</span>], QTYPES[<span class="st">"noul"</span>]])</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>hb <span class="op">=</span> torch.zeros(Bt, Lt, Dt)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> W[qt][:, <span class="va">None</span>, :]                                          <span class="co"># (batch, 1, width)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>test_eq(e.shape, (Bt, <span class="dv">1</span>, Dt))<span class="op">;</span> test_eq((hb <span class="op">+</span> e).shape, (Bt, Lt, Dt))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>emb <span class="op">=</span> torch.nn.Embedding(<span class="dv">3</span>, Dt)<span class="op">;</span> emb.weight.data <span class="op">=</span> W</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>test_eq(emb(qt).detach()[:, <span class="va">None</span>, :], e)                                <span class="co"># what DecisionHead.forward adds</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="7ead2d1d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>TCOL <span class="op">=</span> {<span class="dv">0</span>: PAL[<span class="st">"orange"</span>], <span class="dv">1</span>: PAL[<span class="st">"violet"</span>], <span class="dv">2</span>: PAL[<span class="st">"aqua"</span>]}</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>rowcol <span class="op">=</span> <span class="kw">lambda</span> b: TCOL[<span class="bu">int</span>(qt[b])]</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>fmt1 <span class="op">=</span> <span class="kw">lambda</span> i, v: <span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:+.1f}</span><span class="ss">"</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> []</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>q_ <span class="op">=</span> Placed(td.to_diagram(qt.numpy()).fill_color(<span class="kw">lambda</span> i, v: tint(TCOL[<span class="bu">int</span>(v)], <span class="fl">.7</span>)).fill_values(font_size<span class="op">=</span><span class="fl">0.42</span>), <span class="fl">0.8</span>, <span class="dv">0</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>W_ <span class="op">=</span> Placed(td.to_diagram(W.numpy()).fill_color(<span class="kw">lambda</span> i, v: tint(TCOL[i[<span class="dv">0</span>]], <span class="fl">.45</span>)).fill_values(font_size<span class="op">=</span><span class="fl">0.3</span>, <span class="bu">format</span><span class="op">=</span>fmt1), <span class="fl">4.6</span>, <span class="op">-</span><span class="fl">0.5</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>E_ <span class="op">=</span> Placed(td.to_diagram(W[qt].numpy()).fill_color(<span class="kw">lambda</span> i, v: tint(rowcol(i[<span class="dv">0</span>]), <span class="fl">.7</span>)).fill_values(font_size<span class="op">=</span><span class="fl">0.3</span>, <span class="bu">format</span><span class="op">=</span>fmt1), <span class="fl">12.6</span>, <span class="dv">0</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [q_.dia, W_.dia, E_.dia, label(<span class="st">"qtype (batch,)"</span>, <span class="fl">0.38</span>, INK, q_.x, <span class="op">-</span><span class="fl">1.05</span>), label(<span class="st">"type_emb.weight (3, width)"</span>, <span class="fl">0.38</span>, INK, W_.x <span class="op">+</span> <span class="fl">1.5</span>, <span class="op">-</span><span class="fl">1.55</span>),</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"type_emb(qtype) (batch, width)"</span>, <span class="fl">0.38</span>, INK, E_.x <span class="op">+</span> <span class="fl">1.5</span>, <span class="op">-</span><span class="fl">1.05</span>)]</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(Bt): parts.append(label(<span class="ss">f"b=</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.32</span>, MUTED, q_.x <span class="op">-</span> <span class="fl">0.65</span>, b, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, i <span class="kw">in</span> QTYPES.items(): parts.append(label(name, <span class="fl">0.3</span>, INK2, W_.x <span class="op">-</span> <span class="fl">0.65</span>, W_.y <span class="op">+</span> i, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [arrow((q_.x <span class="op">+</span> <span class="fl">0.7</span>, <span class="fl">0.5</span>), (W_.x <span class="op">-</span> <span class="fl">1.9</span>, <span class="fl">0.5</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>), label(<span class="st">"picks rows"</span>, <span class="fl">0.3</span>, INK2, (q_.x <span class="op">+</span> W_.x <span class="op">-</span> <span class="fl">1.2</span>) <span class="op">/</span> <span class="dv">2</span>, <span class="fl">0.1</span>),</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>          arrow((W_.x <span class="op">+</span> Dt <span class="op">-</span> <span class="fl">0.3</span>, <span class="fl">0.5</span>), (E_.x <span class="op">-</span> <span class="fl">0.7</span>, <span class="fl">0.5</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>)]</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>y3 <span class="op">=</span> <span class="fl">5.2</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>H_ <span class="op">=</span> Placed(td.to_diagram(hb).fill_color(<span class="st">"#f3f2ee"</span>), <span class="dv">0</span>, y3)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>Eb <span class="op">=</span> Placed(td.to_diagram(torch.zeros(Bt, Lt, Dt)).fill_color(<span class="kw">lambda</span> i, v: tint(rowcol(i[<span class="dv">0</span>]), <span class="fl">.8</span>)).fill_opacity(<span class="kw">lambda</span> i, v: <span class="fl">1.0</span> <span class="cf">if</span> i[<span class="dv">1</span>] <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">0.22</span>), <span class="fl">11.0</span>, y3)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>O_ <span class="op">=</span> Placed(td.to_diagram(hb <span class="op">+</span> e).fill_color(<span class="kw">lambda</span> i, v: tint(rowcol(i[<span class="dv">0</span>]), <span class="fl">.45</span>)), <span class="fl">22.0</span>, y3)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [H_.dia, Eb.dia, O_.dia]</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T_, nm <span class="kw">in</span> ((H_, <span class="st">"h (batch, L, width)"</span>), (Eb, <span class="st">"type_emb(qtype)[:, None, :] (batch, 1, width)"</span>), (O_, <span class="st">"h + type_emb(qtype)[:, None, :]"</span>)):</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    parts.append(label(nm, <span class="fl">0.36</span>, INK, T_.x, y3 <span class="op">-</span> Dt <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">0.75</span>, align<span class="op">=</span><span class="st">"l"</span>))</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(Bt): parts.append(label(<span class="ss">f"b=</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.3</span>, MUTED, T_.x <span class="op">-</span> <span class="fl">0.2</span>, y3 <span class="op">+</span> b <span class="op">+</span> <span class="fl">.5</span>, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    parts.append(hbracket(T_.x, T_.x <span class="op">+</span> (<span class="dv">1</span> <span class="cf">if</span> T_ <span class="kw">is</span> Eb <span class="cf">else</span> Lt), y3 <span class="op">+</span> Bt <span class="op">+</span> <span class="fl">0.35</span>, <span class="st">"1"</span> <span class="cf">if</span> T_ <span class="kw">is</span> Eb <span class="cf">else</span> <span class="ss">f"L = </span><span class="sc">{</span>Lt<span class="sc">}</span><span class="ss">"</span>, size<span class="op">=</span><span class="fl">0.34</span>))</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [label(<span class="st">"broadcast along L: no copy"</span>, <span class="fl">0.3</span>, INK2, Eb.x <span class="op">+</span> <span class="dv">1</span> <span class="op">+</span> (Lt <span class="op">-</span> <span class="dv">1</span>) <span class="op">/</span> <span class="dv">2</span>, y3 <span class="op">+</span> Bt <span class="op">+</span> <span class="fl">0.7</span>),</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"+"</span>, <span class="fl">0.9</span>, INK, (H_.bbox[<span class="dv">2</span>] <span class="op">+</span> Eb.x) <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">0.1</span>, y3 <span class="op">+</span> <span class="fl">1.0</span>), label(<span class="st">"="</span>, <span class="fl">0.9</span>, INK, (Eb.bbox[<span class="dv">2</span>] <span class="op">+</span> O_.x) <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">0.1</span>, y3 <span class="op">+</span> <span class="fl">1.0</span>),</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>          arrow((E_.x <span class="op">+</span> <span class="fl">0.5</span>, <span class="fl">1.75</span>), (Eb.x <span class="op">+</span> <span class="fl">0.8</span>, y3 <span class="op">-</span> Dt <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">1.15</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>), label(<span class="st">"[:, None, :]"</span>, <span class="fl">0.32</span>, INK2, E_.x <span class="op">+</span> <span class="fl">1.0</span>, (<span class="fl">1.9</span> <span class="op">+</span> y3 <span class="op">-</span> Dt <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">1.2</span>) <span class="op">/</span> <span class="dv">2</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>save(figure(parts, union(H_.bbox, O_.bbox, q_.bbox, (<span class="op">-</span><span class="fl">1.6</span>, <span class="op">-</span><span class="fl">2.0</span>, O_.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.2</span>, y3 <span class="op">+</span> Bt <span class="op">+</span> <span class="fl">1.2</span>))), <span class="st">"type_embedding"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/type_embedding.svg: 977 × 336 px, 219 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/type_embedding.svg" class="img-fluid"></p>
+</section>
+<section id="the-masked-softmax" class="level2">
+<h2 class="anchored" data-anchor-id="the-masked-softmax">The masked softmax</h2>
+<p>Used in <a href="./models.html#decisionhead">models</a> and <a href="./losses.html#soft-cross-entropy">losses</a>. A batch mixes rows with different option counts, so every row’s logits are padded to the batch’s K; the head writes <span class="math inline">\(-10^4\)</span> into the padded slots, and the softmax across the options gives them a probability of exactly 0, so they take no probability mass and, in the loss, no gradient.</p>
+<div id="8a18ca84" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> torch.tensor([[<span class="fl">2.0</span>, <span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.3</span>, <span class="op">-</span><span class="fl">0.3</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.1</span>, <span class="fl">1.2</span>, <span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.5</span>]])</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>ms <span class="op">=</span> torch.tensor([[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>]]).<span class="bu">bool</span>()</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>zm <span class="op">=</span> zs.masked_fill(<span class="op">~</span>ms, <span class="op">-</span><span class="fl">1e4</span>)                                 <span class="co"># what DecisionHead.score does to padded slots</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> torch.softmax(zm, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>test_eq(ps[<span class="op">~</span>ms].<span class="bu">abs</span>().<span class="bu">max</span>().item(), <span class="fl">0.0</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>test_close(ps.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>), torch.ones(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="dda13aaa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fmtz <span class="op">=</span> <span class="kw">lambda</span> i, v: <span class="st">"−10⁴"</span> <span class="cf">if</span> v <span class="op">&lt;=</span> <span class="op">-</span><span class="fl">1e3</span> <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>cell_col <span class="op">=</span> <span class="kw">lambda</span> i, v: SEGMENTS[<span class="st">"option"</span>] <span class="cf">if</span> ms[i] <span class="cf">else</span> <span class="st">"#f3f2ee"</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>Zp <span class="op">=</span> Placed(td.to_diagram(zm.numpy()).fill_color(cell_col).fill_values(<span class="bu">format</span><span class="op">=</span>fmtz, font_size<span class="op">=</span><span class="fl">0.3</span>), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>Pp <span class="op">=</span> Placed(td.to_diagram(ps.numpy()).fill_color(cell_col).fill_values(<span class="bu">format</span><span class="op">=</span><span class="kw">lambda</span> i, v: <span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:.2f}</span><span class="ss">"</span>, font_size<span class="op">=</span><span class="fl">0.3</span>), <span class="fl">7.5</span>, <span class="dv">0</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [Zp.dia, Pp.dia, label(<span class="st">"logits (batch, K)"</span>, <span class="fl">0.4</span>, INK, <span class="op">-</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.1</span>, align<span class="op">=</span><span class="st">"l"</span>), label(<span class="st">"p = softmax over K"</span>, <span class="fl">0.4</span>, INK, <span class="fl">7.0</span>, <span class="op">-</span><span class="fl">1.1</span>, align<span class="op">=</span><span class="st">"l"</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>         arrow((Zp.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.4</span>, <span class="dv">1</span>), (Pp.bbox[<span class="dv">0</span>] <span class="op">-</span> <span class="fl">0.4</span>, <span class="dv">1</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>), label(<span class="st">"softmax(dim=-1)"</span>, <span class="fl">0.32</span>, INK2, (Zp.bbox[<span class="dv">2</span>] <span class="op">+</span> Pp.bbox[<span class="dv">0</span>]) <span class="op">/</span> <span class="dv">2</span>, <span class="fl">0.45</span>)]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r, name <span class="kw">in</span> <span class="bu">enumerate</span>((<span class="st">"choice, k = 4"</span>, <span class="st">"noul, k = 2"</span>, <span class="st">"score, k = 4"</span>)): parts.append(label(name, <span class="fl">0.32</span>, MUTED, <span class="op">-</span><span class="fl">0.8</span>, r, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T_ <span class="kw">in</span> (Zp, Pp):</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">2</span>, <span class="dv">3</span>): parts.append(hatch(<span class="op">*</span>T_.cell_box(<span class="dv">1</span>, k), color<span class="op">=</span>INK2, step<span class="op">=</span><span class="fl">0.5</span>))</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>save(figure(parts, union(Zp.bbox, Pp.bbox, (<span class="op">-</span><span class="fl">4.0</span>, <span class="op">-</span><span class="fl">1.6</span>, Pp.bbox[<span class="dv">2</span>], <span class="fl">3.0</span>))), <span class="st">"masked_softmax"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/masked_softmax.svg: 475 × 162 px, 27 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/masked_softmax.svg" class="img-fluid"></p>
+</section>
+<section id="a-row-and-its-budgets" class="level2">
+<h2 class="anchored" data-anchor-id="a-row-and-its-budgets">A row and its budgets</h2>
+<p>Used in <a href="./template.html#rowbuilder">template</a>. A row built with small budgets, so all of them bind: every option is its anchor and at most <code>option_tokens</code> tokens, the question and its options share <code>head_max_len</code>, and the state gets what is left of <code>max_len</code>, cut on the right.</p>
+<div id="c22e05b5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>small <span class="op">=</span> RowBuilder(tok, RowTemplate.preset(<span class="st">"laya"</span>).replace(max_len<span class="op">=</span><span class="dv">40</span>, head_max_len<span class="op">=</span><span class="dv">24</span>, option_tokens<span class="op">=</span><span class="dv">3</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>rb <span class="op">=</span> small.build(<span class="st">"the customer writes that the invoice was charged twice and asks for the money back today"</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                 {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which team?"</span>, <span class="st">"criteria"</span>: {<span class="st">"billing"</span>: <span class="st">"invoices, refunds"</span>, <span class="st">"tech"</span>: <span class="st">"bugs, outages"</span>, <span class="st">"sales"</span>: <span class="st">"contracts"</span>}})</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>sg <span class="op">=</span> segments(rb)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>first_sep, second_sep <span class="op">=</span> [j <span class="cf">for</span> j, t <span class="kw">in</span> <span class="bu">enumerate</span>(rb.ids) <span class="cf">if</span> t <span class="op">==</span> tok.sep_token_id][:<span class="dv">2</span>]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>test_eq((rb.n_tokens, <span class="bu">len</span>(rb.markers)), (<span class="dv">40</span>, <span class="dv">3</span>))</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">all</span>(b <span class="op">-</span> a <span class="op">&lt;=</span> <span class="dv">1</span> <span class="op">+</span> <span class="dv">3</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(rb.markers, rb.markers[<span class="dv">1</span>:] <span class="op">+</span> [second_sep])), <span class="va">True</span>)   <span class="co"># anchor + at most 3 tokens</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>test_eq((first_sep <span class="op">-</span> <span class="dv">1</span>) <span class="op">+</span> (second_sep <span class="op">-</span> first_sep <span class="op">-</span> <span class="dv">1</span>), <span class="dv">24</span>)     <span class="co"># the question run and the options fill head_max_len; the question was cut to fit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="223cc39b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>rn <span class="op">=</span> [short(tok.convert_ids_to_tokens(t)) <span class="cf">for</span> t <span class="kw">in</span> rb.ids]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>R_ <span class="op">=</span> Placed(td.to_diagram(np.array(rb.ids)[<span class="va">None</span>]).fill_color(<span class="kw">lambda</span> i, v: SEGMENTS[sg[i[<span class="dv">1</span>]]]).fill_values(<span class="bu">format</span><span class="op">=</span><span class="kw">lambda</span> i, v: rn[i[<span class="dv">1</span>]], font_size<span class="op">=</span><span class="fl">0.28</span>), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [R_.dia]</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>ends <span class="op">=</span> rb.markers[<span class="dv">1</span>:] <span class="op">+</span> [second_sep]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, (a, b) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">zip</span>(rb.markers, ends)): parts.append(hbracket(a <span class="op">-</span> <span class="fl">0.45</span>, b <span class="op">-</span> <span class="fl">0.55</span>, <span class="op">-</span><span class="fl">0.85</span>, <span class="ss">f"option </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: ≤ 1 + 3"</span>, below<span class="op">=</span><span class="va">False</span>, size<span class="op">=</span><span class="fl">0.28</span>, gap<span class="op">=</span><span class="fl">0.25</span>))</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [hbracket(<span class="fl">0.55</span>, first_sep <span class="op">-</span> <span class="fl">0.55</span>, <span class="op">-</span><span class="fl">0.85</span>, <span class="st">"question: what is left of 24"</span>, below<span class="op">=</span><span class="va">False</span>, size<span class="op">=</span><span class="fl">0.28</span>, gap<span class="op">=</span><span class="fl">0.25</span>),</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>          hbracket(<span class="op">-</span><span class="fl">0.45</span>, second_sep <span class="op">+</span> <span class="fl">0.45</span>, <span class="fl">0.8</span>, <span class="st">"the question and its options: head_max_len = 24"</span>, size<span class="op">=</span><span class="fl">0.32</span>),</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>          hbracket(second_sep <span class="op">+</span> <span class="fl">0.55</span>, rb.n_tokens <span class="op">-</span> <span class="fl">1.55</span>, <span class="fl">0.8</span>, <span class="st">"the state: the rest of max_len = 40, cut on the right"</span>, size<span class="op">=</span><span class="fl">0.32</span>),</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>          hbracket(<span class="op">-</span><span class="fl">0.45</span>, rb.n_tokens <span class="op">-</span> <span class="fl">0.55</span>, <span class="fl">2.2</span>, <span class="ss">f"the row: max_len = </span><span class="sc">{</span>rb<span class="sc">.</span>n_tokens<span class="sc">}</span><span class="ss"> tokens"</span>, size<span class="op">=</span><span class="fl">0.32</span>)]</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>save(figure(parts, (<span class="op">-</span><span class="fl">0.8</span>, <span class="op">-</span><span class="fl">2.2</span>, rb.n_tokens, <span class="fl">3.2</span>)), <span class="st">"row_budgets"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/row_budgets.svg: 1247 × 186 px, 43 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/row_budgets.svg" class="img-fluid"></p>
+</section>
+<section id="labels-packed-for-the-trainer" class="level2">
+<h2 class="anchored" data-anchor-id="labels-packed-for-the-trainer">Labels packed for the Trainer</h2>
+<p>Used in <a href="./learner.html#decisiontrainer">learner</a>. <code>prediction_step</code> hands the Trainer one tensor per batch, (batch, K, 5): the target, the marker mask, the question type, the label and whether the gold answers the question at all (for the act head), each broadcast over the options. Batches have different K, and the Trainer’s evaluation loop joins them with <code>nested_concat</code>, padding with −100; the packing puts the options on the axis that gets padded, and the mask channel is what tells a real option from padding when <a href="https://sgaseretto.github.io/sysonelib/learner.html#unpack_labels"><code>unpack_labels</code></a> reads them back.</p>
+<div id="ecfc4a27" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers.trainer_pt_utils <span class="im">import</span> nested_concat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="2862051b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>gold_rows <span class="op">=</span> [builder.build(<span class="st">"refund me"</span>, {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Refund?"</span>, <span class="st">"criteria"</span>: {<span class="st">"false"</span>: <span class="st">"no"</span>, <span class="st">"true"</span>: <span class="st">"yes"</span>}}, {<span class="st">"noul"</span>: <span class="fl">0.8</span>}),</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>             builder.build(<span class="st">"app crashes"</span>, {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Team?"</span>, <span class="st">"criteria"</span>: [<span class="st">"billing"</span>, <span class="st">"tech"</span>, <span class="st">"sales"</span>]}, {<span class="st">"label"</span>: <span class="st">"tech"</span>}),</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>             builder.build(<span class="st">"asap"</span>, {<span class="st">"type"</span>: <span class="st">"score"</span>, <span class="st">"instructions"</span>: <span class="st">"Urgent?"</span>, <span class="st">"criteria"</span>: [<span class="st">"no"</span>, <span class="st">"yes"</span>]}, {<span class="st">"score"</span>: <span class="fl">0.9</span>}),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>             builder.build(<span class="st">"hello"</span>, {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Spam?"</span>, <span class="st">"criteria"</span>: {<span class="st">"false"</span>: <span class="st">"no"</span>, <span class="st">"true"</span>: <span class="st">"yes"</span>}}, {<span class="st">"noul"</span>: <span class="fl">0.1</span>})]</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>pa, pb <span class="op">=</span> pack_labels(collate(gold_rows[:<span class="dv">2</span>], <span class="dv">0</span>)), pack_labels(collate(gold_rows[<span class="dv">2</span>:], <span class="dv">0</span>))</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> nested_concat(pa, pb, padding_index<span class="op">=-</span><span class="dv">100</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">tuple</span>(pa.shape), <span class="bu">tuple</span>(pb.shape), <span class="bu">tuple</span>(joined.shape)), ((<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>), (<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">5</span>), (<span class="dv">4</span>, <span class="dv">3</span>, <span class="dv">5</span>)))</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.learner <span class="im">import</span> unpack_labels</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>tg, mk, qq, lb <span class="op">=</span> unpack_labels(joined.numpy())</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>test_eq(mk.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>).tolist(), [<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="1cbb4261" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>CH <span class="op">=</span> [(<span class="st">"target"</span>, PAL[<span class="st">"blue"</span>]), (<span class="st">"marker mask"</span>, PAL[<span class="st">"grey"</span>]), (<span class="st">"qtype"</span>, PAL[<span class="st">"violet"</span>]), (<span class="st">"label"</span>, PAL[<span class="st">"aqua"</span>]), (<span class="st">"answerable"</span>, PAL[<span class="st">"orange"</span>])]</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>parts, x <span class="op">=</span> [], <span class="fl">0.0</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>fmtp <span class="op">=</span> <span class="kw">lambda</span> i, v: <span class="st">"−100"</span> <span class="cf">if</span> v <span class="op">==</span> <span class="op">-</span><span class="dv">100</span> <span class="cf">else</span> (<span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:.1f}</span><span class="ss">"</span> <span class="cf">if</span> <span class="bu">abs</span>(v <span class="op">-</span> <span class="bu">round</span>(v)) <span class="op">&gt;</span> <span class="fl">1e-6</span> <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(v)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c, (name, colr) <span class="kw">in</span> <span class="bu">enumerate</span>(CH):</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    P_ <span class="op">=</span> Placed(td.to_diagram(joined[..., c].numpy()).fill_color(<span class="kw">lambda</span> i, v, colr<span class="op">=</span>colr: <span class="st">"#ffffff"</span> <span class="cf">if</span> v <span class="op">==</span> <span class="op">-</span><span class="dv">100</span> <span class="cf">else</span> tint(colr, <span class="fl">.45</span>)).fill_values(<span class="bu">format</span><span class="op">=</span>fmtp, font_size<span class="op">=</span><span class="fl">0.3</span>), x, <span class="dv">0</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    parts <span class="op">+=</span> [P_.dia, label(<span class="ss">f"[..., </span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">] </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.36</span>, INK, x <span class="op">-</span> <span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> joined[r, k, c] <span class="op">==</span> <span class="op">-</span><span class="dv">100</span>: parts.append(hatch(<span class="op">*</span>P_.cell_box(r, k), color<span class="op">=</span>MUTED, step<span class="op">=</span><span class="fl">0.5</span>))</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    x <span class="op">+=</span> <span class="fl">4.6</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>parts <span class="op">+=</span> [label(<span class="st">"batch 1 (K = 3)"</span>, <span class="fl">0.32</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">0.5</span>, align<span class="op">=</span><span class="st">"r"</span>), label(<span class="st">"batch 2 (K = 2)"</span>, <span class="fl">0.32</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">2.5</span>, align<span class="op">=</span><span class="st">"r"</span>),</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>          seg((<span class="op">-</span><span class="fl">0.7</span>, <span class="fl">1.5</span>), (x <span class="op">-</span> <span class="fl">1.1</span>, <span class="fl">1.5</span>), INK2, dash<span class="op">=</span>[<span class="dv">4</span>, <span class="dv">3</span>]),</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>          label(<span class="st">"nested_concat(batch 1, batch 2, padding_index=-100): the options axis is padded, the batches stacked"</span>, <span class="fl">0.32</span>, INK2, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">4.2</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>save(figure(parts, (<span class="op">-</span><span class="fl">4.2</span>, <span class="op">-</span><span class="fl">1.5</span>, x <span class="op">-</span> <span class="fl">1.0</span>, <span class="fl">4.6</span>)), <span class="st">"pack_labels"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/pack_labels.svg: 810 × 207 px, 62 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/pack_labels.svg" class="img-fluid"></p>
+</section>
+<section id="what-a-feature-cache-stores" class="level2">
+<h2 class="anchored" data-anchor-id="what-a-feature-cache-stores">What a feature cache stores</h2>
+<p>Used in <a href="./cache.html">cache</a>. A frozen encoder gives the same output for a row every epoch, so it runs once. <code>rows</code> mode keeps the whole output, a vector per position, which a head with layers needs; <code>masks</code> mode keeps only the vectors at the anchors, k per row instead of n, which is all a head without layers reads.</p>
+<div id="8d31ed21" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>row_c <span class="op">=</span> gold_rows[<span class="dv">1</span>]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>hid <span class="op">=</span> torch.arange(row_c.n_tokens <span class="op">*</span> <span class="dv">4</span>, dtype<span class="op">=</span>torch.float32).reshape(row_c.n_tokens, <span class="dv">4</span>).T      <span class="co"># (width, n): positions along the axis</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>anc <span class="op">=</span> hid[:, row_c.markers]</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>test_eq(anc.shape, (<span class="dv">4</span>, <span class="bu">len</span>(row_c.markers)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="39cd477d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>is_m <span class="op">=</span> <span class="kw">lambda</span> j: j <span class="kw">in</span> row_c.markers</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>Hc <span class="op">=</span> Placed(td.to_diagram(hid.numpy()).fill_color(<span class="kw">lambda</span> i, v: SEGMENTS[<span class="st">"anchor"</span>] <span class="cf">if</span> is_m(i[<span class="dv">1</span>]) <span class="cf">else</span> SEGMENTS[<span class="st">"question"</span>] <span class="cf">if</span> sg_c[i[<span class="dv">1</span>]] <span class="op">==</span> <span class="st">"question"</span> <span class="cf">else</span> <span class="st">"#e8e7e1"</span>), <span class="dv">0</span>, <span class="dv">0</span>) <span class="cf">if</span> (sg_c <span class="op">:=</span> segments(row_c)) <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>Ac <span class="op">=</span> Placed(td.to_diagram(anc.numpy()).fill_color(SEGMENTS[<span class="st">"anchor"</span>]), row_c.n_tokens <span class="op">+</span> <span class="fl">3.0</span>, <span class="dv">0</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [Hc.dia, Ac.dia, hbracket(<span class="op">-</span><span class="fl">0.5</span>, row_c.n_tokens <span class="op">-</span> <span class="fl">0.5</span>, <span class="fl">3.8</span>, <span class="ss">f"rows mode: n × width per row (n = </span><span class="sc">{</span>row_c<span class="sc">.</span>n_tokens<span class="sc">}</span><span class="ss"> here; 291 on average for typed-decisions: 3.6 GB)"</span>, size<span class="op">=</span><span class="fl">0.34</span>),</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>         hbracket(Ac.x <span class="op">-</span> <span class="fl">0.5</span>, Ac.x <span class="op">+</span> <span class="bu">len</span>(row_c.markers) <span class="op">-</span> <span class="fl">0.5</span>, <span class="fl">3.8</span>, <span class="ss">f"masks mode: k × width (k = </span><span class="sc">{</span><span class="bu">len</span>(row_c.markers)<span class="sc">}</span><span class="ss">; 3.55 on average: 44 MB)"</span>, size<span class="op">=</span><span class="fl">0.34</span>),</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>         arrow((Hc.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.3</span>, <span class="fl">1.5</span>), (Ac.bbox[<span class="dv">0</span>] <span class="op">-</span> <span class="fl">0.3</span>, <span class="fl">1.5</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>), label(<span class="st">"keep the anchors"</span>, <span class="fl">0.3</span>, INK2, (Hc.bbox[<span class="dv">2</span>] <span class="op">+</span> Ac.bbox[<span class="dv">0</span>]) <span class="op">/</span> <span class="dv">2</span>, <span class="fl">0.95</span>),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>         label(<span class="st">"the encoder's output for one row (width × positions)"</span>, <span class="fl">0.38</span>, INK, <span class="op">-</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>save(figure(parts, (<span class="op">-</span><span class="fl">0.8</span>, <span class="op">-</span><span class="fl">1.5</span>, Ac.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">9.5</span>, <span class="fl">5.0</span>)), <span class="st">"cache_modes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/cache_modes.svg: 1367 × 219 px, 57 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/cache_modes.svg" class="img-fluid"></p>
+</section>
+<section id="neommes-two-axis-positions" class="level2">
+<h2 class="anchored" data-anchor-id="neommes-two-axis-positions">NeoMME’s two-axis positions</h2>
+<p>Used in <a href="./neomme.html">multimodal</a>. NeoMME reads an image as <code>&lt;doc&gt;</code>, the marker <code>&lt;img&gt;</code>, then a grid of patch placeholders with a <code>&lt;row&gt;</code> after each row of patches, and gives every position two coordinates. Text runs along the diagonal (both coordinates equal); patch (r, c) of a grid that opens at d sits at (d + 2 + r, d + 2 + c); text after the grid resumes on the diagonal past both of the grid’s axes. The positions are <a href="https://sgaseretto.github.io/sysonelib/neomme.html#neomme_positions"><code>neomme_positions</code></a>’ own:</p>
+<div id="a2d665cc" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.multimodal <span class="im">import</span> neomme_positions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="31b96ed5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>gh, gw, n_text <span class="op">=</span> <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">6</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>kinds <span class="op">=</span> [<span class="st">"&lt;doc&gt;"</span>, <span class="st">"&lt;img&gt;"</span>] <span class="op">+</span> ([<span class="st">"patch"</span>] <span class="op">*</span> gw <span class="op">+</span> [<span class="st">"&lt;row&gt;"</span>]) <span class="op">*</span> gh <span class="op">+</span> [<span class="st">"text"</span>] <span class="op">*</span> n_text</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>pos <span class="op">=</span> neomme_positions(<span class="bu">len</span>(kinds), image_at<span class="op">=</span><span class="dv">1</span>, h<span class="op">=</span>gh, w<span class="op">=</span>gw)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>test_eq(pos[:, :<span class="dv">2</span>].tolist(), [[<span class="dv">0</span>, <span class="dv">1</span>], [<span class="dv">0</span>, <span class="dv">1</span>]])</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>test_eq(pos[:, <span class="dv">2</span>].tolist(), [<span class="dv">2</span>, <span class="dv">2</span>])<span class="op">;</span> test_eq(pos[:, <span class="dv">2</span> <span class="op">+</span> gw <span class="op">+</span> <span class="dv">1</span>].tolist(), [<span class="dv">3</span>, <span class="dv">2</span>])        <span class="co"># patch (0, 0), then patch (1, 0)</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>test_eq((pos[<span class="dv">0</span>, <span class="op">-</span>n_text:] <span class="op">==</span> pos[<span class="dv">1</span>, <span class="op">-</span>n_text:]).<span class="bu">all</span>().item(), <span class="va">True</span>)                          <span class="co"># text is back on the diagonal</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="1bec9afc" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>KC <span class="op">=</span> {<span class="st">"&lt;doc&gt;"</span>: <span class="st">"#c3c2b7"</span>, <span class="st">"&lt;img&gt;"</span>: PAL[<span class="st">"violet"</span>], <span class="st">"patch"</span>: tint(PAL[<span class="st">"violet"</span>], <span class="fl">.35</span>), <span class="st">"&lt;row&gt;"</span>: tint(PAL[<span class="st">"violet"</span>], <span class="fl">.7</span>), <span class="st">"text"</span>: SEGMENTS[<span class="st">"state"</span>]}</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>Tk <span class="op">=</span> Placed(td.to_diagram(np.zeros((<span class="dv">1</span>, <span class="bu">len</span>(kinds)))).fill_color(<span class="kw">lambda</span> i, v: KC[kinds[i[<span class="dv">1</span>]]]).fill_values(<span class="bu">format</span><span class="op">=</span><span class="kw">lambda</span> i, v: {<span class="st">"patch"</span>: <span class="st">"p"</span>, <span class="st">"text"</span>: <span class="st">"t"</span>}.get(kinds[i[<span class="dv">1</span>]], kinds[i[<span class="dv">1</span>]][<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>][:<span class="dv">3</span>]), font_size<span class="op">=</span><span class="fl">0.26</span>), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>Pz <span class="op">=</span> Placed(td.to_diagram(pos.numpy()).fill_color(<span class="kw">lambda</span> i, v: tint(KC[kinds[i[<span class="dv">1</span>]]], <span class="fl">.6</span>)).fill_values(font_size<span class="op">=</span><span class="fl">0.34</span>), <span class="dv">0</span>, <span class="fl">2.0</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [Tk.dia, Pz.dia, label(<span class="st">"tokens"</span>, <span class="fl">0.34</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, <span class="dv">0</span>, align<span class="op">=</span><span class="st">"r"</span>), label(<span class="st">"axis 0"</span>, <span class="fl">0.34</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, <span class="dv">2</span>, align<span class="op">=</span><span class="st">"r"</span>), label(<span class="st">"axis 1"</span>, <span class="fl">0.34</span>, INK2, <span class="op">-</span><span class="fl">0.8</span>, <span class="dv">3</span>, align<span class="op">=</span><span class="st">"r"</span>),</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>         hbracket(<span class="fl">1.55</span>, <span class="fl">1.45</span> <span class="op">+</span> gh <span class="op">*</span> (gw <span class="op">+</span> <span class="dv">1</span>), <span class="op">-</span><span class="fl">0.9</span>, <span class="ss">f"a </span><span class="sc">{</span>gh<span class="sc">}</span><span class="ss"> × </span><span class="sc">{</span>gw<span class="sc">}</span><span class="ss"> patch grid, a &lt;row&gt; after each row"</span>, below<span class="op">=</span><span class="va">False</span>, size<span class="op">=</span><span class="fl">0.32</span>, gap<span class="op">=</span><span class="fl">0.25</span>),</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>         label(<span class="st">"position_ids (2, n): the row the model reads, per axis"</span>, <span class="fl">0.36</span>, INK, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">4.3</span>, align<span class="op">=</span><span class="st">"l"</span>)]</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>save(figure(parts, (<span class="op">-</span><span class="fl">2.4</span>, <span class="op">-</span><span class="fl">1.8</span>, <span class="bu">len</span>(kinds), <span class="fl">4.8</span>)), <span class="st">"neomme_positions"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/neomme_positions.svg: 576 × 222 px, 45 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/neomme_positions.svg" class="img-fluid"></p>
+</section>
+<section id="rlcds-noise-draws" class="level2">
+<h2 class="anchored" data-anchor-id="rlcds-noise-draws">RLCD’s noise draws</h2>
+<p>Used in <a href="./losses.html#rlcd">losses</a>. For one row with three real options in a batch padded to K = 4, four draws: the noise is zeroed on the padded slot by the mask, then each draw is shifted so its real options sum to zero, because softmax cannot see a shift of all the logits and the part of the noise along it would only add variance. These are RLCD’s two lines, applied to fixed draws:</p>
+<div id="d1a97cee" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m1, k1 <span class="op">=</span> torch.tensor([<span class="va">True</span>, <span class="va">True</span>, <span class="va">True</span>, <span class="va">False</span>]), <span class="dv">3</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> torch.tensor([[<span class="fl">0.3</span>, <span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.2</span>], [<span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="op">-</span><span class="fl">0.3</span>], [<span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.1</span>], [<span class="op">-</span><span class="fl">0.1</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>]]) <span class="op">*</span> m1</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>proj <span class="op">=</span> (raw <span class="op">-</span> raw.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>) <span class="op">/</span> k1) <span class="op">*</span> m1               <span class="co"># rlcd_loss: eps = (eps - eps.sum(-1, keepdim=True) / k) * mask</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>test_close(proj.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>), torch.zeros(<span class="dv">4</span>))</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>test_eq(proj[:, <span class="dv">3</span>].<span class="bu">abs</span>().<span class="bu">max</span>().item(), <span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="ee1e007a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fmtn <span class="op">=</span> <span class="kw">lambda</span> i, v: <span class="ss">f"</span><span class="sc">{</span><span class="bu">round</span>(<span class="bu">float</span>(v), <span class="dv">2</span>) <span class="op">+</span> <span class="fl">0.0</span><span class="sc">:+.2f}</span><span class="ss">"</span>     <span class="co"># no "-0.00"</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>cn <span class="op">=</span> <span class="kw">lambda</span> i, v: <span class="st">"#f3f2ee"</span> <span class="cf">if</span> <span class="kw">not</span> m1[i[<span class="dv">1</span>]] <span class="cf">else</span> tint(PAL[<span class="st">"blue"</span>], <span class="fl">.3</span> <span class="op">+</span> <span class="fl">0.6</span> <span class="op">*</span> <span class="bu">min</span>(<span class="dv">1</span>, <span class="bu">abs</span>(v) <span class="op">/</span> <span class="fl">0.5</span>))</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>Rn <span class="op">=</span> Placed(td.to_diagram(raw.numpy()).fill_color(cn).fill_values(<span class="bu">format</span><span class="op">=</span>fmtn, font_size<span class="op">=</span><span class="fl">0.28</span>), <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>Sr <span class="op">=</span> Placed(td.to_diagram(raw.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).numpy()).fill_color(<span class="st">"#ffffff"</span>).fill_values(<span class="bu">format</span><span class="op">=</span>fmtn, font_size<span class="op">=</span><span class="fl">0.28</span>), <span class="fl">4.6</span>, <span class="dv">0</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>Pn <span class="op">=</span> Placed(td.to_diagram(proj.numpy()).fill_color(cn).fill_values(<span class="bu">format</span><span class="op">=</span>fmtn, font_size<span class="op">=</span><span class="fl">0.28</span>), <span class="fl">8.6</span>, <span class="dv">0</span>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>Sp <span class="op">=</span> Placed(td.to_diagram(proj.<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).numpy()).fill_color(<span class="st">"#ffffff"</span>).fill_values(<span class="bu">format</span><span class="op">=</span>fmtn, font_size<span class="op">=</span><span class="fl">0.28</span>), <span class="fl">13.2</span>, <span class="dv">0</span>)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> [Rn.dia, Sr.dia, Pn.dia, Sp.dia, label(<span class="st">"draws ε · mask (G, K)"</span>, <span class="fl">0.36</span>, INK, <span class="op">-</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, align<span class="op">=</span><span class="st">"l"</span>), label(<span class="st">"Σ"</span>, <span class="fl">0.4</span>, INK, <span class="fl">4.6</span>, <span class="op">-</span><span class="fl">1.6</span>),</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>         label(<span class="st">"ε − its mean (real options)"</span>, <span class="fl">0.36</span>, INK, <span class="fl">8.1</span>, <span class="op">-</span><span class="fl">1.0</span>, align<span class="op">=</span><span class="st">"l"</span>), label(<span class="st">"Σ"</span>, <span class="fl">0.4</span>, INK, <span class="fl">13.2</span>, <span class="op">-</span><span class="fl">1.6</span>),</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>         arrow((Sr.bbox[<span class="dv">2</span>] <span class="op">+</span> <span class="fl">0.3</span>, <span class="fl">1.5</span>), (Pn.bbox[<span class="dv">0</span>] <span class="op">-</span> <span class="fl">0.3</span>, <span class="fl">1.5</span>), INK2, head<span class="op">=</span><span class="fl">0.2</span>), label(<span class="st">"minus the mean"</span>, <span class="fl">0.28</span>, INK2, (Sr.bbox[<span class="dv">2</span>] <span class="op">+</span> Pn.bbox[<span class="dv">0</span>]) <span class="op">/</span> <span class="dv">2</span>, <span class="fl">0.95</span>)]</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T_ <span class="kw">in</span> (Rn, Pn):</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>): parts.append(hatch(<span class="op">*</span>T_.cell_box(g, <span class="dv">3</span>), color<span class="op">=</span>MUTED, step<span class="op">=</span><span class="fl">0.5</span>))</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>): parts.append(label(<span class="ss">f"g=</span><span class="sc">{</span>g<span class="sc">}</span><span class="ss">"</span>, <span class="fl">0.3</span>, MUTED, <span class="op">-</span><span class="fl">0.8</span>, g, align<span class="op">=</span><span class="st">"r"</span>))</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>save(figure(parts, (<span class="op">-</span><span class="fl">2.0</span>, <span class="op">-</span><span class="fl">1.5</span>, Sp.bbox[<span class="dv">2</span>], <span class="fl">3.6</span>)), <span class="st">"rlcd_noise"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'images/rlcd_noise.svg: 495 × 177 px, 46 kB'</code></pre>
+</div>
+</div>
+<p><img src="images/rlcd_noise.svg" class="img-fluid"></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

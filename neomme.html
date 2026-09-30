@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="NeoMME-260M under the sysone head (its tokens, image rows built with two-axis positions, and its methods of sysone’s generic functions), and the multimodal application, which takes its defaults from whichever encoder it runs.">
+
+<title>multimodal – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="multimodal – sysone">
+<meta property="og:description" content="NeoMME-260M under the sysone head (its tokens, image rows built with two-axis positions, and its methods of sysone’s generic functions), and the multimodal application, which takes its defaults from whichever encoder it runs.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/neomme_positions.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="multimodal – sysone">
+<meta name="twitter:description" content="NeoMME-260M under the sysone head (its tokens, image rows built with two-axis positions, and its methods of sysone’s generic functions), and the multimodal application, which takes its defaults from whichever encoder it runs.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/neomme_positions.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./neomme.html">multimodal</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#load-and-inspect" id="toc-load-and-inspect" class="nav-link active" data-scroll-target="#load-and-inspect">1. Load and inspect</a></li>
+  <li><a href="#a-row-by-hand" id="toc-a-row-by-hand" class="nav-link" data-scroll-target="#a-row-by-hand">2. A row by hand</a></li>
+  <li><a href="#the-template" id="toc-the-template" class="nav-link" data-scroll-target="#the-template">3. The template</a></li>
+  <li><a href="#the-spec" id="toc-the-spec" class="nav-link" data-scroll-target="#the-spec">4. The spec</a></li>
+  <li><a href="#one-forward-pass" id="toc-one-forward-pass" class="nav-link" data-scroll-target="#one-forward-pass">5. One forward pass</a></li>
+  <li><a href="#a-head-only-run" id="toc-a-head-only-run" class="nav-link" data-scroll-target="#a-head-only-run">6. A head-only run</a></li>
+  <li><a href="#two-small-image-tasks-on-the-real-checkpoint" id="toc-two-small-image-tasks-on-the-real-checkpoint" class="nav-link" data-scroll-target="#two-small-image-tasks-on-the-real-checkpoint">7. Two small image tasks on the real checkpoint</a></li>
+  <li><a href="#which-encoder-by-default" id="toc-which-encoder-by-default" class="nav-link" data-scroll-target="#which-encoder-by-default">8. Which encoder by default</a></li>
+  <li><a href="#what-did-not-work-and-what-to-watch" id="toc-what-did-not-work-and-what-to-watch" class="nav-link" data-scroll-target="#what-did-not-work-and-what-to-watch">9. What did not work, and what to watch</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="neomme.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">multimodal</h1>
+</div>
+
+<div>
+  <div class="description">
+    NeoMME-260M under the sysone head (its tokens, image rows built with two-axis positions, and its methods of sysone’s generic functions), and the multimodal application, which takes its defaults from whichever encoder it runs.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>This notebook is the record of how an encoder was added, and the outline to copy for the next one: load and inspect it, build a row by hand, write the template preset, fill in the spec, run one forward pass, train a head, and write down what did not work.</p>
+<section id="load-and-inspect" class="level2">
+<h2 class="anchored" data-anchor-id="load-and-inspect">1. Load and inspect</h2>
+<p><a href="https://huggingface.co/Hcompany/NeoMME-260M">NeoMME-260M</a> (Apache-2.0, in transformers since 5.17) is a bidirectional encoder over text and page images: 17 layers, width 1,024, a 16,384-position context, trained by masked diffusion, so <code>&lt;mask&gt;</code> is the token it was taught to fill. Its tokenizer has no cls or sep token and adds nothing to the text; a document starts with <code>&lt;doc&gt;</code>, and an image is <code>&lt;img&gt;</code> followed by a patch grid, one <code>&lt;img&gt;</code> per 32 × 32 patch and a <code>&lt;row&gt;</code> after each row of patches, with two-axis positions. The fixture is a random 2-layer NeoMME with a small tokenizer that keeps NeoMME’s special tokens at NeoMME’s ids, and the real image processor:</p>
+<div id="c48ce55d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-neomme"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> EncoderSpec.from_pretrained(FIX)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>tok, proc <span class="op">=</span> spec.tokenizer, spec.processor</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>spec, {t: <span class="bu">getattr</span>(tok, <span class="ss">f"</span><span class="sc">{</span>t<span class="sc">}</span><span class="ss">_token_id"</span>) <span class="cf">for</span> t <span class="kw">in</span> (<span class="st">"pad"</span>, <span class="st">"mask"</span>, <span class="st">"document"</span>, <span class="st">"image"</span>, <span class="st">"row"</span>)}, tok.cls_token, tok.sep_token</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(EncoderSpec(fixtures/tiny-neomme: neomme, width 64, context 16384, multimodal, template neomme),
+ {'pad': 0, 'mask': 4, 'document': 5, 'image': 6, 'row': 8},
+ None,
+ None)</code></pre>
+</div>
+</div>
+<div id="8c38d546" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>test_eq((spec.family, spec.modality, spec.template.name), (<span class="st">"neomme"</span>, <span class="st">"multimodal"</span>, <span class="st">"neomme"</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>test_eq(tok(<span class="st">"a mask here"</span>, add_special_tokens<span class="op">=</span><span class="va">True</span>)[<span class="st">"input_ids"</span>], tok(<span class="st">"a mask here"</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The processor lays an image out as a document of its own, <code>&lt;doc&gt;&lt;img&gt;</code> then the grid, with positions (row, column): the marker at (1, 1), patch (r, c) at (2 + r, 2 + c). It rejects a row that mixes text and an image, which is exactly what a decision row is, so sysone builds those rows itself and uses the processor’s image half, the patches and the grid size:</p>
+<div id="eafcf356" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>shot <span class="op">=</span> PILImage.<span class="bu">open</span>(<span class="st">"fixtures/shot.png"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ref <span class="op">=</span> proc(images<span class="op">=</span>[shot], return_tensors<span class="op">=</span><span class="st">"pt"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ref[<span class="st">"input_ids"</span>][<span class="dv">0</span>].tolist(), ref[<span class="st">"position_ids"</span>][:, <span class="dv">0</span>].tolist(), <span class="bu">tuple</span>(ref[<span class="st">"pixel_values"</span>].shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>([5, 6, 6, 6, 8, 6, 6, 8],
+ [[0, 1, 2, 2, 2, 3, 3, 3], [0, 1, 2, 3, 4, 2, 3, 4]],
+ (4, 3072))</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: NeoMME's processor cannot build a decision row">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: NeoMME’s processor cannot build a decision row
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A decision row is text and an image in one sequence: the question and its anchored options, and the page. NeoMME’s processor takes a text or an image, one per row, and refuses anything else, whichever way round; so sysone lays the row out itself and asks the processor only for the image half: the patches and the grid size.</p>
+</div>
+</div>
+<div id="cbca3a7d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: proc(text<span class="op">=</span>[<span class="st">"&lt;doc&gt;Is the save button visible?"</span>], images<span class="op">=</span>[shot]), contains<span class="op">=</span><span class="st">"image prompts"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: proc(text<span class="op">=</span>[<span class="st">"&lt;doc&gt;&lt;img&gt;Is it visible?"</span>], images<span class="op">=</span>[shot]), contains<span class="op">=</span><span class="st">"token layout"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="a-row-by-hand" class="level2">
+<h2 class="anchored" data-anchor-id="a-row-by-hand">2. A row by hand</h2>
+<p>A NeoMME decision row with the page first: the page’s grid, then its text, then the question and its options, each <code>&lt;mask&gt;</code> directly followed by its option’s text (NeoMME’s tokenizer merges a space into the word after it, and its masks replaced whole tokens in pretraining), sections separated by newlines. Text after the grid returns to diagonal positions, starting past both grid axes, as in NeoMME’s image-text pairs. The positions of the whole row:</p>
+<div id="fc1683e2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.142388+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.147257+00:00&quot;,&quot;total&quot;:0.004872761999990871}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/multimodal.py#L25" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="neomme_positions" class="level3">
+<h3 class="anchored" data-anchor-id="neomme_positions">neomme_positions</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> neomme_positions(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    n:<span class="bu">int</span>, image_at:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, h:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>, w:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>torch.Tensor:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>NeoMME’s two-axis position ids for a row of <code>n</code> tokens whose image marker sits at <code>image_at</code> (an h × w grid)</em></p>
+</section>
+</div>
+<p>What those positions look like for a page whose grid is 2 × 3 patches, followed by text:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/neomme_positions.svg" class="img-fluid figure-img"></p>
+<figcaption>NeoMME’s two-axis positions for an image block followed by text</figcaption>
+</figure>
+</div>
+<p><em>Drawn with <a href="https://sgaseretto.github.io/sysonelib/neomme.html#neomme_positions"><code>neomme_positions</code></a> in <a href="./figures.html#neommes-two-axis-positions">figures</a>.</em></p>
+<div id="79732d98" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> neomme_positions(<span class="bu">len</span>(ref[<span class="st">"input_ids"</span>][<span class="dv">0</span>]) <span class="op">+</span> <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>test_eq(p[:, :<span class="dv">8</span>], ref[<span class="st">"position_ids"</span>][:, <span class="dv">0</span>])</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[0, 1, 2, 2, 2, 3, 3, 3, 5, 6, 7],
+        [0, 1, 2, 3, 4, 2, 3, 4, 5, 6, 7]])</code></pre>
+</div>
+</div>
+</section>
+<section id="the-template" class="level2">
+<h2 class="anchored" data-anchor-id="the-template">3. The template</h2>
+<p>The <code>neomme</code> presets are in <code>sysone.template</code>. <a href="https://sgaseretto.github.io/sysonelib/neomme.html#build_processor_rows"><code>build_processor_rows</code></a> is NeoMME’s method of <a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a>, the generic function a processor-backed builder calls: the row builder’s own budgets and layout for the text, with the image block, <code>&lt;doc&gt;</code>, <code>&lt;img&gt;</code> and the grid, placed at the template’s <code>{image}</code> field and counted against <code>max_len</code> (never truncated; an image too large for the row is an error). Every row carries <code>position_ids</code> and <code>pixel_values</code> (empty for a text-only row), so text and image rows mix in one batch.</p>
+<div id="8d633ccd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.149611+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.152905+00:00&quot;,&quot;total&quot;:0.003297360000004801}}" data-execution_count="6">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/multimodal.py#L47" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="build_processor_rows" class="level3">
+<h3 class="anchored" data-anchor-id="build_processor_rows">build_processor_rows</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_processor_rows(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.neomme.processing_neomme.NeoMMEProcessor, builder:sysone.template.RowBuilder,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    record:<span class="bu">dict</span>, <span class="op">*</span>, skip_errors:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Rows of a transformed record for a NeoMME-style processor: text by the builder’s budgets, the image as a patch grid</em></p>
+</section>
+</div>
+<div id="c3ed92d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.152992+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.155401+00:00&quot;,&quot;total&quot;:0.002411384999987831}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/multimodal.py#L39" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="image_block" class="level3">
+<h3 class="anchored" data-anchor-id="image_block">image_block</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> image_block(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    builder:sysone.template.RowBuilder, image</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The ids, patches and grid of one image: <code>&lt;doc&gt;</code>, <code>&lt;img&gt;</code>, then a row of patch placeholders and <code>&lt;row&gt;</code> per grid row</em></p>
+</section>
+</div>
+<div id="89001e8b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> {<span class="st">"target"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which element is clicked next?"</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"criteria"</span>: {<span class="st">"1"</span>: <span class="st">"[1] Add to cart (button)"</span>, <span class="st">"2"</span>: <span class="st">"[2] Size M (radio)"</span>, <span class="st">"3"</span>: <span class="st">"[3] Help (link)"</span>}}}</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>page_first <span class="op">=</span> spec.builder(RowTemplate.preset(<span class="st">"neomme_page_first"</span>, max_len<span class="op">=</span><span class="dv">256</span>), tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="dv">64</span>)])</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> {<span class="st">"state"</span>: {<span class="st">"image"</span>: <span class="st">"fixtures/shot.png"</span>, <span class="st">"text"</span>: <span class="st">"goal: buy the blue shirt in M"</span>}, <span class="st">"questions"</span>: qs, <span class="st">"gold"</span>: {<span class="st">"target"</span>: {<span class="st">"label"</span>: <span class="st">"2"</span>}}}</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> page_first.build_record(rec)[<span class="dv">0</span>]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(r, tok))<span class="op">;</span> r.extras[<span class="st">"position_ids"</span>][:, :<span class="dv">12</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;doc&gt; &lt;img&gt;×3 &lt;row&gt; &lt;img&gt;×2 &lt;row&gt; goal: buy the blue shirt in M
+choice question: Which element is clicked next? &lt;mask&gt; 1: [1] Add to cart (button) &lt;mask&gt; 2: [2] Size M (radio) &lt;mask&gt; 3: [3] Help (link)
+markers [48, 68, 87] · qtype choice · 102 tokens</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[0, 1, 2, 2, 2, 3, 3, 3, 5, 6, 7, 8],
+        [0, 1, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8]])</code></pre>
+</div>
+</div>
+<p>On the page-first layout the image part of the row, ids and positions, is exactly what NeoMME’s processor produces for the image alone, and the anchors are the <code>&lt;mask&gt;</code> tokens:</p>
+<div id="d6a693dd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(ref[<span class="st">"input_ids"</span>][<span class="dv">0</span>])</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>test_eq(r.ids[:n], ref[<span class="st">"input_ids"</span>][<span class="dv">0</span>].tolist())</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>test_eq(r.extras[<span class="st">"position_ids"</span>][:, :n], ref[<span class="st">"position_ids"</span>][:, <span class="dv">0</span>])</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>test_eq([r.ids[m] <span class="cf">for</span> m <span class="kw">in</span> r.markers], [tok.mask_token_id] <span class="op">*</span> <span class="dv">3</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>test_eq(r.extras[<span class="st">"pixel_values"</span>], ref[<span class="st">"pixel_values"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>neomme</code> preset keeps Laya’s order, question first, and gives the page its own <code>&lt;doc&gt;</code> before the grid, which NeoMME needs to tell the image marker from a patch; a text-only row is <code>&lt;doc&gt;</code>, the question and the text, with diagonal positions:</p>
+<div id="107f0b87" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>qfirst <span class="op">=</span> spec.builder(tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="dv">64</span>)])</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>rq <span class="op">=</span> qfirst.build_record(rec)[<span class="dv">0</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>rt <span class="op">=</span> qfirst.build_record({<span class="st">"state"</span>: <span class="st">"goal: open the returns page"</span>, <span class="st">"questions"</span>: qs})[<span class="dv">0</span>]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(rq, tok))<span class="op">;</span> <span class="bu">print</span>(show_row(rt, tok))</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>test_eq(rq.ids.count(tok.document_token_id), <span class="dv">2</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>test_eq(rt.extras[<span class="st">"position_ids"</span>], torch.arange(rt.n_tokens).expand(<span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">tuple</span>(rt.extras[<span class="st">"pixel_values"</span>].shape), (<span class="dv">0</span>, <span class="dv">3072</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;doc&gt; choice question: Which element is clicked next? &lt;mask&gt; 1: [1] Add to cart (button) &lt;mask&gt; 2: [2] Size M (radio) &lt;mask&gt; 3: [3] Help (link) &lt;doc&gt; &lt;img&gt;×3 &lt;row&gt; &lt;img&gt;×2 &lt;row&gt; goal: buy the blue shirt in M
+markers [26, 46, 65] · qtype choice · 103 tokens
+&lt;doc&gt; choice question: Which element is clicked next? &lt;mask&gt; 1: [1] Add to cart (button) &lt;mask&gt; 2: [2] Size M (radio) &lt;mask&gt; 3: [3] Help (link)
+goal: open the returns page
+markers [26, 46, 65] · qtype choice · 93 tokens</code></pre>
+</div>
+</div>
+<p>A <code>&lt;doc&gt;</code> or <code>&lt;row&gt;</code> typed into a state is scrubbed like a stray <code>&lt;mask&gt;</code>: it would otherwise open a new document or end a patch row.</p>
+<div id="fc7223ad" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>rs <span class="op">=</span> qfirst.build_record({<span class="st">"state"</span>: <span class="st">"see &lt;doc&gt; and &lt;row&gt; and &lt;mask&gt;"</span>, <span class="st">"questions"</span>: qs})[<span class="dv">0</span>]</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>test_eq(rs.ids.count(tok.document_token_id), <span class="dv">1</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>test_eq(rs.k, <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-spec" class="level2">
+<h2 class="anchored" data-anchor-id="the-spec">4. The spec</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec.from_pretrained"><code>EncoderSpec.from_pretrained</code></a> recognises a multimodal checkpoint by the image token in its config and loads its processor; the family entry gives the template (<code>neomme</code>) and LoRA’s targets (the attention projections <code>q_proj</code>, <code>k_proj</code>, <code>v_proj</code> and <code>output_projection.o_proj</code>, leaving the patch embeddings and the MLP alone). NeoMME wants two-axis <code>position_ids</code> as (2, batch, length); rows carry them as (2, length), so NeoMME’s method of <a href="https://sgaseretto.github.io/sysonelib/models.html#encoder_inputs"><code>encoder_inputs</code></a> transposes the collated batch, and drops <code>pixel_values</code> when no row has an image:</p>
+<div id="51a81055" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.157422+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.159823+00:00&quot;,&quot;total&quot;:0.0024033999999915068}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/multimodal.py#L68" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="neomme_inputs" class="level3">
+<h3 class="anchored" data-anchor-id="neomme_inputs">neomme_inputs</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> neomme_inputs(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    config:transformers.models.neomme.configuration_neomme.NeoMMEConfig, inputs:<span class="bu">dict</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>NeoMME’s inputs: position ids as (2, batch, length), and no <code>pixel_values</code> when no row of the batch has an image</em></p>
+</section>
+</div>
+<div id="bb9a7b15" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>test_eq(spec.lora_targets, [<span class="st">"q_proj"</span>, <span class="st">"k_proj"</span>, <span class="st">"v_proj"</span>, <span class="st">"o_proj"</span>])</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> set_regime(EncoderDecisionModel(spec.load_encoder(dtype<span class="op">=</span>torch.float32), DecisionHead(spec.width, <span class="dv">0</span>), spec), <span class="st">"lora"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>({n.split(<span class="st">".lora_"</span>)[<span class="dv">0</span>].split(<span class="st">"."</span>)[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> n, p <span class="kw">in</span> m.encoder.named_parameters() <span class="cf">if</span> p.requires_grad}),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        [<span class="st">"k_proj"</span>, <span class="st">"o_proj"</span>, <span class="st">"q_proj"</span>, <span class="st">"v_proj"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="one-forward-pass" class="level2">
+<h2 class="anchored" data-anchor-id="one-forward-pass">5. One forward pass</h2>
+<p>A text row and an image row in one batch: one vector per position comes back, the head reads the <code>&lt;mask&gt;</code> positions, and each row’s logits match its own single-row pass, so padding and mixing change nothing:</p>
+<div id="7b973843" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> EncoderDecisionModel(spec.load_encoder(dtype<span class="op">=</span>torch.float32), DecisionHead(spec.width, layers<span class="op">=</span><span class="dv">0</span>), spec).<span class="bu">eval</span>()</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> collate([rq, rt], tok.pad_token_id)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">tuple</span>(v.shape) <span class="cf">for</span> k, v <span class="kw">in</span> b.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'input_ids': (2, 103),
+ 'attention_mask': (2, 103),
+ 'marker_pos': (2, 3),
+ 'marker_mask': (2, 3),
+ 'qtype': (2,),
+ 'target': (2, 3),
+ 'label': (2,),
+ 'spans': (2, 3, 2),
+ 'answerable': (2,),
+ 'position_ids': (2, 2, 103),
+ 'pixel_values': (4, 3072)}</code></pre>
+</div>
+</div>
+<div id="add751c9" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fwd <span class="op">=</span> <span class="kw">lambda</span> rows: model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> collate(rows, tok.pad_token_id).items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    both, one_img, one_txt <span class="op">=</span> fwd([rq, rt]), fwd([rq]), fwd([rt])</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>test_close(both[<span class="dv">0</span>], one_img[<span class="dv">0</span>], eps<span class="op">=</span><span class="fl">1e-4</span>)<span class="op">;</span> test_close(both[<span class="dv">1</span>], one_txt[<span class="dv">0</span>], eps<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>both.softmax(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[0.3333, 0.3333, 0.3333],
+        [0.3333, 0.3333, 0.3333]])</code></pre>
+</div>
+</div>
+</section>
+<section id="a-head-only-run" class="level2">
+<h2 class="anchored" data-anchor-id="a-head-only-run">6. A head-only run</h2>
+<p>The multimodal application runs any encoder that has an adapter, and takes its defaults from it: the row template (its family’s preset), the image side (<a href="https://sgaseretto.github.io/sysonelib/template.html#default_image_side"><code>default_image_side</code></a>: 1,024 pixels for NeoMME’s pages, one 512-pixel tile for <a href="./modernvbert.html">ModernVBERT</a>) and the batching (<a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a>: when the processor tiles, the batches that run the vision tower are divided by the images per row). The caller can override each. The default encoder is ModernVBERT, and section 8 says why. Encoders run in fp32: NeoMME’s checkpoint loads in bf16, whose worst-token agreement with fp32 is poor enough to matter for a head trained on frozen features. An <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform resizes each image to <code>image_side</code> pixels on its long side, and the frozen encoder fills a cache of anchor vectors, so the images are read once and the export carries no image files. The head is Laya’s scorer on the anchors, without Laya’s two transformer layers, in every regime, and it standardises NeoMME’s vectors before scoring them; both choices come from the real-checkpoint runs of section 7. <code>head="laya"</code> asks for the two-layer head. A learner built on data that an earlier learner used gets its own <code>image_side</code>: the application replaces the <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform it added before, and keeps one the caller put in the data. Keeping the first learner’s side would also find the first learner’s cache, and a comparison of image sizes would compare one size with itself.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: a float16 cache quantises NeoMME's constant channel">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: a float16 cache quantises NeoMME’s constant channel
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Channel 139 of NeoMME’s output sits at about 30.9 in every vector, with a spread of only 0.02 (the <a href="./tutorials/neomme_images.html#why-the-head-standardises-neommes-vectors">images tutorial</a> measures it). Near 30.9, float16’s step is 0.016, so a float16 cache stores that channel as a handful of levels, while the same model run live, as a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> runs it, sees it in float32. A head that standardises its input divides by that small spread, and the two paths then disagree. On the tutorial’s digits, the linear head’s expected calibration error was 0.106 through <code>validate</code> (the cache) and 0.161 through the <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> (live), with the same accuracy. With a float32 cache the two agree to the last digit (accuracy 0.41, ECE 0.169). So the multimodal application caches in float32 (<code>cache_dtype="float32"</code>). For anchors that costs 4 KB per option, next to the 2 KB of float16. The text application keeps float16.</p>
+</div>
+</div>
+<div id="211a0e68" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.162613+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.166002+00:00&quot;,&quot;total&quot;:0.003393039000002318}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/gliner.py#L212" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decision_learner" class="level3">
+<h3 class="anchored" data-anchor-id="decision_learner">decision_learner</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decision_learner(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    data:sysone.data.TypedDecisions, encoder:<span class="bu">str</span><span class="op">=</span><span class="st">'ModernVBERT/modernvbert'</span>, train:<span class="bu">str</span><span class="op">=</span><span class="st">'head'</span>, cache:<span class="bu">str</span><span class="op">=</span><span class="st">'auto'</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    template:NoneType<span class="op">=</span><span class="va">None</span>, image_side:<span class="bu">str</span><span class="op">=</span><span class="st">'auto'</span>, head:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, dtype:torch.dtype<span class="op">=</span>torch.float32,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    standardize:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, cache_dtype:<span class="bu">str</span><span class="op">=</span><span class="st">'float32'</span>, <span class="op">**</span>kw</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.learner.Learner:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A multimodal <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a> for any encoder with an adapter (ModernVBERT by default), with the encoder’s template, image side and batching</em></p>
+</section>
+</div>
+<div id="de2c4cb2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.166086+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.168155+00:00&quot;,&quot;total&quot;:0.002071408999995583}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/multimodal.py#L82" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="neomme_image_side" class="level3">
+<h3 class="anchored" data-anchor-id="neomme_image_side">neomme_image_side</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> neomme_image_side(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.neomme.processing_neomme.NeoMMEProcessor</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>NeoMME’s default image side: 1,024 pixels on the long side, for the pages and screenshots it reads</em></p>
+</section>
+</div>
+<p>Eight browser steps on the fixture screenshot, text rows and image rows mixed; the head trains from the cache and the export loads back and answers for a new screenshot:</p>
+<div id="00299d98" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> step(i):</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    goal <span class="op">=</span> [<span class="st">"buy the blue shirt"</span>, <span class="st">"get help"</span>, <span class="st">"add to cart"</span>, <span class="st">"open the menu"</span>][i <span class="op">%</span> <span class="dv">4</span>]</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    st <span class="op">=</span> {<span class="st">"image"</span>: <span class="st">"fixtures/shot.png"</span>, <span class="st">"text"</span>: <span class="ss">f"goal: </span><span class="sc">{</span>goal<span class="sc">}</span><span class="ss">"</span>} <span class="cf">if</span> i <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> <span class="ss">f"goal: </span><span class="sc">{</span>goal<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"id"</span>: <span class="ss">f"s</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, <span class="st">"state"</span>: st, <span class="st">"questions"</span>: qs, <span class="st">"gold"</span>: {<span class="st">"target"</span>: {<span class="st">"label"</span>: <span class="bu">str</span>(<span class="dv">1</span> <span class="op">+</span> i <span class="op">%</span> <span class="dv">3</span>)}}}</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>mm <span class="op">=</span> TypedDecisions.from_records([step(i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">8</span>)], valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(mm, FIX, image_side<span class="op">=</span><span class="dv">64</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp())</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>learn.fit(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">1e-2</span>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> learn.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"browser-jev"</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>jev <span class="op">=</span> Decider.load(out, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>jev.predict({<span class="st">"image"</span>: <span class="st">"fixtures/shot.png"</span>, <span class="st">"text"</span>: <span class="st">"goal: open the returns page"</span>}, qs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.024', 'eval_accuracy': '0.5', 'eval_soft_accuracy': '0.3674', 'eval_brier': '0.6133', 'eval_kl': '1.024', 'eval_tv': '0.6326', 'eval_ece': '0.06849', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 2, 'eval_accuracy_choice': '0.5', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0017', 'eval_samples_per_second': '1155', 'eval_steps_per_second': '577.7', 'epoch': '1'}
+{'eval_loss': '1.262', 'eval_accuracy': '0', 'eval_soft_accuracy': '0.2859', 'eval_brier': '0.7801', 'eval_kl': '1.262', 'eval_tv': '0.7141', 'eval_ece': '0.4355', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 2, 'eval_accuracy_choice': '0', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0012', 'eval_samples_per_second': '1606', 'eval_steps_per_second': '803.2', 'epoch': '2'}
+{'eval_loss': '1.295', 'eval_accuracy': '0', 'eval_soft_accuracy': '0.2777', 'eval_brier': '0.7933', 'eval_kl': '1.295', 'eval_tv': '0.7223', 'eval_ece': '0.4216', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 2, 'eval_accuracy_choice': '0', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0012', 'eval_samples_per_second': '1637', 'eval_steps_per_second': '818.4', 'epoch': '3'}
+{'train_runtime': '0.0214', 'train_samples_per_second': '842.8', 'train_steps_per_second': '140.5', 'train_loss': '1.076', 'epoch': '3'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'target': {'type': 'choice',
+  'choice': '2',
+  'probabilities': {'1': 0.3033, '2': 0.3601, '3': 0.3366},
+  'confidence': 0.0022,
+  'answer_confidence': 0.3601}}</code></pre>
+</div>
+</div>
+<div id="6359888a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> out.iterdir()), [<span class="st">"encoder"</span>, <span class="st">"head.safetensors"</span>, <span class="st">"processor"</span>, <span class="st">"sysone.json"</span>])</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>test_eq(jev.predict(step(<span class="dv">0</span>)[<span class="st">"state"</span>], qs), learn.predict(step(<span class="dv">0</span>)[<span class="st">"state"</span>], qs))</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"anchors"</span> <span class="kw">in</span> learn.dataset(<span class="st">"train"</span>).column_names, <span class="va">True</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>test_eq((default_image_side(proc), prepare_processor(proc, <span class="dv">64</span>), learn.data.builder.template.name), (<span class="dv">1024</span>, <span class="dv">1</span>, <span class="st">"neomme"</span>))   <span class="co"># NeoMME's defaults</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>test_eq(learn.dataset(<span class="st">"train"</span>).features[<span class="st">"anchors"</span>].dtype, <span class="st">"float32"</span>)      <span class="co"># the application's cache keeps float32</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>sides <span class="op">=</span> <span class="kw">lambda</span> l: [t.side <span class="cf">for</span> t <span class="kw">in</span> l.data.builder.tfms <span class="cf">if</span> <span class="bu">isinstance</span>(t, Image)]</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>test_eq(sides(decision_learner(mm, FIX, image_side<span class="op">=</span><span class="dv">32</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp())), [<span class="dv">32</span>])</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>own <span class="op">=</span> TypedDecisions.from_records([step(i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">8</span>)], valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="dv">0</span>, tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="dv">48</span>)])</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>test_eq(sides(decision_learner(own, FIX, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp())), [<span class="dv">48</span>])</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>fresh <span class="op">=</span> subprocess.run([sys.executable, <span class="st">"-c"</span>, <span class="st">"import sysone.multimodal, sysone.learner as L; print(hasattr(L.Learner, 'fit_linear'))"</span>],</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>                       capture_output<span class="op">=</span><span class="va">True</span>, text<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>test_eq(fresh.stdout.strip(), <span class="st">"True"</span>)      <span class="co"># in a fresh session the application brings the cache's verbs, fit_linear among them</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="d0e344c3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">list</span>(learn.dataset(<span class="st">"train"</span>)[<span class="st">"case"</span>]), learn.data.rows(<span class="st">"train"</span>)[<span class="st">"case"</span>])     <span class="co"># image rows keep their case ids in the cache</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The feature cache’s key covers the images, not only the tokens: the same steps over a different screenshot of the same size get a cache of their own.</p>
+<div id="3cdab42a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-30T17:42:59.169214+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-30T17:42:59.169683+00:00&quot;,&quot;total&quot;:0.0004709300000058647}}" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.cache <span class="im">import</span> FeatureCache</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fbeefe04" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>other <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"other.png"</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>PILImage.<span class="bu">open</span>(<span class="st">"fixtures/shot.png"</span>).transpose(PILImage.Transpose.FLIP_LEFT_RIGHT).save(other)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> steps_on(img): <span class="cf">return</span> TypedDecisions.from_records([{<span class="op">**</span>step(i), <span class="st">"state"</span>: {<span class="op">**</span>step(i)[<span class="st">"state"</span>], <span class="st">"image"</span>: <span class="bu">str</span>(img)}} <span class="cf">if</span> i <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> step(i)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                                                        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">8</span>)], calib<span class="op">=</span><span class="dv">0</span>, tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="dv">64</span>)]).bind(proc, <span class="st">"neomme"</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>ka <span class="op">=</span> FeatureCache(learn.model, steps_on(<span class="st">"fixtures/shot.png"</span>), <span class="st">"masks"</span>).key(<span class="st">"train"</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>kb <span class="op">=</span> FeatureCache(learn.model, steps_on(other), <span class="st">"masks"</span>).key(<span class="st">"train"</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>test_ne(ka, kb)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>With <code>train="lora"</code> the encoder trains through adapters and the cache is dropped; text-only records work in the same call, with no image key. On the real checkpoint:</p>
+<div id="ed049b50" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>data  <span class="op">=</span> TypedDecisions.from_json(<span class="st">"steps.jsonl"</span>, valid<span class="op">=</span><span class="fl">0.1</span>)        <span class="co"># or TypedDecisions.from_registry("mind2web_mm")</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, <span class="st">"Hcompany/NeoMME-260M"</span>, train<span class="op">=</span><span class="st">"head"</span>, image_side<span class="op">=</span><span class="dv">1024</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>learn.show_batch(<span class="dv">2</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>learn.lr_find()</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>learn.calibrate()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>learn.export(<span class="st">"browser-jev"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="two-small-image-tasks-on-the-real-checkpoint" class="level2">
+<h2 class="anchored" data-anchor-id="two-small-image-tasks-on-the-real-checkpoint">7. Two small image tasks on the real checkpoint</h2>
+<p>The fixture shows that the pieces fit; only the real checkpoint can show that what NeoMME reads off an image reaches the anchors. Two small tasks, the first a <strong>choice</strong> and the second a <strong>noul</strong>:</p>
+<ul>
+<li><em>Which digit is written in the image?</em>, ten options: <a href="https://huggingface.co/datasets/ylecun/mnist">MNIST</a>, 10 images per digit to train (a fifth of the cases held out for the temperatures) and 10 others per digit, from MNIST’s test split, to score; chance is 0.10;</li>
+<li><em>The photo shows a hot dog.</em>: 40 photos of each class to train and 40 others of each class to score, from <a href="https://huggingface.co/datasets/truepositive/hotdog_nothotdog">truepositive/hotdog_nothotdog</a>, stock photos of hot dogs and of other food, 224 px on their long side; it stands in for Kaggle’s <code>dansbecker/hot-dog-not-hot-dog</code>, which needs a Kaggle account to download: with one, <code>kaggle datasets download dansbecker/hot-dog-not-hot-dog</code> and the same function over its folders. Chance is 0.50.</li>
+</ul>
+<p>A state is JSON, so an image travels as a path; the <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform the application adds loads it and resizes it, which here enlarges both: the 28 px digits to 224 px on the long side, the 224 px photos to 384 px. The <a href="./tutorials/neomme_images.html">images tutorial</a> runs these tasks with its outputs: the rows, the training curves, the answers image by image and the confusions.</p>
+<div id="8fcace89" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datasets <span class="im">import</span> load_dataset</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> huggingface_hub <span class="im">import</span> snapshot_download</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> Path(<span class="st">"neomme-real"</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mnist_records(per_class<span class="op">=</span><span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Choice records over MNIST: per_class images of each digit from train, and as many from test"</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> random.Random(seed)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    ds, q, recs <span class="op">=</span> load_dataset(<span class="st">"ylecun/mnist"</span>), {<span class="st">"digit"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which digit is written in the image?"</span>,</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>                                                           <span class="st">"criteria"</span>: [<span class="bu">str</span>(d) <span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>)]}}, {}</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> split <span class="kw">in</span> (<span class="st">"train"</span>, <span class="st">"test"</span>):</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>        by <span class="op">=</span> {d: [] <span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>)}</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> rng.sample(<span class="bu">range</span>(<span class="bu">len</span>(ds[split])), <span class="bu">len</span>(ds[split])):</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(by[ds[split][i][<span class="st">"label"</span>]]) <span class="op">&lt;</span> per_class: by[ds[split][i][<span class="st">"label"</span>]].append(i)</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">all</span>(<span class="bu">len</span>(v) <span class="op">==</span> per_class <span class="cf">for</span> v <span class="kw">in</span> by.values()): <span class="cf">break</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>        (out <span class="op">/</span> <span class="st">"images"</span> <span class="op">/</span> split).mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)<span class="op">;</span> recs[split] <span class="op">=</span> []</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> d, idx <span class="kw">in</span> by.items():</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> idx:</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>                p <span class="op">=</span> out <span class="op">/</span> <span class="st">"images"</span> <span class="op">/</span> split <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">.png"</span><span class="op">;</span> ds[split][i][<span class="st">"image"</span>].save(p)</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>                recs[split].append({<span class="st">"id"</span>: <span class="ss">f"mnist-</span><span class="sc">{</span>split<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, <span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">""</span>, <span class="st">"image"</span>: <span class="bu">str</span>(p)}, <span class="st">"questions"</span>: q, <span class="st">"gold"</span>: {<span class="st">"digit"</span>: {<span class="st">"label"</span>: <span class="bu">str</span>(d)}}})</span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>        rng.shuffle(recs[split])</span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> recs[<span class="st">"train"</span>], recs[<span class="st">"test"</span>]</span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hotdog_records(per_class<span class="op">=</span><span class="dv">40</span>, root<span class="op">=</span><span class="va">None</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Noul records over hot dog / not hot dog photos: per_class of each class to train, per_class others to score"</span></span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> random.Random(seed)</span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>    root <span class="op">=</span> Path(root <span class="kw">or</span> snapshot_download(<span class="st">"truepositive/hotdog_nothotdog"</span>, repo_type<span class="op">=</span><span class="st">"dataset"</span>)) <span class="op">/</span> <span class="st">"train"</span></span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>    q, train, test <span class="op">=</span> {<span class="st">"hot_dog"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"The photo shows a hot dog."</span>}}, [], []</span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> cls, truth <span class="kw">in</span> ((<span class="st">"hotdog"</span>, <span class="fl">1.0</span>), (<span class="st">"not_hotdog"</span>, <span class="fl">0.0</span>)):</span>
+<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>        files <span class="op">=</span> <span class="bu">sorted</span>((root <span class="op">/</span> cls).glob(<span class="st">"*.jpg"</span>))<span class="op">;</span> rng.shuffle(files)</span>
+<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> part, fs <span class="kw">in</span> ((train, files[:per_class]), (test, files[per_class:<span class="dv">2</span> <span class="op">*</span> per_class])):</span>
+<span id="cb35-32"><a href="#cb35-32" aria-hidden="true" tabindex="-1"></a>            part <span class="op">+=</span> [{<span class="st">"id"</span>: <span class="ss">f"</span><span class="sc">{</span>cls<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>p<span class="sc">.</span>stem<span class="sc">}</span><span class="ss">"</span>, <span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">""</span>, <span class="st">"image"</span>: <span class="bu">str</span>(p)}, <span class="st">"questions"</span>: q, <span class="st">"gold"</span>: {<span class="st">"hot_dog"</span>: {<span class="st">"noul"</span>: truth}}} <span class="cf">for</span> p <span class="kw">in</span> fs]</span>
+<span id="cb35-33"><a href="#cb35-33" aria-hidden="true" tabindex="-1"></a>    rng.shuffle(train)<span class="op">;</span> rng.shuffle(test)</span>
+<span id="cb35-34"><a href="#cb35-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train, test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The application’s default path, the encoder frozen and its vectors at the anchors cached, with the head it trains by default (Laya’s scorer) and with the linear head fitted by LBFGS; then LoRA:</p>
+<div id="46cdf7c9" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>train, test <span class="op">=</span> mnist_records()                       <span class="co"># or hotdog_records(), with image_side=384</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> head <span class="kw">in</span> (<span class="st">"mlp"</span>, <span class="st">"linear"</span>):</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> TypedDecisions.from_records(train, valid<span class="op">=</span>test, calib<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    learn <span class="op">=</span> decision_learner(data, <span class="st">"Hcompany/NeoMME-260M"</span>, train<span class="op">=</span><span class="st">"head"</span>, head<span class="op">=</span>head, image_side<span class="op">=</span><span class="dv">224</span>)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> head <span class="op">==</span> <span class="st">"linear"</span>: learn.fit_linear()</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>: learn.fit_one_cycle(<span class="dv">30</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(head, learn.validate()[<span class="st">"accuracy"</span>])</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, <span class="st">"Hcompany/NeoMME-260M"</span>, train<span class="op">=</span><span class="st">"lora"</span>, image_side<span class="op">=</span><span class="dv">224</span>)    <span class="co"># the encoder trains through adapters</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">20</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>learn.validate()[<span class="st">"accuracy"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Run on 2026-09-26, M3 Pro (MPS, fp32). Accuracy on the held-out images (100 digits, 80 photos), before and after the two fixes described below:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>digits, 10-way choice</th>
+<th>hot dog, noul</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>chance</td>
+<td>0.10</td>
+<td>0.50</td>
+</tr>
+<tr class="even">
+<td>a linear probe on the image alone (the mean of its patch vectors)</td>
+<td>0.56</td>
+<td>0.71</td>
+</tr>
+<tr class="odd">
+<td><em>before</em> · head only, Laya’s scorer, <code>lr_find</code>’s valley, 10 epochs</td>
+<td>0.16</td>
+<td>0.50</td>
+</tr>
+<tr class="even">
+<td><em>before</em> · head only, the linear head (<code>fit_linear</code>)</td>
+<td>0.40</td>
+<td>0.70</td>
+</tr>
+<tr class="odd">
+<td><em>before</em> · LoRA, Laya’s two-layer head, <code>lr_find</code>’s valley, 10 epochs</td>
+<td>0.10</td>
+<td>0.50</td>
+</tr>
+<tr class="even">
+<td><em>after</em> · head only, Laya’s scorer, <code>lr_find</code>’s valley, 10 epochs</td>
+<td>0.21</td>
+<td>0.70</td>
+</tr>
+<tr class="odd">
+<td><em>after</em> · head only, Laya’s scorer, 10⁻³, 30 epochs</td>
+<td>0.29</td>
+<td>0.76</td>
+</tr>
+<tr class="even">
+<td><em>after</em> · head only, the linear head</td>
+<td>0.40</td>
+<td>0.70</td>
+</tr>
+<tr class="odd">
+<td><em>after</em> · LoRA, Laya’s two-layer head, 10⁻³, 20 epochs</td>
+<td>0.12</td>
+<td>0.53</td>
+</tr>
+<tr class="even">
+<td><em>after</em> · LoRA, Laya’s scorer alone (the default now), 10⁻³, 20 epochs</td>
+<td>0.34</td>
+<td>0.74</td>
+</tr>
+</tbody>
+</table>
+<p>Both kinds of question work on images: from 80 to 100 examples the best configurations read the digits at four times chance and the photos at three in four. The probe reads NeoMME’s image representation without the question, the options or the head, and says the images reach the model and carry the class. For scale, a logistic regression on the digits’ raw 28 × 28 pixels, on the same 100 images, scores 0.77: NeoMME is a page encoder, and a digit at 224 px is a 7 × 7 grid of its 32-pixel patches.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: NeoMME's vectors need standardising, and a small task needs no head layers">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: NeoMME’s vectors need standardising, and a small task needs no head layers
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Before the fixes, the default head barely learned (0.16 on the digits, 0.50 on the photos) and LoRA collapsed to a uniform answer (every option at the same probability), while the linear head, which standardises its inputs, reached 0.40 and 0.70. One channel of NeoMME’s vectors carries about 97% of every vector’s norm. A LayerNorm scales each vector by its own spread, so after it the dominant channel still dwarfs the others and every anchor looks alike; the linear head’s per-dimension standardisation puts every channel on the same scale. In a plain Adam loop over the cached anchors, Laya’s scorer went from 0.18 on the raw digits’ anchors to 0.40 on standardised ones, and from 0.73 to 0.78 on the photos. So the multimodal application’s heads now standardise the encoder’s output per dimension (<code>DecisionHead(standardize=True)</code>, fitted from the training rows before the first fit; see the <a href="./models.html#standardising-the-encoders-output">models</a> notebook).</p>
+<p>That fixed the default head on the photos (0.50 to 0.70) but not LoRA with Laya’s head, whose two transformer layers, trained from scratch on 80 examples, still collapsed at every learning rate tried; with Laya’s scorer alone LoRA learns (0.34 and 0.74), so that is now the application’s head in every regime. The images reach the model on every path: zeroing a batch’s pixels changes its logits. On so few examples <code>lr_find</code>‘s valley is too cautious (1.3e-04 for the head here, 1.4e-06 for LoRA on the photos): the tables’ best runs use 10⁻³.</p>
+</div>
+</div>
+<p>The <a href="./tutorials/neomme_images.html">images tutorial</a> reruns both tasks with their outputs. It caches the anchors in float32, as the application now does (see the finding in section 6), which moves the heads’ results by a point or two: on the digits the linear head scores 0.41 and the default head 0.31. It also adds two things. Both come from single runs scored on the test split, so they are leads rather than settings:</p>
+<ul>
+<li><strong>Smaller images read better.</strong> With the linear head the digits reach 0.57 at 112 px (4 × 4 patches) and 0.54 at 56 px, against 0.41 at the 224 px used above, and the default head reaches 0.57 at 56 px. The photos lose accuracy below their own 224 px and gain nothing clear from being enlarged past it.</li>
+<li><strong>The photo split is kinder than it looks.</strong> Stock photos come in shoots, several shots of one scene, and a seeded split puts 17 of the 40 held-out hot dogs next to a training photo from the same shoot. The linear head finds 13 of those 17 hot dogs, but only 13 of the 23 without one. A split by shoot would be the honest one, as sysone splits by case (see <a href="./data.html#splits-by-case">data</a>).</li>
+</ul>
+</section>
+<section id="which-encoder-by-default" class="level2">
+<h2 class="anchored" data-anchor-id="which-encoder-by-default">8. Which encoder by default</h2>
+<p>The application’s default was NeoMME-260M, because H company built it for screenshots and documents, the pages a browser agent decides over. Three comparisons have since measured it against ModernVBERT, each with the same records and the same recipe for both, and each is a tutorial with every output:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>NeoMME-260M</th>
+<th>ModernVBERT</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>100 MNIST digits, a 10-way choice (<a href="./tutorials/neomme_vs_modernvbert.html">comparison tutorial</a>)</td>
+<td>0.31</td>
+<td>0.84</td>
+</tr>
+<tr class="even">
+<td>80 photos, a hot-dog noul (the same tutorial)</td>
+<td>0.74</td>
+<td>0.94</td>
+</tr>
+<tr class="odd">
+<td>Web pages as text: the 12-way element choice on the test and <code>ood</code> websites (<a href="./tutorials/web_text.html">text tutorial</a>)</td>
+<td>0.406 and 0.446</td>
+<td>0.384 and 0.446</td>
+</tr>
+<tr class="even">
+<td>Web pages with the screenshot, a pilot: the operation question (<a href="./tutorials/web_screens.html">screens tutorial</a>)</td>
+<td>0.812</td>
+<td>0.885</td>
+</tr>
+<tr class="odd">
+<td>The same pilot: the element to act on</td>
+<td>0.136</td>
+<td>0.209</td>
+</tr>
+<tr class="even">
+<td>Seconds to encode a screenshot row at 1,024 pixels</td>
+<td>0.58</td>
+<td>0.61</td>
+</tr>
+</tbody>
+</table>
+<p>ModernVBERT wins every comparison that uses an image, including real screenshots, the one where NeoMME’s design should have favoured it. On text the two are level. So since 2026-09-30 the default is ModernVBERT. The screenshot comparison is a pilot, 276 training steps in which no head learned to pick the element to act on, and the switch didn’t wait for a full run, which could still revise it. NeoMME-260M is one argument away: <code>decision_learner(data, "Hcompany/NeoMME-260M")</code>. For screenshots, give ModernVBERT more than its default single tile: the screens tutorial reads them at <code>image_side=1024</code>, 2 × 2 tiles and the global view.</p>
+</section>
+<section id="what-did-not-work-and-what-to-watch" class="level2">
+<h2 class="anchored" data-anchor-id="what-did-not-work-and-what-to-watch">9. What did not work, and what to watch</h2>
+<ul>
+<li><strong>The processor’s own rows.</strong> <code>NeoMMEProcessor</code> rejects text and an image in one row, in either order, and two images in one row; rows are built here instead, with the processor’s image processor for the patches.</li>
+<li><strong>Spaces after <code>&lt;mask&gt;</code>.</strong> <code>"&lt;mask&gt; Save"</code> tokenizes as <code>&lt;mask&gt; ĠS ave</code>, fragmenting the option’s first word; <code>"&lt;mask&gt;Save"</code> keeps it whole. The presets write no space.</li>
+<li><strong>A second <code>&lt;doc&gt;</code>.</strong> In the question-first layout the image needs its own <code>&lt;doc&gt;</code>: without it the model counts the <code>&lt;img&gt;</code> marker as a patch and the forward fails on the patch count.</li>
+<li><strong>Missing positions.</strong> Leaving <code>position_ids</code> out of an image row raises nothing and silently falls back to one-axis positions; every row therefore carries them.</li>
+<li><strong>No resolution cap.</strong> The base checkpoints’ processor has no <code>max_side</code>, so a 4K screenshot becomes 11,750 patches; the <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform resizes first (1,024 px on the long side: 32 × 24 patches for a 1,024 × 768 shot).</li>
+<li><strong>bf16.</strong> The checkpoint’s default dtype; fp32 is the application’s default, bf16 and fp16 both run on MPS.</li>
+<li><strong>Raw anchor geometry.</strong> NeoMME’s final norm has no scale, one channel carries about 97% of every vector’s norm, and raw cosines between anchors are all about 0.99. A raw cosine cannot rank options, and neither can a head trained on the raw vectors: the scorer’s LayerNorm does not undo it (section 7), so the application standardises the head’s input per dimension.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
