@@ -64,7 +64,7 @@ learn.predict(state, questions)
  'urgency': {'type': 'score',
   'score': 1.0002,
   'legend': {'0': 'not urgent', '1': 'soon', '2': 'critical'},
-  'probabilities': {'0': 0.3332, '1': 0.3334, '2': 0.3334},
+  'probabilities': {'0': 0.3333, '1': 0.3333, '2': 0.3334},
   'confidence': 0.0,
   'answer_confidence': 0.3334},
  'churn_risk': {'type': 'noul',
@@ -75,7 +75,7 @@ learn.predict(state, questions)
 
 ## Validated so far
 
-Measured on 2026-09-26 and 27 on an M3 Pro (MPS, fp32), with the code in this repository:
+Measured between 2026-09-26 and 29 on an M3 Pro (MPS, fp32), with the code in this repository:
 
 | What | Result |
 | --- | --- |
@@ -84,6 +84,7 @@ Measured on 2026-09-26 and 27 on an M3 Pro (MPS, fp32), with the code in this re
 | Head-only ModernBERT-large, frozen, anchors cached (the ten lines above) | 0.504 accuracy, below the dataset card's majority baseline (0.520): a frozen encoder never tuned for decisions carries little of the task. 12 minutes end to end, of which 58 s is training |
 | Laya's general checkpoint, `convaiinnovations/laya`, zero-shot on the same test split | 0.362 accuracy: it was not trained on these four workflows |
 | Laya's general encoder, frozen, under a new head (`decision_learner(data, "convaiinnovations/laya", train="head")`) | 0.560 accuracy, against ModernBERT-large's 0.504 under the same recipe: an encoder already trained on decisions gives a new head more to work with |
+| GLiNER2.5-Decide's encoder, frozen, under a new head (`decision_learner(data, "fastino/GLiNER2.5-Decide")`) | 0.645 accuracy under the same recipe, the best frozen encoder measured so far; its own classifier, copied into the head with no training, scores 0.476 (the [text notebook's table](nbs/10_text.ipynb#regimes-on-the-laptop)) |
 | Rows built by `RowBuilder` on Laya's template | token-for-token identical to Laya's `build_sequence` on every fixture row, on ModernBERT-large's tokenizer too |
 | A sysone export in Laya's format | loads in `laya.Agent`, which returns the same answers; its logits match Laya's `DecisionModel` |
 | RLCD | equal to the loss in Laya's fine-tuning notebook, pasted, under the same seed |
@@ -92,8 +93,10 @@ Measured on 2026-09-26 and 27 on an M3 Pro (MPS, fp32), with the code in this re
 | ModernVBERT on the same images and recipes, frozen, a head on its anchors | the digit choice: 0.84, where NeoMME scored 0.31; the hot-dog noul: 0.94, where NeoMME scored 0.74; with LoRA on the text tower, 0.84 and 0.96. A probe on its image vectors reads 0.92 and 0.98 (the [ModernVBERT tutorial](nbs/tutorials/modernvbert_images.ipynb); the two encoders side by side in the [comparison](nbs/tutorials/neomme_vs_modernvbert.ipynb)) |
 | ProtST-ESM1b loaded from its tensors alone (`sysone.protein`, no remote code), zero-shot on 600 DeepLoc test proteins | a 10-way location choice: 0.418 with ProtST's label texts as options, against 0.300 for the majority class, and 0.270 to 0.345 with other wordings; a membrane noul: 0.758, against 0.578 |
 | The protein application: a pair head on ProtST's frozen towers, trained from vectors cached once for 1,200 proteins | 0.828 on the location choice, 0.906 on the membrane noul, 0.896 on four-way shortlists. At a 90% target, thresholds on the head's calibrated confidence act on 70% of the location questions, and the act head's on 57% (the [protein tutorial](nbs/tutorials/protein_decisions.ipynb), 13 minutes on the laptop) |
+| GLiNER2.5-Decide zero-shot on Fastino's own benchmark (its published development split: 17 domains, 1,700 rows) | 0.629 over every head as the dataset card scores it (the card reports 0.602 on its hidden test split), 0.685 over the 26 single-label heads. sysone's GLiNER2 backend scores 0.693, and the encoder under the sysone head with the classifier copied in 0.684, giving the card's label on 95% of the decisions |
+| Heads trained on half of each domain, scored on the other half | the copied classifier, trained: 0.684; a new head on the Decide encoder: 0.690; a new head on ModernBERT-large: 0.420 (the [GLiNER2.5-Decide tutorial](nbs/tutorials/gliner_decide.ipynb), 19 minutes on the laptop) |
 
-Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's notebook from its released checkpoint (written in the text notebook, launched with `sysone run`, which needs credentials), GLiNER2.5-Decide on its real checkpoint, NeoMME on real screenshots rather than small image tasks, and the zero-shot suites.
+Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's notebook from its released checkpoint (written in the text notebook, launched with `sysone run`, which needs credentials), NeoMME on real screenshots rather than small image tasks, and the zero-shot suites.
 
 ## Install
 
@@ -124,6 +127,7 @@ Where behaviour depends on the kind of question or on the encoder, sysone uses g
 - [ModernVBERT on images](nbs/tutorials/modernvbert_images.ipynb) runs the same two tasks on ModernVBERT, with the same records and recipes. Its outputs show the rows with the image as one 512-pixel tile of 64 image tokens, the three ways to train, the geometry of its vectors, and what more tiles change.
 - [NeoMME and ModernVBERT, side by side](nbs/tutorials/neomme_vs_modernvbert.ipynb) trains both encoders on identical inputs, and compares their accuracy, calibration and cost, and where each one is wrong.
 - [ProtST as a decision model](nbs/tutorials/protein_decisions.ipynb) asks three typed questions about each of 600 held-out proteins: a 10-way location choice, a membrane noul, and a four-way shortlist that lacks the right answer a third of the time. It answers them zero-shot with ProtST, comparing four ways to write the options. Then it trains a head on the frozen towers from 1,200 proteins and compares the two, compartment by compartment. It ends with when to act and when to escalate: Laya's act head against thresholds on the head's own confidence.
+- [GLiNER2.5-Decide under the sysone head](nbs/tutorials/gliner_decide.ipynb) runs Fastino's decision model on its own benchmark three ways: as the dataset card scores it, through sysone's GLiNER2 backend, and with its encoder under the sysone head and its classifier copied in. It measures how closely they agree before any training, then trains heads on half of each domain and scores them on the other half, beside a new head on ModernBERT-large. On the way, it shows why a learning rate suggested by `lr_find` needs a look at its curve.
 
 ## Reading the notebooks
 
@@ -151,6 +155,8 @@ Read in order, the notebooks build the library up from its core, and each one ex
 | ProtST-BinaryLocalization labels membrane-bound proteins 0, which its card doesn't say | [protein tutorial](nbs/tutorials/protein_decisions.ipynb#the-data) |
 | An embedder built on the spot switched ProtST's shared text tower into training mode, and peft needs a `base_model_prefix` on a stream encoder | [protein](nbs/22_protein.ipynb#zero-shot) |
 | Laya's act head, trained on the rows the option head fits, ranked answers worse than the head's own confidence, and one threshold for every question acted on no shortlist | [protein tutorial](nbs/tutorials/protein_decisions.ipynb#acting-or-escalating) |
+| `gliner2` refuses an empty instruction, so the GLiNER2 backend stopped on questions without one; fixed, a question sent on its own gets the benchmark card's answer on all 2,600 decisions | [gliner backend](nbs/31_gliner_backend.ipynb#glinerdecider) |
+| `lr_find`'s valley for the same new head on the same 850 rows was 1.4e-6 with one batch order and 6.6e-4 with another | [GLiNER2.5-Decide tutorial](nbs/tutorials/gliner_decide.ipynb#how-fast-to-train) |
 
 ## Developer guide
 

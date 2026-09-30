@@ -858,7 +858,7 @@ def load_gliner_encoder(src:str, revision:str|None=None, dtype=None):
     enc = enc.float()
     return enc.to(dtype) if dtype is not None else enc
 
-# %% ../nbs/30_gliner_encoder.ipynb #9060bcb7
+# %% ../nbs/30_gliner_encoder.ipynb #36475066
 def _gliner_spec(id:str, revision:str|None=None, **kw) -> EncoderSpec:
     d = _gliner_dir(id, revision)
     cfg, tok = AutoConfig.from_pretrained(d / "encoder_config"), AutoTokenizer.from_pretrained(d)
@@ -869,7 +869,7 @@ def _gliner_spec(id:str, revision:str|None=None, **kw) -> EncoderSpec:
 
 ENCODER_SOURCES.insert(0, ("gliner2", is_gliner_checkpoint, _gliner_spec))
 
-# %% ../nbs/30_gliner_encoder.ipynb #04ac9bcc
+# %% ../nbs/30_gliner_encoder.ipynb #4292e62a
 class GlinerCheckpoint(Checkpoint): "A GLiNER2 checkpoint: its classifier MLP starts a `gliner2` scorer"
 
 def gliner_warm_start(head:DecisionHead, ckpt:GlinerCheckpoint, *, strict:bool=True) -> DecisionHead:

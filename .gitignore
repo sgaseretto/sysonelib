@@ -226,8 +226,9 @@ _proc/
 *.bak
 nbs/.ipynb_checkpoints/
 .sysone/
-# the images the tutorials save next to themselves
+# the images and feature caches the tutorials save next to themselves
 nbs/tutorials/neomme-images/
 nbs/tutorials/protein-decisions/
 nbs/tutorials/modernvbert-images/
 nbs/tutorials/compare-images/
+nbs/tutorials/gliner-decide/
