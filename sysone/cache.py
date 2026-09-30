@@ -173,17 +173,17 @@ def features(self:FeatureCache, split:str="train") -> Dataset:
         (path / "sysone_cache.json").write_text(json.dumps({"split": split, "rows": len(ds), "seconds": round(time.time() - t0, 2),
                                                             "mode": self.mode, "encoder": getattr(self.model.spec, "id", None)}))
     ds = load_from_disk(str(path))
-    live = self.data.rows(split)       # the key covers what the encoder saw; the gold comes from the rows as they are now
+    live = self.data.rows(split)       # the key covers what the encoder saw; the gold, and which case each row is, come from the rows as they are now
     if len(live) == len(ds):
-        gold = [c for c in ("target", "label", "answerable") if c in ds.column_names and c in live.column_names]
-        ds = ds.remove_columns(gold)
-        for c in gold: ds = ds.add_column(c, live[c])
+        fresh = [c for c in ("target", "label", "answerable", "case", "qid", "case_idx", "variant") if c in ds.column_names and c in live.column_names]
+        ds = ds.remove_columns(fresh)
+        for c in fresh: ds = ds.add_column(c, live[c])
     col = "anchors" if self.mode == "masks" else "hidden"
     ds.set_format("numpy", columns=["input_ids", "markers", "target", col] + [c for c in ("query", "first") if c in ds.column_names],
                   output_all_columns=True)
     return ds
 
-# %% ../nbs/07_cache.ipynb #0f912899
+# %% ../nbs/07_cache.ipynb #8adc9f14
 def _stack_anchors(ds):
     X = [np.asarray(a, dtype=np.float32) for a in ds["anchors"]]
     K, D = max(len(x) for x in X), X[0].shape[1]
@@ -218,7 +218,7 @@ def fit_linear(self:Learner, l2:float=1e-3, max_iter:int=200) -> dict:
     if self.calibrate_after_fit and self.data.cases.get("calib") is not None: self.calibrate()
     return {"train_loss": loss, "seconds": round(time.time() - t0, 2)}
 
-# %% ../nbs/07_cache.ipynb #f03314ec
+# %% ../nbs/07_cache.ipynb #8216257c
 def cache_size(rows, width:int, mode:str="masks", bytes_per:int=2) -> int:
     "Bytes a feature cache of `rows` takes"
     n = sum(len(m) for m in rows["markers"]) if mode == "masks" else sum(rows["n_tokens"])

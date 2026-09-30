@@ -77,7 +77,7 @@ def neomme_inputs(config:NeoMMEConfig, inputs:dict) -> dict:
 encoder_inputs.register(neomme_inputs)
 
 # %% ../nbs/20_neomme.ipynb #302215e1
-ENCODER = "Hcompany/NeoMME-260M"
+ENCODER = "ModernVBERT/modernvbert"       # the default since 2026-09-30, NeoMME-260M before: section 8 says why
 
 def neomme_image_side(processor:NeoMMEProcessor) -> int:
     "NeoMME's default image side: 1,024 pixels on the long side, for the pages and screenshots it reads"
@@ -87,19 +87,20 @@ default_image_side.register(neomme_image_side)
 
 def decision_learner(data:TypedDecisions, encoder=ENCODER, train="head", cache="auto", template=None, image_side="auto",
                      head:str|None=None, dtype=torch.float32, standardize:bool=True, cache_dtype:str="float32", **kw) -> Learner:
-    "A multimodal `Learner` for any encoder with an adapter (NeoMME-260M by default), with the encoder's template, image side and batching"
+    "A multimodal `Learner` for any encoder with an adapter (ModernVBERT by default), with the encoder's template, image side and batching"
     spec = encoder if isinstance(encoder, EncoderSpec) else EncoderSpec.from_pretrained(encoder)
     template = template if template is not None else spec.template.name     # the family's preset, whatever the data was bound to before
     if image_side == "auto": image_side = default_image_side(spec.processor)
+    if cache == "auto": cache = "masks" if train == "head" and head in (None, "mlp", "linear") and not kw.get("head_layers") else None
     per_row = prepare_processor(spec.processor, image_side)                 # a tiling processor makes several images of one
     if per_row > 1:           # the vision tower's batch is rows × images per row: fewer rows keep it the size of one image's
         base = PRESETS[kw.get("preset") or default_preset()]
-        for k in ("per_device_train_batch_size", "per_device_eval_batch_size"):
+        shrink = ("per_device_eval_batch_size",) if cache else ("per_device_train_batch_size", "per_device_eval_batch_size")
+        for k in shrink:      # with cached anchors, only the batches that fill the cache run the vision tower
             if k in base: kw.setdefault(k, max(1, base[k] // per_row))
     if not any(isinstance(t, Image) and not getattr(t, "_added", False) for t in data.tfms):   # the caller's own Image transform is kept
         img = Image(side=image_side); img._added = True       # this call's side, also when an earlier call added one to the same data
         data.tfms = [img] + [t for t in data.tfms if not getattr(t, "_added", False)]
-    if cache == "auto": cache = "masks" if train == "head" and head in (None, "mlp", "linear") and not kw.get("head_layers") else None
     head = head or "mlp"     # Laya's scorer on the anchors in every regime; Laya's two-layer head trained from scratch collapsed on small image tasks
     return _decision_learner(data, spec, train=train, cache=cache, template=template, head=head, dtype=dtype, standardize=standardize,
                              cache_dtype=cache_dtype, **kw)

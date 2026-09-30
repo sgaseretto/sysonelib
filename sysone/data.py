@@ -273,17 +273,18 @@ class LazyRows(torch.utils.data.Dataset):
     def __init__(self, data:TypedDecisions, split:str="train"):
         self.data, self.split = data, split
         static = data.rows(split)
-        self.index = list(zip(static["case_idx"], static["variant"], static["qid"]))
+        self.index = list(zip(static["case_idx"], static["variant"], static["qid"], static["case"]))
         self.lengths = static["n_tokens"]
     def __len__(self): return len(self.index)
     def __getitem__(self, i):
-        ci, v, qid = self.index[i]
+        ci, v, qid, case = self.index[i]
         train = self.split == "train"
         rec = case_record(self.data.cases[self.split], ci)
         if train and self.data.sampler is not None: rec = self.data.sampler.expand(rec, self.data.builder)[v]
         rec["questions"] = {qid: rec["questions"][qid]}
         rec["gold"] = {qid: (rec.get("gold") or {}).get(qid)}
-        return self.data.builder.build_record(rec, train=train)[0].to_dict()
+        row = self.data.builder.build_record(rec, train=train)[0].to_dict()
+        return row | {"case": case, "qid": qid, "case_idx": ci, "variant": v}      # which case and question, as the static rows say
 
 @patch
 def lazy_rows(self:TypedDecisions, split:str="train") -> LazyRows:

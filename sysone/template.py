@@ -137,8 +137,8 @@ class Shuffle(Transform):
         return {**record, "questions": qs}
 
 # %% ../nbs/01_template.ipynb #1c6fee86
-def load_image(img, side:int|None=None):
-    "A PIL RGB image from a path, a base64 data URL, bytes or a PIL image, resized so its long side is `side`"
+def load_image(img, side:int|None=None, box:tuple|None=None):
+    "A PIL RGB image from a path, a base64 data URL, bytes or a PIL image, cropped to `box` (left, top, right, bottom), resized so its long side is `side`"
     from PIL import Image as PILImage
     import io, base64
     if isinstance(img, str) and img.startswith("data:image/"): img = PILImage.open(io.BytesIO(base64.b64decode(img.split(",", 1)[1])))
@@ -146,6 +146,9 @@ def load_image(img, side:int|None=None):
     elif isinstance(img, (bytes, bytearray)): img = PILImage.open(io.BytesIO(img))
     elif isinstance(img, dict) and "bytes" in img: img = PILImage.open(io.BytesIO(img["bytes"]))
     img = img.convert("RGB")
+    if box is not None:
+        l, t, r, b = max(0, box[0]), max(0, box[1]), min(img.width, box[2]), min(img.height, box[3])
+        if r > l and b > t and (l, t, r, b) != (0, 0, img.width, img.height): img = img.crop((l, t, r, b))
     if side and max(img.size) != side:
         w, h = img.size; s = side / max(w, h)
         img = img.resize((max(1, round(w * s)), max(1, round(h * s))), PILImage.BICUBIC)
@@ -153,8 +156,13 @@ def load_image(img, side:int|None=None):
 
 @transform("Image")
 class Image(Transform):
-    "Move the image at `state[key]` into `record['images']`, resized to `side` px on the long side"
-    def __init__(self, key:str="image", side:int|None=1024): store_attr()
+    "Move the image at `state[key]` into `record['images']`, cropped to `box` if given, resized to `side` px on the long side"
+    def __init__(self, key:str="image", side:int|None=1024, box:tuple|None=None):
+        store_attr(); self.box = tuple(box) if box is not None else None
+    def to_json(self) -> dict:
+        d = super().to_json()
+        if self.box is None: d.pop("box")      # an Image without a box describes itself as before, so cache keys and exports stay valid
+        return d
     def __call__(self, record):
         s = record["state"]
         if not isinstance(s, dict): return record
@@ -162,9 +170,9 @@ class Image(Transform):
             return {**record, "state": s["text"]} if set(s) - {self.key} == {"text"} else record
         s = dict(s); img = s.pop(self.key)
         text = s.pop("text") if set(s) == {"text"} else (s if s else "")
-        return {**record, "state": text, "images": [load_image(img, self.side)]}
+        return {**record, "state": text, "images": [load_image(img, self.side, self.box)]}
 
-# %% ../nbs/01_template.ipynb #13c2fa89
+# %% ../nbs/01_template.ipynb #2967becf
 @transform("Stream")
 class Stream(Transform):
     "Move `state[key]` out of the text and into the side stream `stream` (named `key` by default), which the encoder reads on its own"
@@ -176,7 +184,7 @@ class Stream(Transform):
         text = s.pop("text") if set(s) == {"text"} else (s if s else "")
         return {**record, "state": text, "streams": {**(record.get("streams") or {}), self.stream: v}}
 
-# %% ../nbs/01_template.ipynb #6831b764
+# %% ../nbs/01_template.ipynb #57731bcf
 LAYA_ROW = "{start}{type} question: {instructions}{sep}{options}{sep}{state}{end}"
 _ROW_FIELDS = {"start", "sep", "end", "mask", "image", "type", "instructions", "options", "state"}
 _OPTION_FIELDS = {"mask", "text"}
@@ -221,7 +229,7 @@ class RowTemplate:
         return (f"RowTemplate({self.name or 'custom'}: {self.row!r}, option={self.option!r}, mask={self.mask!r}, "
                 f"budgets {self.max_len}/{self.head_max_len}/{self.option_tokens})")
 
-# %% ../nbs/01_template.ipynb #57731bcf
+# %% ../nbs/01_template.ipynb #59690d0d
 _TEMPLATE_KEYS = ("start", "sep", "end", "mask", "image", "row", "option", "max_len", "head_max_len",
                   "option_tokens", "truncate", "option_sep")
 
@@ -246,7 +254,7 @@ def hash(self:RowTemplate) -> str:
     blob = json.dumps({"t": self.to_json() | {"name": None}, "tfms": tfms_to_json(self.tfms)}, sort_keys=True)
     return hashlib.sha1(blob.encode()).hexdigest()[:16]
 
-# %% ../nbs/01_template.ipynb #8d305d38
+# %% ../nbs/01_template.ipynb #e065ecb3
 _PRESETS = {
     "laya": dict(start="[CLS]", sep="[SEP]", mask="[MASK]", end="[SEP]", row=LAYA_ROW, option="{mask} {text}",
                  max_len=512, head_max_len=192, option_tokens=48, truncate="auto"),
@@ -279,7 +287,7 @@ def preset(cls:RowTemplate, name:str, tokenizer=None, **overrides):
     else: raise ValueError(f"unknown preset {name!r}; use one of {sorted(_PRESETS) + ['auto']}")
     return cls(**(kw | overrides), name=name)
 
-# %% ../nbs/01_template.ipynb #f7762c2d
+# %% ../nbs/01_template.ipynb #80931346
 def _compile(pieces):
     "Group pieces into segments: ('special', role), ('run', [pieces]), ('options',), ('state',)"
     segs, run = [], []
@@ -316,7 +324,7 @@ class RowBuilder:
         streams = f", streams={list(self.streams.values())}" if self.streams else ""
         return f"RowBuilder({type(self.tok).__name__} {kind}, {self.template!r}, tfms={self.tfms}{streams})"
 
-# %% ../nbs/01_template.ipynb #80931346
+# %% ../nbs/01_template.ipynb #56694130
 def _single_token_id(tok, s):
     "The id of `s` if the tokenizer knows it as exactly one token, else None"
     if not s: return None
@@ -336,7 +344,7 @@ def _resolve_specials(self:RowBuilder) -> dict:
                          f"(its mask token is {getattr(self.tok, 'mask_token', None)!r})")
     return ids
 
-# %% ../nbs/01_template.ipynb #3c87dd40
+# %% ../nbs/01_template.ipynb #b01282d7
 @patch
 def _scrub(self:RowBuilder, s:str) -> str:
     "User text with the anchor and image tokens replaced by spaces"
@@ -359,7 +367,7 @@ def _cut(ids, n, tail_ids):
     if len(ids) <= n: return ids
     return ids[:max(0, n - len(tail_ids))] + list(tail_ids)
 
-# %% ../nbs/01_template.ipynb #8f922c6a
+# %% ../nbs/01_template.ipynb #64e0a2a7
 @patch
 def _encode(self:RowBuilder, texts:list) -> list:
     "Token ids of several texts in one tokenizer call; the empty string has none"
@@ -377,7 +385,7 @@ def _question_parts(self:RowBuilder, q:Question):
     opts = [[_render_run(s[1], q, self._scrub(o)) for s in self._opt_segs if s[0] == "run"] for o in q.options]
     return runs, opts
 
-# %% ../nbs/01_template.ipynb #4f86125f
+# %% ../nbs/01_template.ipynb #7aefab2b
 @patch
 def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is_list=False, image_ids=None):
     "ids, marker positions and the image marker's position for one question, with Laya's budget rules"
@@ -436,7 +444,7 @@ def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is
     keep = [i for i, m in enumerate(markers) if m < t.max_len]
     return ids[:t.max_len], [markers[i] for i in keep], image_at, [(s, min(e, t.max_len)) for s, e in (spans[i] for i in keep)]
 
-# %% ../nbs/01_template.ipynb #85fdaebf
+# %% ../nbs/01_template.ipynb #a2235efc
 @dispatch
 def processor_rows(processor:object, builder, record:dict, *, skip_errors:bool=False) -> list:
     "The rows of a transformed record for a multimodal encoder: dispatched on its processor's class, whose adapter adds the method"
@@ -508,7 +516,7 @@ def build(self:RowBuilder, state, question, gold=None, name="q") -> Row:
     q = Question.from_dict(question, name=name)
     return self.build_record({"state": state, "questions": {name: q.to_dict()}, "gold": {name: gold}})[0]
 
-# %% ../nbs/01_template.ipynb #7b4eea22
+# %% ../nbs/01_template.ipynb #cf814720
 class TokenStream:
     "A side stream tokenized by its own tokenizer; its ids and attention mask ride in every row of the record"
     def __init__(self,
@@ -547,7 +555,7 @@ def stream_from_json(d:dict, tokenizer):
     if d.get("kind", "tokens") != "tokens": raise ValueError(f"unknown stream kind {d.get('kind')!r}")
     return TokenStream(d["name"], tokenizer, d.get("max_len", 1024), d.get("crop", "right"))
 
-# %% ../nbs/01_template.ipynb #b518b2e5
+# %% ../nbs/01_template.ipynb #ecd8e9cf
 def _decode_ids(tok, ids):
     specials = set(getattr(tok, "all_special_ids", []))
     out, buf = [], []
@@ -578,7 +586,7 @@ def show(self:RowBuilder, record:dict, max_chars:int=300):
     "Print the rows of a record"
     for r in self.build_record(record): print(show_row(r, self.tok, max_chars), end="\n\n")
 
-# %% ../nbs/01_template.ipynb #a5781eb2
+# %% ../nbs/01_template.ipynb #4b68180d
 @patch
 def to_json(self:RowBuilder) -> dict:
     "The template, transforms and side streams, as written to `sysone.json`"
