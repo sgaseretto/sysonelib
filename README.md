@@ -33,7 +33,7 @@ jev = Decider.load("my-jev")          # the same answers from the exported folde
 jev.predict(state, questions)         # choice / score / noul, probabilities, confidence
 ```
 
-`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state, with ModernVBERT by default or with NeoMME (`decision_learner(data, "Hcompany/NeoMME-260M")`); `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; a GLiNER2 checkpoint is a text encoder like any other (`head="gliner2"` starts from its classifier), while `sysone.gliner` drives whole GLiNER2 models through their own package.
+`train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state, with ModernVBERT by default ([why](nbs/20_neomme.ipynb#which-encoder-by-default)) or with NeoMME (`decision_learner(data, "Hcompany/NeoMME-260M")`); `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; a GLiNER2 checkpoint is a text encoder like any other (with `head="gliner2"` and `init_from` set to the checkpoint, the head starts from its classifier), while `sysone.gliner` drives whole GLiNER2 models through their own package.
 
 ## What it answers
 
@@ -106,7 +106,7 @@ Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's noteb
 pip install git+https://github.com/sgaseretto/sysonelib
 ```
 
-Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), `sysone[gliner]` (the `gliner2` package), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[plots]`.
+Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), `sysone[gliner]` (the `gliner2` package and peft, on the same transformers 5 as the rest), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[onnx]` (ONNX export of text models, served by `OnnxDecider` on onnxruntime), `sysone[plots]`.
 
 ## How it is organised
 
