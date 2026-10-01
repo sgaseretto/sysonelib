@@ -7,12 +7,15 @@ Docs: https://sgaseretto.github.io/sysonelib/template.html.md"""
 # %% auto #0
 __all__ = ['LAYA_ROW', 'SPECIALS', 'transform', 'Transform', 'tfms_to_json', 'tfms_from_json', 'apply_tfms', 'Regex', 'Lower',
            'Field', 'Truncate', 'Shuffle', 'load_image', 'Image', 'Stream', 'RowTemplate', 'RowBuilder',
-           'processor_rows', 'default_image_side', 'prepare_processor', 'TokenStream', 'stream_from_json', 'show_row']
+           'processor_rows', 'default_image_side', 'prepare_processor', 'tile_arrays', 'pixel_tiles', 'TokenStream',
+           'stream_from_json', 'show_row']
 
 # %% ../nbs/01_template.ipynb #1d7501af
 import copy, hashlib, importlib, json, random, re, string, warnings
 from pathlib import Path
 
+import numpy as np
+import torch
 from fastcore.basics import patch, store_attr
 
 from .core import *
@@ -516,7 +519,31 @@ def build(self:RowBuilder, state, question, gold=None, name="q") -> Row:
     q = Question.from_dict(question, name=name)
     return self.build_record({"state": state, "questions": {name: q.to_dict()}, "gold": {name: gold}})[0]
 
-# %% ../nbs/01_template.ipynb #cf814720
+# %% ../nbs/01_template.ipynb #ba75f253
+def tile_arrays(processor, row:Row, values=None) -> tuple:
+    "Pixels laid out as tiles (n, 3, H, W) as images in [0, 1], cut to their pixel mask, and `values` (…, n, 3, H, W) summed over the colours and cut alike"
+    pv = torch.as_tensor(row.extras["pixel_values"]).float()
+    if pv.dim() != 4: raise ValueError(f"no `pixel_tiles` method for a {type(processor).__name__}, whose pixels are {tuple(pv.shape)}, not tiles (n, 3, H, W)")
+    ip = getattr(processor, "image_processor", processor)
+    mean, std = (torch.tensor(getattr(ip, k, None) or d, dtype=torch.float32).view(-1, 1, 1) for k, d in (("image_mean", [0.0]), ("image_std", [1.0])))
+    tiles = (pv * std + mean).clamp(0, 1).permute(0, 2, 3, 1).numpy()
+    v = None if values is None else np.asarray(values).sum(-3)
+    mask, out_t, out_v = row.extras.get("pixel_attention_mask"), [], []
+    for i, t in enumerate(tiles):
+        h, w = t.shape[:2]
+        if mask is not None:
+            m = np.asarray(mask[i], bool); rs, cs = np.flatnonzero(m.any(1)), np.flatnonzero(m.any(0))
+            if len(rs) and len(cs): h, w = int(rs.max()) + 1, int(cs.max()) + 1
+        out_t.append(t[:h, :w]); out_v.append(None if v is None else v[..., i, :h, :w])
+    return out_t, (None if values is None else out_v)
+
+@dispatch
+def pixel_tiles(processor:object, row:Row, values=None) -> tuple:
+    "What a row's pixels show, as images in [0, 1], and `values` (one per pixel value) laid over them: dispatched on the processor's class"
+    if load_adapter(processor): return pixel_tiles(processor, row, values)
+    return tile_arrays(processor, row, values)
+
+# %% ../nbs/01_template.ipynb #b518b2e5
 class TokenStream:
     "A side stream tokenized by its own tokenizer; its ids and attention mask ride in every row of the record"
     def __init__(self,
@@ -555,7 +582,7 @@ def stream_from_json(d:dict, tokenizer):
     if d.get("kind", "tokens") != "tokens": raise ValueError(f"unknown stream kind {d.get('kind')!r}")
     return TokenStream(d["name"], tokenizer, d.get("max_len", 1024), d.get("crop", "right"))
 
-# %% ../nbs/01_template.ipynb #ecd8e9cf
+# %% ../nbs/01_template.ipynb #933e3e29
 def _decode_ids(tok, ids):
     specials = set(getattr(tok, "all_special_ids", []))
     out, buf = [], []
@@ -586,7 +613,7 @@ def show(self:RowBuilder, record:dict, max_chars:int=300):
     "Print the rows of a record"
     for r in self.build_record(record): print(show_row(r, self.tok, max_chars), end="\n\n")
 
-# %% ../nbs/01_template.ipynb #4b68180d
+# %% ../nbs/01_template.ipynb #047461f3
 @patch
 def to_json(self:RowBuilder) -> dict:
     "The template, transforms and side streams, as written to `sysone.json`"

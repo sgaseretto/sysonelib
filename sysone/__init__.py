@@ -11,15 +11,17 @@ _LAZY = {
     "TypedDecisions": "data", "RowSampler": "data", "Shortlist": "data",
     "EncoderSpec": "models", "DecisionHead": "models", "EncoderDecisionModel": "models", "StreamEncoder": "models",
     "SideEncoder": "models", "stream_memo": "models", "add_cross_attention": "models",
+    "Preds": "metrics", "Metric": "metrics", "metrics_table": "metrics",
     "Learner": "learner", "decision_learner": "learner",
     "Decider": "inference",
     "FeatureCache": "cache",
+    "Interpretation": "interpret", "Attribution": "interpret", "attribute": "interpret", "occlusion": "interpret",
     "SimilarityDecider": "zeroshot", "VerbalizerDecider": "zeroshot", "CachedEmbedder": "zeroshot",
     "ProtST": "protein", "load_protst": "protein",
 }
 
-_SUBMODULES = {"core", "template", "data", "models", "losses", "learner", "inference", "cache", "datasets", "evaluate",
-               "text", "zeroshot", "multimodal", "modernvbert", "protein", "gliner", "cloud", "cli"}
+_SUBMODULES = {"core", "template", "data", "models", "losses", "metrics", "learner", "inference", "cache", "datasets", "evaluate",
+               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "gliner", "cloud", "cli"}
 
 def __getattr__(name):
     import importlib

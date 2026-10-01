@@ -6,9 +6,12 @@ Docs: https://sgaseretto.github.io/sysonelib/modernvbert.html.md"""
 
 # %% auto #0
 __all__ = ['IDEFICS3_TOKENS', 'ENCODER', 'idefics3_block', 'build_idefics3_rows', 'modernvbert_inputs', 'tiles_for',
-           'idefics3_image_side', 'idefics3_prepare']
+           'idefics3_image_side', 'idefics3_prepare', 'idefics3_tiles']
 
 # %% ../nbs/23_modernvbert.ipynb #26e9049a
+import re
+
+import numpy as np
 import torch
 
 from transformers import Idefics3Processor, ModernVBertConfig
@@ -85,3 +88,16 @@ def idefics3_prepare(processor:Idefics3Processor, side:int|None) -> int:
 
 default_image_side.register(idefics3_image_side)
 prepare_processor.register(idefics3_prepare)
+
+# %% ../nbs/23_modernvbert.ipynb #6ae9f114
+def idefics3_tiles(processor:Idefics3Processor, row:Row, values=None) -> tuple:
+    "ModernVBERT's pixels as the image they show: the tiles stitched back into the image (from its `<row_i_col_j>` tokens), then the global view"
+    tiles, vals = tile_arrays(processor, row, values)
+    grid = [tuple(map(int, m.groups())) for t in processor.tokenizer.convert_ids_to_tokens(list(row.ids)) if (m := re.fullmatch(r"<row_(\d+)_col_(\d+)>", t))]
+    if len(tiles) < 2 or not grid: return tiles, vals
+    R, C = max(r for r, _ in grid), max(c for _, c in grid)
+    if R * C != len(tiles) - 1: return tiles, vals
+    stitch = lambda xs, h, w: np.concatenate([np.concatenate(xs[r * C:(r + 1) * C], axis=w) for r in range(R)], axis=h)
+    return [stitch(tiles[:-1], 0, 1), tiles[-1]], (None if vals is None else [stitch(vals[:-1], -2, -1), vals[-1]])
+
+pixel_tiles.register(idefics3_tiles)

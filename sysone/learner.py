@@ -23,6 +23,7 @@ from .template import *
 from .data import *
 from .models import *
 from .losses import *
+from .metrics import Preds, as_metric
 
 # %% ../nbs/05_learner.ipynb #a76a42d7
 def pack_labels(b) -> torch.Tensor:
@@ -227,12 +228,14 @@ class Learner:
                  calibrate_after_fit:bool=True, # fit temperatures on the calib split after every fit
                  callbacks:list|None=None, # extra TrainerCallbacks
                  act_weight:float=0.5, # the act head's loss weight, beside the option loss
+                 metrics:list|None=None, # more metrics, beside Laya's: functions of a `Preds`, or `Metric`s (see metrics)
                  **args): # extra TrainingArguments
         self.data, self.model, self.cache, self.lr, self.cache_dir, self.cache_dtype = data, model, cache, lr, cache_dir, cache_dtype
         self.path = Path(path) if path else Path(tempfile.mkdtemp(prefix="sysone-"))
         self.preset = preset or default_preset()
         self.loss = get_loss(loss, data.rows("train")["target"])
         self.temperatures, self.calibrate_after_fit, self._features, self.act_threshold, self.act_score = {}, calibrate_after_fit, {}, None, None
+        self.metrics, self._keys = [as_metric(m) for m in metrics or []], {}
         if cache is not None: self._check_cache(cache)
         self.recorder, self.calibration = Recorder(), CalibrationCallback(self)
         self.calibration.active = calibrate_after_fit
@@ -265,7 +268,14 @@ def _split_preds(predictions):
 def _metrics(self:Learner, p) -> dict:
     t, m, q, l = unpack_labels(p.label_ids)
     logits, act = _split_preds(p.predictions)
-    return decision_metrics(np.where(m, logits, -1e4), t, m, q, l, act=act, answerable=unpack_answerable(p.label_ids))
+    ans = unpack_answerable(p.label_ids)
+    out = decision_metrics(np.where(m, logits, -1e4), t, m, q, l, act=act, answerable=ans)
+    if self.metrics:            # the Trainer evaluates the valid split, in order: its rows say which question each one is
+        meta = self.row_meta("valid") if len(t) == len(self.dataset("valid") or []) else {}
+        pr = Preds(logits, t, m, q, l, answerable=ans, act=act, qids=meta.get("qid"), case_idx=meta.get("case_idx"),
+                   option_keys=self.option_keys("valid") if meta else None)
+        out |= {mm.name: mm(pr) for mm in self.metrics}
+    return out
 
 @patch
 def dataset(self:Learner, split:str="train"):
@@ -337,15 +347,39 @@ def fit_standardizer(self:Learner, n:int=512, batch_size:int=8):
 
 # %% ../nbs/05_learner.ipynb #f026c5e6
 @patch
-def get_preds(self:Learner, split:str="valid") -> dict:
-    "Logits, targets, masks, qtypes and labels of every row of a split"
+def row_meta(self:Learner, split:str="valid") -> dict:
+    "Each row's question id, case index and case id, in the order the Trainer reads the split"
+    ds = self.dataset(split)
+    if ds is None: raise ValueError(f"no {split!r} split")
+    if hasattr(ds, "column_names"): return {"qid": [str(v) for v in ds["qid"]], "case_idx": [int(v) for v in ds["case_idx"]], "case": [str(v) for v in ds["case"]]}
+    return {"qid": [x[2] for x in ds.index], "case_idx": [int(x[0]) for x in ds.index], "case": [x[3] for x in ds.index]}
+
+@patch
+def option_keys(self:Learner, split:str="valid") -> list:
+    "Each row's option keys, in the order the Trainer reads a held-out split (looked up once per split)"
+    if split not in self._keys:
+        meta, cases, ds, recs, out = self.row_meta(split), self.data.cases[split], self.dataset(split), {}, []
+        ks = [len(x) for x in ds["markers"]] if hasattr(ds, "column_names") else [None] * len(meta["qid"])
+        for ci, qid, k in zip(meta["case_idx"], meta["qid"], ks):
+            rec = recs.setdefault(ci, case_record(cases, ci))
+            q = as_questions(rec["questions"])[qid]
+            if k is not None and q.k != k:          # a transform changed the options (a shortlist): its keys are the transformed question's
+                q = as_questions(apply_tfms(self.data.builder.tfms, rec)["questions"])[qid]
+            out.append([str(x) for x in q.keys])
+        self._keys[split] = out
+    return self._keys[split]
+
+@patch
+def get_preds(self:Learner, split:str="valid") -> Preds:
+    "Every row of a split as a `Preds`: logits, gold, masks, kinds and labels, p(act) with an act head, each row's question, case and option keys, and the learner's temperatures"
     ds = self.dataset(split)
     if ds is None: raise ValueError(f"no {split!r} split")
     out = self.trainer.predict(ds)
     t, m, q, l = unpack_labels(out.label_ids)
     logits, act = _split_preds(out.predictions)
-    res = {"logits": np.where(m, logits, -1e4), "targets": t, "masks": m, "qtypes": q, "labels": l, "answerable": unpack_answerable(out.label_ids)}
-    return res | ({"act": act} if act is not None else {})
+    meta = self.row_meta(split)
+    return Preds(logits, t, m, q, l, answerable=unpack_answerable(out.label_ids), act=act, qids=meta["qid"], case_idx=meta["case_idx"],
+                 temperatures=self.temperatures, option_keys=self.option_keys(split))
 
 def _acting_right(p) -> np.ndarray:
     "Whether acting on each row would be right: its gold is among the options and the top option is it"
@@ -364,15 +398,16 @@ def _act_scores(p, temperatures, how) -> tuple:
     return (z / z.sum(1, keepdims=True)).max(1), "confidence"
 
 @patch
-def validate(self:Learner, split:str="valid", calibrated:bool=True) -> dict:
-    "The notebook's metrics on a split"
+def validate(self:Learner, split:str="valid", calibrated:bool=True, metrics:list|None=None) -> dict:
+    "The notebook's metrics on a split, the learner's own `metrics`, and any more given here"
     p = self.get_preds(split)
     m = decision_metrics(p["logits"], p["targets"], p["masks"], p["qtypes"], p["labels"], self.temperatures if calibrated else None,
                          act=p.get("act"), answerable=p["answerable"])
     if self.act_threshold is not None:
         s, _ = _act_scores(p, self.temperatures, self.act_score or "auto")
         if s is not None: m |= selective_metrics(s, _acting_right(p), row_thresholds(self.act_threshold, p["qtypes"], p["masks"].sum(1)))
-    return m
+    if not calibrated: p.temperatures = None
+    return m | {mm.name: mm(p) for mm in self.metrics + [as_metric(x) for x in metrics or []]}
 
 # %% ../nbs/05_learner.ipynb #6d0463c2
 @patch
@@ -407,7 +442,7 @@ def fit_one_cycle(self:Learner, epochs:int, lr=None, pct_start:float=0.25, onecy
     else: self._run(epochs, lr, lr_scheduler_type="cosine", warmup_steps=pct_start, **args)
     return self._after_fit()
 
-# %% ../nbs/05_learner.ipynb #5ecf34a9
+# %% ../nbs/05_learner.ipynb #65944eed
 @patch
 def freeze(self:Learner):
     "Train the head only (and use the feature cache, if one is configured)"
@@ -430,7 +465,7 @@ def freeze_to(self:Learner, n:int):
     if self.cache is not None: self._saved_cache, self.cache, self._features = self.cache, None, {}
     return self
 
-# %% ../nbs/05_learner.ipynb #65944eed
+# %% ../nbs/05_learner.ipynb #0257c8f1
 class SuggestedLRs(dict):
     "Learning rates suggested by `lr_find`"
     def __getattr__(self, k):
@@ -456,7 +491,7 @@ def steep(lrs, losses):
     g = np.gradient(np.asarray(losses), np.log(np.asarray(lrs)))
     return float(lrs[int(np.argmin(g))])
 
-# %% ../nbs/05_learner.ipynb #6a60e665
+# %% ../nbs/05_learner.ipynb #0850ed65
 @patch
 def lr_find(self:Learner, start:float=1e-7, end:float=1.0, steps:int=100, stop_div:bool=True, plot:bool=False) -> SuggestedLRs:
     "LR range test: suggests `valley` and `steep`, and restores the model afterwards"
@@ -490,13 +525,13 @@ def plot_lr_find(self:Learner, sugg=None):
     if sugg: ax.legend()
     return fig
 
-# %% ../nbs/05_learner.ipynb #0850ed65
+# %% ../nbs/05_learner.ipynb #aa8e1e8f
 @patch
 def show_batch(self:Learner, n:int=2, split:str="train", max_chars:int=300):
     "Print the first `n` rows of a split with their anchors visible"
     self.data.show_batch(n, split, max_chars)
 
-# %% ../nbs/05_learner.ipynb #aa8e1e8f
+# %% ../nbs/05_learner.ipynb #17e257c6
 @patch
 def decider(self:Learner, **kw):
     "A `sysone.inference.Decider` over the learner's model in memory"
@@ -515,7 +550,7 @@ def export(self:Learner, path, **kw):
     from sysone.inference import export_learner
     return export_learner(self, path, **kw)
 
-# %% ../nbs/05_learner.ipynb #c96c6306
+# %% ../nbs/05_learner.ipynb #23f1d894
 def decision_learner(data:TypedDecisions, encoder, train="head", cache:str|None=None, template=None, head:str="laya",
                      head_layers:int|None=None, init_from:str|None=None, loss=None, lr=None, preset:str|None=None,
                      dtype=None, lora:dict|None=None, standardize:bool=False, readout:str="anchor", query:str|None=None,

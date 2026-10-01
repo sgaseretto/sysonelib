@@ -494,6 +494,7 @@ class SideEncoder(nn.Module):
         super().__init__()
         self.model, self.proj, self.special_ids = model, proj, [int(i) for i in special_ids]
         self.memo = None                            # {input: pooled vector} while `stream_memo` holds one
+        self.dedupe = True                          # encode each distinct input once; an attribution turns it off (its batch is one row, repeated)
     @property
     def width(self) -> int: return self.model.config.hidden_size
     @property
@@ -508,7 +509,7 @@ class SideEncoder(nn.Module):
 
     def forward(self, ids, mask, states:bool=False):
         "(hidden states (batch, P, width) if asked, else None; pooled vectors (batch, out_width))"
-        first, inverse = distinct_rows(ids, mask)
+        first, inverse = distinct_rows(ids, mask) if self.dedupe else (list(range(len(ids))),) * 2
         inv = torch.tensor(inverse, device=ids.device)
         if self.memo is None or states or torch.is_grad_enabled():
             h, pooled = self._run(ids[first], mask[first])

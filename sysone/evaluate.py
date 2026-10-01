@@ -16,6 +16,7 @@ import numpy as np
 
 from .core import *
 from .losses import answer_metrics, ece_score, auroc
+from .metrics import Preds, as_metric
 
 # %% ../nbs/09_evaluate.ipynb #916f3de6
 def answers_of(result) -> dict:
@@ -24,8 +25,8 @@ def answers_of(result) -> dict:
         return result["answers"]
     return result
 
-def evaluate(model, records, by:str|None=None, batch_size:int|None=None) -> dict:
-    "The notebook's metrics, latency and, with `by`, accuracy per group, for `model` over records with gold"
+def evaluate(model, records, by:str|None=None, batch_size:int|None=None, metrics:list|None=None) -> dict:
+    "The notebook's metrics, latency, any more `metrics` (functions of a `Preds`) and, with `by`, accuracy per group, for `model` over records with gold"
     records = [load_record(r) for r in records]
     lat, triples = [], []
     if batch_size and hasattr(model, "predict_batch") and len({json.dumps(r["questions"], sort_keys=True) for r in records}) == 1:
@@ -44,9 +45,12 @@ def evaluate(model, records, by:str|None=None, batch_size:int|None=None) -> dict
         groups = defaultdict(list)
         for r, t in zip(records, triples): groups[r.get(by)].append(t)
         m[f"accuracy_by_{by}"] = {g: round(answer_metrics(ts)["accuracy"], 4) for g, ts in sorted(groups.items(), key=lambda kv: str(kv[0]))}
+    if metrics:
+        p = Preds.from_answers(records, [a for _, a, _ in triples])
+        m |= {mm.name: mm(p) for mm in map(as_metric, metrics)}
     return m
 
-# %% ../nbs/09_evaluate.ipynb #fd99b12d
+# %% ../nbs/09_evaluate.ipynb #5bfa0065
 TYPED_DECISIONS_REFERENCE = [
     {"model": "Prior (ignores the input)", "kind": "reference", "accuracy": 0.470, "brier": 0.189, "ece": 0.088},
     {"model": "ModernBERT-base (149M)", "kind": "specialist", "accuracy": 0.646, "brier": 0.119, "ece": 0.179},
@@ -63,7 +67,7 @@ def typed_decisions_report(model, split:str="test", n:int|None=None, name:str="t
     m = evaluate(model, list(ds), by="workflow")
     return {"metrics": m, "table": TYPED_DECISIONS_REFERENCE + [{"model": name, "kind": "sysone", **{k: round(m[k], 3) for k in ("accuracy", "brier", "ece")}}]}
 
-# %% ../nbs/09_evaluate.ipynb #5bfa0065
+# %% ../nbs/09_evaluate.ipynb #c09929c6
 def zero_shot(model, suites=("ag_news", "emotion", "banking77", "massive", "xnli"), n:int=500, seed:int=0) -> dict:
     "Accuracy and calibration on each zero-shot suite (a seeded sample of `n` test rows)"
     from sysone.datasets import suite_records
@@ -73,7 +77,7 @@ def zero_shot(model, suites=("ag_news", "emotion", "banking77", "massive", "xnli
         out[s] = {k: round(m[k], 4) for k in ("accuracy", "ece", "brier", "latency_p50_ms")}
     return out
 
-# %% ../nbs/09_evaluate.ipynb #c09929c6
+# %% ../nbs/09_evaluate.ipynb #e6fcfaa9
 _LINK = "Which link should I follow next?"
 
 def _probs(model, state, criteria, qid="rel"):

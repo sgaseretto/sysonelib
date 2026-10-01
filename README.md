@@ -35,6 +35,8 @@ jev.predict(state, questions)         # choice / score / noul, probabilities, co
 
 `train="lora"`, `"mica"` or `"full"` trains the encoder too; `decision_learner(data, "convaiinnovations/laya", init_from="convaiinnovations/laya", train="full")` fine-tunes Laya's own checkpoint as its notebook does; `sysone.multimodal` puts screenshots in the state, with ModernVBERT by default ([why](nbs/20_neomme.ipynb#which-encoder-by-default)) or with NeoMME (`decision_learner(data, "Hcompany/NeoMME-260M")`); `sysone.protein` asks typed questions about protein sequences with ProtST, zero-shot from its joint space or with a head trained on its frozen towers; `sysone.zeroshot` answers without training, from a two-tower model's similarity or a masked language model's own prediction; a GLiNER2 checkpoint is a text encoder like any other (with `head="gliner2"` and `init_from` set to the checkpoint, the head starts from its classifier), while `sysone.gliner` drives whole GLiNER2 models through their own package.
 
+To see how good a model is, where it goes wrong and why: `metrics=[F1Score(), BalancedAccuracy()]` adds fastai-style metrics to what the learner reports every epoch ([metrics](nbs/04a_metrics.ipynb)); `Interpretation.from_learner(learn)` finds the worst decisions, the confusions and how confidence compares with being right; and `learn.explain(state, questions)` shows which tokens, pixels and residues moved each option's probability, by integrated gradients or by occlusion ([interpret](nbs/09a_interpret.ipynb), and the [interpretation tutorial](nbs/tutorials/interpretation.ipynb)).
+
 ## What it answers
 
 Three typed questions about one state, and the answers in the Jev schema. The model here is the fixture the notebooks test against, a random four-layer ModernBERT whose head trained for a few seconds, so its probabilities are close to uniform: what matters is the shape of the answers, one per question from one forward pass.
@@ -75,7 +77,7 @@ learn.predict(state, questions)
 
 ## Validated so far
 
-Measured between 2026-09-26 and 30 on an M3 Pro (MPS, fp32), with the code in this repository:
+Measured between 2026-09-26 and 2026-10-01 on an M3 Pro (MPS, fp32), with the code in this repository:
 
 | What | Result |
 | --- | --- |
@@ -97,6 +99,7 @@ Measured between 2026-09-26 and 30 on an M3 Pro (MPS, fp32), with the code in th
 | Heads trained on half of each domain, scored on the other half | the copied classifier, trained: 0.684; a new head on the Decide encoder: 0.690; a new head on ModernBERT-large: 0.420 (the [GLiNER2.5-Decide tutorial](nbs/tutorials/gliner_decide.ipynb), 19 minutes on the laptop) |
 | Web pages as text: Mind2Web's steps in JevForge's records, a 12-way element choice on 8 held-out websites, frozen encoders under a new head | NeoMME-260M 0.406, GLiNER2.5-Decide 0.393, ModernVBERT 0.384, ModernBERT-large 0.374, against 0.083 for guessing; GLiNER2's classifier, zero-shot, 0.244 (the [text tutorial](nbs/tutorials/web_text.ipynb), an hour on the laptop) |
 | Web pages as screenshots: a pilot on 467 Multimodal-Mind2Web steps, 191 of them on 9 held-out websites | on the operation question, ModernVBERT with the screenshot 0.885 and NeoMME with it 0.812, against 0.801 for always CLICK; NeoMME without the screenshot 0.880. No head learned the 45-way element question from 276 steps: 0.14 to 0.21, against 0.12 for guessing (the [screens tutorial](nbs/tutorials/web_screens.ipynb), 32 minutes) |
+| Interpreting the three applications (the [interpretation tutorial](nbs/tutorials/interpretation.ipynb), 17 minutes with warm feature caches) | emotions in tweets: LoRA on ModernBERT-large 0.768 accuracy and macro-F1 0.736, where the frozen default scores 0.453; digits 0.87 and hot dogs 0.938 with ModernVBERT; ProtST's location head 0.788, macro-F1 0.572. Integrated gradients' attributions added up for a tweet's answer, but not for the pixels or for one of two proteins, and its word scores correlated with occlusion's at a median of 0.21 |
 
 Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's notebook from its released checkpoint (written in the text notebook, launched with `sysone run`, which needs credentials), a full run of the screenshot comparison (the pilot's 276 training steps were too few to learn the element question), and the zero-shot suites.
 
@@ -106,7 +109,7 @@ Not yet run: the full fine-tune on Kaggle's T4 pair that reproduces Laya's noteb
 pip install git+https://github.com/sgaseretto/sysonelib
 ```
 
-Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), `sysone[gliner]` (the `gliner2` package and peft, on the same transformers 5 as the rest), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[onnx]` (ONNX export of text models, served by `OnnxDecider` on onnxruntime), `sysone[plots]`.
+Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for NeoMME and ModernVBERT), `sysone[gliner]` (the `gliner2` package and peft, on the same transformers 5 as the rest), `sysone[browser]` (the Mind2Web converters), `sysone[shortlist]` (sentence-transformers), `sysone[serve]` (FastAPI), `sysone[laya]` (Laya's runtime, for its export-compatibility check), `sysone[cloud]` (the Kaggle and Colab CLIs), `sysone[onnx]` (ONNX export of text models, served by `OnnxDecider` on onnxruntime), `sysone[plots]` (matplotlib, for the figures of `lr_find` and of the interpretations).
 
 ## How it is organised
 
@@ -115,8 +118,8 @@ Extras: `sysone[multimodal]` (pillow, torchvision, transformers ≥ 5.17 for Neo
 | Applications | `sysone.text`, `sysone.multimodal`, `sysone.protein` | `decision_learner` per kind of input, with the encoder's own defaults: text (ModernBERT-large by default; mmBERT, Laya's checkpoint, GLiNER2 checkpoints), images and text (ModernVBERT by default; NeoMME-260M), proteins (ProtST) |
 | Encoder adapters | `sysone.multimodal` (NeoMME), `sysone.modernvbert`, `sysone.models` (GLiNER2's encoder) | the methods an encoder adds to sysone's generic functions (`processor_rows`, `default_image_side`, `prepare_processor`, `encoder_inputs`, `warm_start`), dispatched on its classes with plum |
 | Backends | `sysone.zeroshot`, `sysone.gliner` | answers in the same schema without sysone's learner: zero-shot deciders (`SimilarityDecider`, `VerbalizerDecider`), and GLiNER2 through its own package |
-| High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.evaluate` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, evaluation |
-| Mid-level | `sysone.template`, `sysone.models`, `sysone.losses`, `sysone.cache`, `sysone.datasets` | `RowTemplate`, `RowBuilder`, transforms and side streams, `EncoderSpec`, `DecisionHead` (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, metrics and coverage, `FeatureCache`, converters |
+| High-level | `sysone.data`, `sysone.learner`, `sysone.inference`, `sysone.evaluate`, `sysone.interpret` | `TypedDecisions`, `Learner` (`lr_find`, `fit`, `fit_one_cycle`, `freeze`, `calibrate`, `export`), `Decider`, evaluation, `Interpretation` and attributions (`explain`, `occlusion`) |
+| Mid-level | `sysone.template`, `sysone.models`, `sysone.losses`, `sysone.metrics`, `sysone.cache`, `sysone.datasets` | `RowTemplate`, `RowBuilder`, transforms and side streams, `EncoderSpec`, `DecisionHead` (readouts, queries, the act head), stream encoders and cross-attention, regimes, soft CE and RLCD, temperatures, Laya's metrics and coverage, `Preds` and fastai-style metrics (`Metric`, `F1Score`, …), `FeatureCache`, converters |
 | Low-level | `sysone.core` | `Question` and its kinds (`Choice`, `Score`, `Noul`), `Answer`, `Row`, `Batch`, the answer schema's generic functions, sysone's dispatcher and `load_adapter` |
 
 Around them: `sysone.cloud` (Kaggle and Colab jobs) and `sysone.cli` (`sysone train | eval | predict | serve | run | jobs | publish`).
@@ -132,6 +135,7 @@ Where behaviour depends on the kind of question or on the encoder, sysone uses g
 - [GLiNER2.5-Decide under the sysone head](nbs/tutorials/gliner_decide.ipynb) runs Fastino's decision model on its own benchmark three ways: as the dataset card scores it, through sysone's GLiNER2 backend, and with its encoder under the sysone head and its classifier copied in. It measures how closely they agree before any training, then trains heads on half of each domain and scores them on the other half, beside a new head on ModernBERT-large. On the way, it shows why a learning rate suggested by `lr_find` needs a look at its curve.
 - [Web pages as text](nbs/tutorials/web_text.ipynb) takes Mind2Web's browser steps in JevForge's ready-made records, a choice among 12 page elements on websites the heads never saw. It compares four frozen encoders under the same head: ModernBERT-large, GLiNER2.5-Decide's encoder, and the multimodal application's NeoMME and ModernVBERT reading text alone.
 - [Web pages as screenshots](nbs/tutorials/web_screens.ipynb) is a pilot on Multimodal-Mind2Web, 467 browser steps with their screenshots, streamed as 0.5 GB of a 13.6 GB set. It asks whether NeoMME or ModernVBERT reads the pages better and whether the screenshot helps at all. It explains how the rows were chosen, the crop and the row budgets, and what a full run would need.
+- [Interpreting decisions](nbs/tutorials/interpretation.ipynb) trains the three applications on small tasks and looks inside each: emotions in tweets (the text application, with LoRA), handwritten digits and photos of hot dogs (the multimodal application), and where in the cell a protein lives (ProtST). It reports metrics beyond accuracy, finds the confusions and the confident mistakes, and compares how sure the answers are with how often they are right. Then it attributes answers to words, pixels and residues, by integrated gradients and by occlusion, checks the two against each other, and pools occlusion over many decisions to show what a model has learned: the words of each emotion, and a mitochondrial targeting presequence.
 
 ## Reading the notebooks
 
@@ -164,6 +168,9 @@ Read in order, the notebooks build the library up from its core, and each one ex
 | Tiled images shrank a cached head's training batch as well, so a sweep of image sizes compared batches of four rows with batches of one | [modernvbert](nbs/23_modernvbert.ipynb#a-head-only-run) |
 | Image rows lost their case ids in the feature cache, so a per-case look at a multimodal learner's predictions put every row under one empty id | [cache](nbs/07_cache.ipynb#featurecache) |
 | A Mind2Web question needs up to 1,500 tokens, so the multimodal presets cut each of 45 options to 8 tokens, and the screenshots are whole pages up to 40,000 pixels tall | [screens](nbs/21_screens.ipynb#on-real-rows) |
+| A batch of integrated-gradient steps went through a side encoder as one row, since a side encoder encodes each distinct input once | [interpret](nbs/09a_interpret.ipynb#integrated-gradients) |
+| Integrated gradients' attributions didn't add up on the real encoders: on frozen ModernBERT-large an option's log-probability is jagged along the line, and even 2,049 exact gradients miss its change by nats; through ModernVBERT's pixels and ESM's residues, the sums missed by a sixth to more than the whole change | [interpret](nbs/09a_interpret.ipynb#how-far-to-trust-an-attribution) |
+| A protein's attribution held 20 GB, with eight integrated-gradient steps through ESM-1b at once; `attribute` now measures what a step keeps and batches to 2 GB | [interpret](nbs/09a_interpret.ipynb#how-far-to-trust-an-attribution) |
 
 ## Developer guide
 
