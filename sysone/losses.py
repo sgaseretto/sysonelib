@@ -32,11 +32,10 @@ def proper_reward(q, target, qtype, mask, w_sph:float=0.5, w_rps:float=1.0, log_
     sph = (target * q).sum(-1) / q.norm(dim=-1).clamp_min(1e-9)
     r = log_score + w_sph * sph
     is_score = (qtype == QTYPES["score"]).float()
-    if is_score.any():
-        k = mask.sum(-1).clamp(min=2).float()
-        cdf_q, cdf_t = torch.cumsum(q, -1), torch.cumsum(target, -1)
-        rps = (((cdf_q - cdf_t) ** 2) * mask).sum(-1) / (k - 1)
-        r = r - w_rps * rps * is_score
+    k = mask.sum(-1).clamp(min=2).float()      # computed for every row and zeroed where not a score: no branch on the data (XLA)
+    cdf_q, cdf_t = torch.cumsum(q, -1), torch.cumsum(target, -1)
+    rps = (((cdf_q - cdf_t) ** 2) * mask).sum(-1) / (k - 1)
+    r = r - w_rps * rps * is_score
     return r
 
 # %% ../nbs/04_losses.ipynb #15d957d0

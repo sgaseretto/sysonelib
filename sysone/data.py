@@ -6,7 +6,8 @@ Docs: https://sgaseretto.github.io/sysonelib/data.html.md"""
 
 # %% auto #0
 __all__ = ['CASE_COLUMNS', 'ROW_FEATURES', 'cases_from_records', 'as_cases', 'case_record', 'case_groups', 'split_cases',
-           'TypedDecisions', 'read_jsonl', 'row_features', 'DecisionCollator', 'LazyRows', 'RowSampler', 'Shortlist']
+           'TypedDecisions', 'file_ref', 'read_jsonl', 'row_features', 'DecisionCollator', 'LazyRows', 'RowSampler',
+           'Shortlist']
 
 # %% ../nbs/02_data.ipynb #054571be
 import hashlib, json, math, random, warnings
@@ -96,6 +97,7 @@ class TypedDecisions:
                       "calib": as_cases(calib) if calib is not None else None}
         self.template, self.tfms, self.sampler, self.seed = template, list(tfms or []), sampler, seed
         self.builder, self._rows = None, {}
+        self.source = None   # where the cases came from, set by the loaders below and kept in the training record
 
     def __repr__(self):
         n = ", ".join(f"{len(v)} {k}" for k, v in self.cases.items() if v is not None)
@@ -112,7 +114,13 @@ def _holdouts(train, valid, calib, seed, groups=None):
 def from_records(cls:TypedDecisions, records, valid=None, calib=0.1, seed:int=0, groups=None, **kw):
     "Cases from a list of records; `groups` (a field or a function of the record) keeps each group on one side of every split"
     train, valid, calib = _holdouts(cases_from_records(records), valid, calib, seed, groups)
-    return cls(train, valid, calib, seed=seed, **kw)
+    out = cls(train, valid, calib, seed=seed, **kw)
+    out.source = {"kind": "records"}
+    return out
+
+def file_ref(path) -> dict:
+    "A file's name and SHA-256: enough to tell later whether a model was trained on the same data, without its path"
+    return {"name": Path(path).name, "sha256": hashlib.sha256(Path(path).read_bytes()).hexdigest()}
 
 def read_jsonl(path) -> list:
     "Records from a JSON-lines file (or a JSON list)"
@@ -124,12 +132,16 @@ def read_jsonl(path) -> list:
 def from_json(cls:TypedDecisions, path, valid=None, calib=0.1, seed:int=0, groups=None, **kw):
     "Cases from a JSON-lines file, one record per line; `valid` may be a second file"
     v = cases_from_records(read_jsonl(valid)) if isinstance(valid, (str, Path)) else valid
-    return cls.from_records(read_jsonl(path), valid=v, calib=calib, seed=seed, groups=groups, **kw)
+    out = cls.from_records(read_jsonl(path), valid=v, calib=calib, seed=seed, groups=groups, **kw)
+    out.source = {"kind": "file", "files": [file_ref(p) for p in (path, valid) if isinstance(p, (str, Path))]}
+    return out
 
 @patch(cls_method=True)
 def from_pandas(cls:TypedDecisions, df, valid=None, calib=0.1, seed:int=0, groups=None, **kw):
     "Cases from a DataFrame with `state` and `questions` (and `gold`) columns"
-    return cls.from_records(df.to_dict("records"), valid=valid, calib=calib, seed=seed, groups=groups, **kw)
+    out = cls.from_records(df.to_dict("records"), valid=valid, calib=calib, seed=seed, groups=groups, **kw)
+    out.source = {"kind": "dataframe"}
+    return out
 
 def _pick_config(path, config):
     if config is not None: return config
@@ -145,10 +157,14 @@ def from_hub(cls:TypedDecisions, path:str, config:str|None=None, split:str="trai
              revision:str|None=None, seed:int=0, groups=None, **kw):
     "Cases from a Hub dataset in the typed-decisions format; `valid` is a split name or a fraction of `split`"
     config = _pick_config(path, config)
+    source = {"kind": "hub", "id": path, "config": config, "split": split, "valid": valid if isinstance(valid, str) else None,
+              "revision": revision}
     train = as_cases(load_dataset(path, config, split=split, revision=revision))
     if isinstance(valid, str): valid = as_cases(load_dataset(path, config, split=valid, revision=revision))
     train, valid, calib = _holdouts(train, valid, calib, seed, groups)
-    return cls(train, valid, calib, seed=seed, **kw)
+    out = cls(train, valid, calib, seed=seed, **kw)
+    out.source = source
+    return out
 
 # %% ../nbs/02_data.ipynb #8fc1a0e0
 ROW_FEATURES = Features({"input_ids": Sequence(Value("int32")), "markers": Sequence(Value("int32")), "qtype": Value("int8"),

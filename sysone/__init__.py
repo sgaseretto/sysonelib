@@ -12,16 +12,23 @@ _LAZY = {
     "EncoderSpec": "models", "DecisionHead": "models", "EncoderDecisionModel": "models", "StreamEncoder": "models",
     "SideEncoder": "models", "stream_memo": "models", "add_cross_attention": "models",
     "Preds": "metrics", "Metric": "metrics", "metrics_table": "metrics",
-    "Learner": "learner", "decision_learner": "learner",
-    "Decider": "inference",
+    "Learner": "learner", "decision_learner": "learner", "training_record": "record",
+    "Decider": "inference", "load_learner": "inference",
     "FeatureCache": "cache",
     "Interpretation": "interpret", "Attribution": "interpret", "attribute": "interpret", "occlusion": "interpret",
+    "push_to_hub": "hub", "model_card": "hub", "login": "auth", "whoami": "auth",
+    "ProgressLog": "track", "MLflowLogger": "track", "log_export": "track", "sync_run": "track", "mlflow_server": "track",
+    "remote": "cloud", "jobs": "cloud", "watch": "cloud", "Job": "cloud", "job_input": "cloud", "job_output": "cloud",
+    "Local": "cloud", "Colab": "cloud", "Kaggle": "cloud", "SageMaker": "cloud",
+    "CPU": "cloud", "MPS": "cloud", "GPU": "cloud", "TPU": "cloud", "Neuron": "cloud",
+    "deploy": "deploy", "cloudformation": "deploy", "cdk_app": "deploy", "build_image": "aws", "floci_up": "aws", "model_trainer": "aws",
+    "prepare_xla": "xla", "export_neuron": "xla",
     "SimilarityDecider": "zeroshot", "VerbalizerDecider": "zeroshot", "CachedEmbedder": "zeroshot",
     "ProtST": "protein", "load_protst": "protein",
 }
 
-_SUBMODULES = {"core", "template", "data", "models", "losses", "metrics", "learner", "inference", "cache", "datasets", "evaluate",
-               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "gliner", "cloud", "cli"}
+_SUBMODULES = {"core", "template", "data", "models", "losses", "metrics", "learner", "record", "inference", "cache", "datasets", "evaluate",
+               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "gliner", "cloud", "colab", "kaggle", "aws", "xla", "deploy", "hub", "auth", "track", "cli"}
 
 def __getattr__(name):
     import importlib

@@ -206,7 +206,9 @@ def from_registry(cls:TypedDecisions, name:str, **kw):
     if name not in REGISTRY:
         import sysone.datasets  # noqa: F401  (converters registered by other notebooks)
         if name not in REGISTRY: raise ValueError(f"unknown dataset {name!r}; registered: {sorted(REGISTRY)}")
-    return REGISTRY[name].load(**kw)
+    out = REGISTRY[name].load(**kw)
+    out.source = {"registry": name} | (out.source or {})
+    return out
 
 # %% ../nbs/21_screens.ipynb #102ea2e0
 import re as _re

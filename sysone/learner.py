@@ -6,11 +6,11 @@ Docs: https://sgaseretto.github.io/sysonelib/learner.html.md"""
 
 # %% auto #0
 __all__ = ['PRESETS', 'pack_labels', 'unpack_labels', 'unpack_answerable', 'DecisionTrainer', 'training_args', 'default_preset',
-           'SigmaSchedule', 'OptionShuffle', 'Recorder', 'CalibrationCallback', 'LRFinder', 'Learner', 'SuggestedLRs',
-           'valley', 'steep', 'decision_learner']
+           'SigmaSchedule', 'OptionShuffle', 'Recorder', 'CalibrationCallback', 'peak_memory_gb', 'FitLog', 'LRFinder',
+           'Learner', 'SuggestedLRs', 'valley', 'steep', 'decision_learner']
 
 # %% ../nbs/05_learner.ipynb #648d56db
-import copy, dataclasses, math, os, tempfile, warnings
+import contextlib, copy, dataclasses, datetime, json, math, os, sys, tempfile, time, warnings
 from pathlib import Path
 
 import numpy as np
@@ -47,12 +47,20 @@ def unpack_answerable(packed):
     return packed[:, 0, 4].astype(int) if packed.shape[-1] > 4 else np.ones(len(packed), dtype=int)
 
 # %% ../nbs/05_learner.ipynb #f7716249
+@contextlib.contextmanager
+def _keep_last(args):
+    "Evaluate and predict on every row: `dataloader_drop_last` (which the XLA presets set, for fixed shapes) is for training"
+    old, args.dataloader_drop_last = args.dataloader_drop_last, False
+    try: yield
+    finally: args.dataloader_drop_last = old
+
 class DecisionTrainer(Trainer):
     "A `Trainer` with the decision loss, head and encoder learning rates, and an optional LR-range or one-cycle schedule"
     def __init__(self, *args, loss_fn=None, lr_head:float|None=None, lr_encoder:float|None=None, act_weight:float=0.5, **kwargs):
         super().__init__(*args, **kwargs)
         self.loss_fn, self.lr_head, self.lr_encoder, self.act_weight = loss_fn or soft_ce, lr_head, lr_encoder, act_weight
         self.model_accepts_loss_kwargs = False   # the loss is a mean; gradient accumulation must scale it
+        self.all_answerable = False              # every training row has an answer: the loss runs on whole batches (no host sync, for XLA)
         self.schedule = None                     # None (the args' scheduler), ("range", start, end) or ("onecycle", pct_start)
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
@@ -63,8 +71,10 @@ class DecisionTrainer(Trainer):
         fn = self.loss_fn if model.training else soft_ce
         if target is None: loss = logits.sum() * 0
         else:
-            rows = target.sum(-1) > 0                   # an unanswerable row teaches the act head only
-            loss = fn(logits[rows], target[rows], inputs["marker_mask"][rows], inputs["qtype"][rows]) if bool(rows.any()) else logits.sum() * 0
+            if self.all_answerable and model.training: loss = fn(logits, target, inputs["marker_mask"], inputs["qtype"])
+            else:
+                rows = target.sum(-1) > 0               # an unanswerable row teaches the act head only
+                loss = fn(logits[rows], target[rows], inputs["marker_mask"][rows], inputs["qtype"][rows]) if bool(rows.any()) else logits.sum() * 0
             if act is not None and label is not None:
                 loss = loss + self.act_weight * act_loss(act, logits, label, inputs.get("answerable", torch.ones_like(label)))
         return (loss, {"logits": logits, "act": act}) if return_outputs else loss
@@ -81,6 +91,12 @@ class DecisionTrainer(Trainer):
         # predictions come back in dataset order (the Trainer would group evaluation rows by length too)
         if eval_dataset is None or not hasattr(eval_dataset, "__len__"): return None
         return torch.utils.data.SequentialSampler(eval_dataset) if self.args.world_size <= 1 else None
+
+    def get_eval_dataloader(self, eval_dataset=None):
+        with _keep_last(self.args): return super().get_eval_dataloader(eval_dataset)
+
+    def get_test_dataloader(self, test_dataset):
+        with _keep_last(self.args): return super().get_test_dataloader(test_dataset)
 
 # %% ../nbs/05_learner.ipynb #057eba61
 @patch
@@ -151,6 +167,10 @@ PRESETS = {
     "l4":      dict(bf16=True, gradient_checkpointing=True, per_device_train_batch_size=16, gradient_accumulation_steps=2,
                     per_device_eval_batch_size=32),
     "a100":    dict(bf16=True, per_device_train_batch_size=32, per_device_eval_batch_size=64),
+    "tpu":     dict(bf16=True, per_device_train_batch_size=16, per_device_eval_batch_size=32, dataloader_drop_last=True,
+                    dataloader_pin_memory=False, optim="adamw_torch"),     # the fused AdamW has no XLA kernel
+    "neuron":  dict(bf16=True, per_device_train_batch_size=8, per_device_eval_batch_size=16, dataloader_drop_last=True,
+                    dataloader_pin_memory=False, optim="adamw_torch"),
 }
 
 def default_preset() -> str:
@@ -161,6 +181,8 @@ def default_preset() -> str:
         if "T4" in name: return "t4x2" if torch.cuda.device_count() > 1 else "t4"
         if "L4" in name: return "l4"
         return "a100"
+    if os.environ.get("PJRT_DEVICE") == "TPU" or os.environ.get("TPU_ACCELERATOR_TYPE"): return "tpu"
+    if os.environ.get("NEURON_RT_VISIBLE_CORES") or Path("/dev/neuron0").exists(): return "neuron"
     if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available(): return "macbook"
     return "cpu"
 
@@ -192,6 +214,40 @@ class CalibrationCallback(TrainerCallback):
     def __init__(self, learner): self.learner, self.active = learner, True
     def on_train_end(self, args, state, control, **kw):
         if self.active and self.learner.data.cases.get("calib") is not None: self.learner.calibrate()
+
+def peak_memory_gb(device:str, mps_bytes:int=0) -> float|None:
+    "The most memory a fit used: CUDA's peak since the last reset, the MPS driver's largest allocation seen, or the process's peak RSS"
+    if device == "cuda": b = torch.cuda.max_memory_allocated()
+    elif device == "mps": b = mps_bytes
+    else:
+        try: import resource
+        except ImportError: return None
+        b = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
+    return round(b / 2**30, 2)
+
+class FitLog(TrainerCallback):
+    "One entry per fit for the training record: what was asked for (epochs, learning rates, schedule, batch) and what it took"
+    def __init__(self, learner): self.learner, self.fits, self._entry = learner, [], None
+    def on_train_begin(self, args, state, control, **kw):
+        t = self.learner.trainer
+        if t.schedule is not None and t.schedule[0] == "range": self._entry = None; return   # lr_find's range test is not a fit
+        self._device, self._mps, self._t0 = args.device.type, 0, time.time()
+        if self._device == "cuda": torch.cuda.reset_peak_memory_stats()
+        sched = t.schedule[0] if t.schedule is not None else getattr(args.lr_scheduler_type, "value", args.lr_scheduler_type)
+        self._entry = {"started": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                       "regime": self.learner.model.regime, "epochs": args.num_train_epochs, "max_steps": args.max_steps,
+                       "lr_head": t.lr_head, "lr_encoder": t.lr_encoder, "schedule": str(sched), "warmup": args.warmup_steps,
+                       "batch_size": args.per_device_train_batch_size, "grad_accum": args.gradient_accumulation_steps,
+                       "precision": "bf16" if args.bf16 else "fp16" if args.fp16 else "fp32", "device": self._device}
+    def on_step_end(self, args, state, control, **kw):
+        if self._entry is not None and self._device == "mps": self._mps = max(self._mps, torch.mps.driver_allocated_memory())
+    def on_train_end(self, args, state, control, **kw):
+        if self._entry is None: return
+        losses = [l["loss"] for l in state.log_history if "loss" in l]
+        self.fits.append(self._entry | {"steps": state.global_step, "seconds": round(time.time() - self._t0, 1),
+                                        "final_loss": losses[-1] if losses else None,
+                                        "peak_memory_gb": peak_memory_gb(self._device, self._mps)})
+        self._entry = None
 
 class LRFinder(TrainerCallback):
     "Record (lr, loss) every step and stop when the smoothed loss diverges"
@@ -237,13 +293,21 @@ class Learner:
         self.temperatures, self.calibrate_after_fit, self._features, self.act_threshold, self.act_score = {}, calibrate_after_fit, {}, None, None
         self.metrics, self._keys = [as_metric(m) for m in metrics or []], {}
         if cache is not None: self._check_cache(cache)
-        self.recorder, self.calibration = Recorder(), CalibrationCallback(self)
+        self.recorder, self.calibration, self.fit_log = Recorder(), CalibrationCallback(self), FitLog(self)
         self.calibration.active = calibrate_after_fit
         self.args = training_args(self.path / "trainer", **(PRESETS[self.preset] | args))
-        cbs = [SigmaSchedule(self.loss), OptionShuffle(data.builder.tfms), self.recorder, self.calibration] + list(callbacks or [])
+        cbs = [SigmaSchedule(self.loss), OptionShuffle(data.builder.tfms), self.recorder, self.calibration, self.fit_log] + list(callbacks or [])
         enc, head = _lrs(lr)
         self.trainer = DecisionTrainer(model=model, args=self.args, data_collator=data.collator, loss_fn=self.loss,
                                        compute_metrics=self._metrics, callbacks=cbs, lr_head=head, lr_encoder=enc, act_weight=act_weight)
+        if self.preset in ("tpu", "neuron"):     # XLA: batches of few shapes, a step with no decisions on the host
+            from sysone.xla import prepare_xla
+            prepare_xla(self)
+        if os.environ.get("SYSONE_PROGRESS") or os.environ.get("SYSONE_TRACK"):   # inside a sysone job: report on itself
+            import sysone.track
+            if os.environ.get("SYSONE_PROGRESS"): self.progress()
+            t = os.environ.get("SYSONE_TRACK", "")
+            if t: self.track(**(json.loads(t) if t.startswith("{") else {}))
 
     def __repr__(self):
         n = self.model.n_params()
@@ -546,9 +610,11 @@ def predict(self:Learner, state, questions:dict, **kw) -> dict:
 
 @patch
 def export(self:Learner, path, **kw):
-    "Write the model, template, transforms and temperatures to `path` (see `sysone.inference.export_learner`)"
+    "Write the model, template, transforms and temperatures to `path` (see `sysone.inference.export_learner`); on several GPUs, the main process writes"
     from sysone.inference import export_learner
-    return export_learner(self, path, **kw)
+    if self.trainer.is_world_process_zero(): path = export_learner(self, path, **kw)
+    self.trainer.accelerator.wait_for_everyone()          # the others wait until it is written
+    return Path(path)
 
 # %% ../nbs/05_learner.ipynb #23f1d894
 def decision_learner(data:TypedDecisions, encoder, train="head", cache:str|None=None, template=None, head:str="laya",

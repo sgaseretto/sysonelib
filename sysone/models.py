@@ -449,10 +449,10 @@ class EncoderDecisionModel(nn.Module):
 
 # %% ../nbs/03_models.ipynb #412a97b8
 @patch
-def gradient_checkpointing_enable(self:EncoderDecisionModel, gradient_checkpointing_kwargs=None):
-    "Checkpoint the encoder's layers (what `TrainingArguments(gradient_checkpointing=True)` calls)"
-    kw = {"use_reentrant": False} | (gradient_checkpointing_kwargs or {})
-    self.encoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs=kw)
+def gradient_checkpointing_enable(self:EncoderDecisionModel, gradient_checkpointing_kwargs=None, **kw):
+    "Checkpoint the encoder's layers (what `TrainingArguments(gradient_checkpointing=True)` calls; newer transformers adds `every_n_layers` and `offload`)"
+    gk = {"use_reentrant": False} | (gradient_checkpointing_kwargs or {})
+    self.encoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs=gk, **kw)
 
 @patch
 def gradient_checkpointing_disable(self:EncoderDecisionModel): self.encoder.gradient_checkpointing_disable()

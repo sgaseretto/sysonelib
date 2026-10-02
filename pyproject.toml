@@ -40,7 +40,9 @@ shortlist = ["sentence-transformers>=5.0"]
 browser = ["beautifulsoup4>=4.12"]
 gliner = ["gliner2>=2.0", "peft>=0.20"]
 onnx = ["onnx>=1.20", "onnxscript>=0.5", "onnxruntime>=1.20"]
-cloud = ["kaggle>=2.0", "google-colab-cli>=0.7; python_version >= '3.12'"]
+cloud = ["kaggle>=2.2", "google-colab-cli>=0.7.4; python_version >= '3.12'"]
+mlflow = ["mlflow>=3.16"]
+aws = ["boto3>=1.43", "sagemaker-mlflow>=0.5"]
 
 [project.urls]
 Repository = "https://github.com/sgaseretto/sysonelib"
@@ -73,6 +75,8 @@ dev = [
     "onnxscript>=0.5",
     "onnxruntime>=1.20",
     "tensordiagram>=0.2.1",
+    "mlflow>=3.16",
+    "boto3>=1.43",
 ]
 # the docs site: `uv sync --group docs && uv run nbdev-docs` (Quarto comes as a Python wheel)
 docs = [
@@ -81,5 +85,5 @@ docs = [
 
 [tool.nbdev]
 title = "sysone"
-tst_flags = "notest slow"
+tst_flags = "notest slow hub colab kaggle floci mlflow sagemaker xla neuron"
 cell_timeout = 900
