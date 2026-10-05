@@ -196,7 +196,7 @@ class SigmaSchedule(TrainerCallback):
         if hasattr(self.loss, "set_epoch"): self.loss.set_epoch(_epoch(state), math.ceil(state.num_train_epochs or 1))
 
 class OptionShuffle(TrainerCallback):
-    "Give every `Shuffle` transform the current epoch, so option order changes between epochs"
+    "Give every transform with `set_epoch` the current epoch (`Shuffle`, `Rephrase`, an `Expansion`), so option orders, wordings and added questions change between epochs"
     def __init__(self, tfms): self.tfms = [t for t in tfms if hasattr(t, "set_epoch")]
     def on_epoch_begin(self, args, state, control, **kw):
         for t in self.tfms: t.set_epoch(_epoch(state))
