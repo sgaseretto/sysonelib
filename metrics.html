@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Metrics in fastai’s style for typed decisions: a split’s predictions in one Preds, a function per metric, Metric to bind a metric’s arguments, keep it to one kind of question and name it, and a table of metrics by question kind or id. The learner reports them every epoch, and evaluate computes them from any backend’s answers.">
+
+<title>metrics – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="metrics – sysone">
+<meta property="og:description" content="Metrics in fastai’s style for typed decisions: a split’s predictions in one Preds, a function per metric, Metric to bind a metric’s arguments, keep it to one kind of question and name it, and a table of metrics by question kind or id. The learner reports them every epoch, and evaluate computes them from any backend’s answers.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/04a_metrics_files/figure-html/cell-46-output-1.png">
+<meta property="og:site_name" content="sysone">
+<meta property="og:image:height" content="602">
+<meta property="og:image:width" content="1128">
+<meta name="twitter:title" content="metrics – sysone">
+<meta name="twitter:description" content="Metrics in fastai’s style for typed decisions: a split’s predictions in one Preds, a function per metric, Metric to bind a metric’s arguments, keep it to one kind of question and name it, and a table of metrics by question kind or id. The learner reports them every epoch, and evaluate computes them from any backend’s answers.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/04a_metrics_files/figure-html/cell-46-output-1.png">
+<meta name="twitter:image-height" content="602">
+<meta name="twitter:image-width" content="1128">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./metrics.html">metrics</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preds" id="toc-preds" class="nav-link active" data-scroll-target="#preds">Preds</a></li>
+  <li><a href="#metrics-of-the-answers" id="toc-metrics-of-the-answers" class="nav-link" data-scroll-target="#metrics-of-the-answers">Metrics of the answers</a></li>
+  <li><a href="#metrics-of-the-probabilities" id="toc-metrics-of-the-probabilities" class="nav-link" data-scroll-target="#metrics-of-the-probabilities">Metrics of the probabilities</a></li>
+  <li><a href="#metrics-of-the-levels-and-of-the-nouls" id="toc-metrics-of-the-levels-and-of-the-nouls" class="nav-link" data-scroll-target="#metrics-of-the-levels-and-of-the-nouls">Metrics of the levels and of the nouls</a></li>
+  <li><a href="#metrics-of-acting-on-the-answers" id="toc-metrics-of-acting-on-the-answers" class="nav-link" data-scroll-target="#metrics-of-acting-on-the-answers">Metrics of acting on the answers</a></li>
+  <li><a href="#metric" id="toc-metric" class="nav-link" data-scroll-target="#metric">Metric</a></li>
+  <li><a href="#from-any-backends-answers" id="toc-from-any-backends-answers" class="nav-link" data-scroll-target="#from-any-backends-answers">From any backend’s answers</a></li>
+  <li><a href="#which-metric-for-what" id="toc-which-metric-for-what" class="nav-link" data-scroll-target="#which-metric-for-what">Which metric for what</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="metrics.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">metrics</h1>
+</div>
+
+<div>
+  <div class="description">
+    Metrics in fastai’s style for typed decisions: a split’s predictions in one <code>Preds</code>, a function per metric, <code>Metric</code> to bind a metric’s arguments, keep it to one kind of question and name it, and a table of metrics by question kind or id. The learner reports them every epoch, and <code>evaluate</code> computes them from any backend’s answers.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<div id="e2df8a28" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.151090+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.151564+00:00&quot;,&quot;total&quot;:0.0004769109999926968}}" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.losses <span class="im">import</span> decision_metrics, answer_metrics, macro_f1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In fastai, a metric is a function of what the model predicted and what the targets were. A learner takes a list of them, <code>Learner(dls, model, metrics=[accuracy, F1Score()])</code>, and reports each one after every epoch. Typed decisions need the same thing, with three twists:</p>
+<ul>
+<li><strong>Rows have different numbers of options.</strong> A batch pads every row to its widest, so a row’s prediction is its first <code>k</code> logits, not the whole vector.</li>
+<li><strong>Three kinds of questions share a batch, and they answer differently.</strong> A choice answers with its likeliest option, a score with its expected level, and a noul with whether p(true) reaches a half. Some metrics only mean something for one kind, like the error of a level for a score, or an AUROC for a noul.</li>
+<li><strong>The gold can be a distribution, or say that no option is right.</strong> A soft gold rewards spreading probability the way the annotators did, and an unanswerable row has no option to be right about.</li>
+</ul>
+<p><a href="./losses.html#metrics">[<code>decision_metrics</code>](https://sgaseretto.github.io/sysonelib/losses.html#decision_metrics)</a> handles all three, and returns the fixed set of Laya’s notebook. This notebook opens the set up. Everything a metric reads about a split sits in one object, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a>, and a metric is any function of a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> that returns a number. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#metric"><code>Metric</code></a> binds a metric’s arguments, keeps it to one kind of question if asked, and names the column it fills:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    G["learn.get_preds(split)&lt;br/&gt;logits, gold, masks, kinds"] --&gt; P[Preds]
+    A["answers in the Jev schema,&lt;br/&gt;from any backend"] --&gt;|Preds.from_answers| P
+    P --&gt; F["accuracy(p), f1_score(p), ece(p), …"]
+    P --&gt; M["Metric(f1_score, average='weighted')&lt;br/&gt;Metric(accuracy, qtype='noul')"]
+    F &amp; M --&gt; L["Learner(metrics=[...]):&lt;br/&gt;a column per metric, every epoch"]
+    F &amp; M --&gt; T["metrics_table(p, by='qtype')"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="preds" class="level2">
+<h2 class="anchored" data-anchor-id="preds">Preds</h2>
+<p>A <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> is a <code>dict</code> of arrays with one row per decision: the logits padded with <span class="math inline">\(-10^4\)</span>, the gold distributions padded with zeros, the option masks, the question types and the gold labels. When they are known, it also holds whether each row is answerable, the act head’s p(act), each row’s question id and case index, and its options’ keys. Being a <code>dict</code>, it still works for code that reads <code>learn.get_preds()</code> by key. Its properties derive what metrics need. <code>probs</code> are the softmax over each row’s own options, divided by the temperature of the row’s bucket when the <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> carries temperatures. <code>pred</code> is the option each row answers, and <code>correct</code>, <code>conf</code> and <code>ok</code> say whether that answer is right, how sure it is, and whether the row has an answer among its options at all.</p>
+<div id="c2dd18d2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.153807+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.163688+00:00&quot;,&quot;total&quot;:0.009883310000006418}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L25" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds-1" class="level3">
+<h3 class="anchored" data-anchor-id="preds-1">Preds</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Preds(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    logits, targets, masks, qtypes, labels, answerable:NoneType<span class="op">=</span><span class="va">None</span>, act:NoneType<span class="op">=</span><span class="va">None</span>, qids:NoneType<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    case_idx:NoneType<span class="op">=</span><span class="va">None</span>, temperatures:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, option_keys:<span class="bu">list</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Every row’s option logits beside its gold, option mask, question type and gold label (and, when known, answerability, p(act), question id, case index and option keys): what metrics and interpretations read</em></p>
+</section>
+</div>
+<div id="799ccf27" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.167097+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.169463+00:00&quot;,&quot;total&quot;:0.002368856000003916}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L95" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.of_type" class="level3">
+<h3 class="anchored" data-anchor-id="preds.of_type">Preds.of_type</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> of_type(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>names</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Preds:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The rows of the question types named</em></p>
+</section>
+</div>
+<div id="65c9e569" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.169541+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.172096+00:00&quot;,&quot;total&quot;:0.0025573090000108323}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L85" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.select" class="level3">
+<h3 class="anchored" data-anchor-id="preds.select">Preds.select</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> select(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    rows</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Preds:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The rows a boolean mask or a list of indices picks, with the same temperatures</em></p>
+</section>
+</div>
+<div id="b1918abb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.172174+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.174431+00:00&quot;,&quot;total&quot;:0.002260464000002571}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L82" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.conf" class="level3">
+<h3 class="anchored" data-anchor-id="preds.conf">Preds.conf</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> conf()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The probability of each row’s answer</em></p>
+</section>
+</div>
+<div id="cb42a4bb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.174508+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.176711+00:00&quot;,&quot;total&quot;:0.0022060020000083114}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L79" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.right" class="level3">
+<h3 class="anchored" data-anchor-id="preds.right">Preds.right</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> right()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Whether acting on each row’s answer would be right: an answerable row answered correctly</em></p>
+</section>
+</div>
+<div id="8ab2eb1d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.176787+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.178978+00:00&quot;,&quot;total&quot;:0.0021936090000025388}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L76" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.correct" class="level3">
+<h3 class="anchored" data-anchor-id="preds.correct">Preds.correct</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> correct()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Whether each row’s answer is its gold label</em></p>
+</section>
+</div>
+<div id="9dde1434" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.179055+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.181466+00:00&quot;,&quot;total&quot;:0.0024138099999930773}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L70" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.pred" class="level3">
+<h3 class="anchored" data-anchor-id="preds.pred">Preds.pred</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pred()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Each row’s answer, as an option index: the likeliest option, and for a noul true when p(true) ≥ 0.5</em></p>
+</section>
+</div>
+<div id="d5ff5925" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.181542+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.183782+00:00&quot;,&quot;total&quot;:0.0022422199999994064}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L67" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.ok" class="level3">
+<h3 class="anchored" data-anchor-id="preds.ok">Preds.ok</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ok()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Rows whose gold puts its mass on some option: an answer among the options</em></p>
+</section>
+</div>
+<div id="0479c870" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.183858+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.186325+00:00&quot;,&quot;total&quot;:0.002470247000005088}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L60" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.probs" class="level3">
+<h3 class="anchored" data-anchor-id="preds.probs">Preds.probs</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> probs()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Each row’s option probabilities, softmax(z / T) over its own options, zero on padding</em></p>
+</section>
+</div>
+<div id="173813f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.186404+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.188750+00:00&quot;,&quot;total&quot;:0.0023491999999976088}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L55" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.temps" class="level3">
+<h3 class="anchored" data-anchor-id="preds.temps">Preds.temps</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> temps()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Each row’s temperature: its bucket’s, else its type’s, else 1</em></p>
+</section>
+</div>
+<div id="cc90e3d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.188826+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.191027+00:00&quot;,&quot;total&quot;:0.002203758000007383}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L52" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.k" class="level3">
+<h3 class="anchored" data-anchor-id="preds.k">Preds.k</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> k()<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Each row’s number of options</em></p>
+</section>
+</div>
+<div id="39d9197c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.191103+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.193316+00:00&quot;,&quot;total&quot;:0.0022155399999945757}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L49" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.n" class="level3">
+<h3 class="anchored" data-anchor-id="preds.n">Preds.n</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> n()<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Number of rows</em></p>
+</section>
+</div>
+<p>A toy split of four rows: a four-option choice whose gold is its first option, a noul whose gold is true, a four-level score whose gold is spread over levels 1 and 2, and a three-option choice whose record says none of its options is right. The noul has two options and the last choice three, so their other slots are padding:</p>
+<div id="86455de0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> np.array([[<span class="fl">2.0</span>, <span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.3</span>, <span class="op">-</span><span class="fl">0.3</span>, <span class="op">-</span><span class="fl">1e4</span>, <span class="op">-</span><span class="fl">1e4</span>], [<span class="fl">0.1</span>, <span class="fl">1.2</span>, <span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.5</span>], [<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1e4</span>]])</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>], [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>], [<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="dv">0</span>], [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>]], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>masks <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>]], dtype<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> Preds(logits, targets, masks, qtypes<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>], labels<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>test_eq(p.k.tolist(), [<span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">3</span>])</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>test_eq(p.ok.tolist(), [<span class="va">True</span>, <span class="va">True</span>, <span class="va">True</span>, <span class="va">False</span>])</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>test_eq(p.pred.tolist(), [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>])               <span class="co"># the noul's p(true) is 0.35: it answers false</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>test_eq(p.correct.tolist(), [<span class="va">True</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>])</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>test_close(p.probs.<span class="bu">sum</span>(<span class="dv">1</span>), np.ones(<span class="dv">4</span>))</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>p, p.probs.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(Preds(4 rows: 2 choice, 1 score, 1 noul · 1 unanswerable · T = 1),
+ array([[0.71 , 0.158, 0.035, 0.096],
+        [0.646, 0.354, 0.   , 0.   ],
+        [0.169, 0.509, 0.229, 0.093],
+        [0.506, 0.186, 0.307, 0.   ]]))</code></pre>
+</div>
+</div>
+</section>
+<section id="metrics-of-the-answers" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-of-the-answers">Metrics of the answers</h2>
+<p>The simplest metrics read only each row’s answer. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy"><code>accuracy</code></a> is the share of answerable rows answered right, and <a href="https://sgaseretto.github.io/sysonelib/metrics.html#error_rate"><code>error_rate</code></a> is its complement, as in fastai. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#top_k_accuracy"><code>top_k_accuracy</code></a> asks whether the gold is among the <code>k</code> likeliest options, which separates a model that is nearly right from one that is lost. It counts choice and score rows only, since a noul’s two options are always its top two.</p>
+<div id="5d46a37c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.195350+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.197779+00:00&quot;,&quot;total&quot;:0.002431944000008457}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L115" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="top_k_accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="top_k_accuracy">top_k_accuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> top_k_accuracy(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, k:<span class="bu">int</span><span class="op">=</span><span class="dv">2</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Share of choice and score rows whose gold label is among the <code>k</code> likeliest options</em></p>
+</section>
+</div>
+<div id="9f0b2eda" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.197852+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.200097+00:00&quot;,&quot;total&quot;:0.0022472299999947154}}" data-execution_count="20">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L111" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="error_rate" class="level3">
+<h3 class="anchored" data-anchor-id="error_rate">error_rate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> error_rate(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>1 − accuracy</em></p>
+</section>
+</div>
+<div id="7fe241cb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.200170+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.202416+00:00&quot;,&quot;total&quot;:0.0022484519999892427}}" data-execution_count="21">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L107" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="accuracy">accuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> accuracy(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Share of answerable rows answered right: the likeliest option against the gold label (for a noul, p(true) ≥ 0.5 against its truth)</em></p>
+</section>
+</div>
+<div id="a684fbac" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>test_close(accuracy(p), <span class="dv">2</span> <span class="op">/</span> <span class="dv">3</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>test_close(error_rate(p), <span class="dv">1</span> <span class="op">/</span> <span class="dv">3</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>test_eq(top_k_accuracy(p, k<span class="op">=</span><span class="dv">1</span>), <span class="fl">1.0</span>)                   <span class="co"># the two choice and score rows: both answered right</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>test_eq(top_k_accuracy(p.select([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]), k<span class="op">=</span><span class="dv">4</span>), <span class="fl">1.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Precision, recall and F1 need classes, and in a typed decision the classes are a question’s options. They are computed per question, and then averaged over questions, which is how <a href="./losses.html#metrics">[<code>answer_metrics</code>](https://sgaseretto.github.io/sysonelib/losses.html#answer_metrics)</a> computes its macro-F1. A <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> that knows each row’s question id groups its rows by it. One that also knows the option keys counts classes by key, since in typed-decisions the same question id can offer different options in different cases; without keys, an option’s position is its class. Within a question:</p>
+<ul>
+<li><code>average="macro"</code> takes each gold label’s value and averages them, so that a rare label weighs as much as a frequent one, and a model that answers only the frequent labels can’t hide behind its accuracy;</li>
+<li><code>average="weighted"</code> weights each label by its support;</li>
+<li><code>average="micro"</code> pools every decision, which for single-label answers is the accuracy.</li>
+</ul>
+<p><a href="https://sgaseretto.github.io/sysonelib/metrics.html#balanced_accuracy"><code>balanced_accuracy</code></a> is the macro recall. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#matthews_corrcoef"><code>matthews_corrcoef</code></a> correlates answers with gold labels over the whole confusion matrix (Gorodkin’s multiclass form), and it is 0 for a model that always answers the same. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#cohen_kappa"><code>cohen_kappa</code></a> measures agreement beyond chance. With <code>weights="linear"</code> or <code>"quadratic"</code> a near miss counts as partly right, which suits a score’s ordered levels. Weighted kappa needs the levels in their order, so it always reads options by position.</p>
+<div id="4ca5dfae" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.208969+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.211805+00:00&quot;,&quot;total&quot;:0.0028389649999951416}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L184" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cohen_kappa" class="level3">
+<h3 class="anchored" data-anchor-id="cohen_kappa">cohen_kappa</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cohen_kappa(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, weights:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Cohen’s kappa between answers and gold labels per question, averaged; <code>weights</code> ‘linear’ or ‘quadratic’ count near misses between ordered levels as partly right</em></p>
+</section>
+</div>
+<div id="b6da2a2b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.211881+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.214515+00:00&quot;,&quot;total&quot;:0.0026370679999985214}}" data-execution_count="24">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L176" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="matthews_corrcoef" class="level3">
+<h3 class="anchored" data-anchor-id="matthews_corrcoef">matthews_corrcoef</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> matthews_corrcoef(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Matthews correlation between answers and gold labels per question (Gorodkin’s multiclass form), averaged over questions</em></p>
+</section>
+</div>
+<div id="b91fb998" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.214602+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.216772+00:00&quot;,&quot;total&quot;:0.0021719989999979816}}" data-execution_count="25">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L169" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="balanced_accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="balanced_accuracy">balanced_accuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> balanced_accuracy(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The mean recall over each question’s gold labels, then over questions: accuracy with every label weighing the same</em></p>
+</section>
+</div>
+<div id="442f7823" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.216838+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.218992+00:00&quot;,&quot;total&quot;:0.0021562299999970946}}" data-execution_count="26">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L165" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="f1_score" class="level3">
+<h3 class="anchored" data-anchor-id="f1_score">f1_score</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f1_score(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>F1 per gold label, averaged as <a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>precision</code></a> is: with ‘macro’, <a href="https://sgaseretto.github.io/sysonelib/losses.html#answer_metrics"><code>answer_metrics</code></a>’ macro-F1</em></p>
+</section>
+</div>
+<div id="32a69452" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.219057+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.221410+00:00&quot;,&quot;total&quot;:0.002356163000001743}}" data-execution_count="27">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L161" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="fbeta" class="level3">
+<h3 class="anchored" data-anchor-id="fbeta">fbeta</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fbeta(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, beta:<span class="bu">float</span><span class="op">=</span><span class="fl">1.0</span>, average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>F-beta per gold label (recall weighing <code>beta</code> times as much as precision), averaged as <a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>precision</code></a> is</em></p>
+</section>
+</div>
+<div id="947cbf05" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.221491+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.223715+00:00&quot;,&quot;total&quot;:0.0022266710000025114}}" data-execution_count="28">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L157" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="recall" class="level3">
+<h3 class="anchored" data-anchor-id="recall">recall</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> recall(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Recall per gold label, averaged as <a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>precision</code></a> is</em></p>
+</section>
+</div>
+<div id="c41fe3b1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.223780+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.225991+00:00&quot;,&quot;total&quot;:0.002213636999996993}}" data-execution_count="29">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L153" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="precision" class="level3">
+<h3 class="anchored" data-anchor-id="precision">precision</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> precision(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Precision per gold label, averaged (‘macro’, support-‘weighted’ or ‘micro’) within each question, then over questions</em></p>
+</section>
+</div>
+<p>On a question with three labels where the model always answers the commonest one, accuracy is 0.6 while macro-F1, balanced accuracy and both correlations show that it has learned nothing. A score whose answers are always one level off gets no credit from plain kappa, and most of it from quadratic kappa:</p>
+<div id="be4f5e7c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> toy(gold, pred, k<span class="op">=</span><span class="dv">3</span>, qtype<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A Preds whose rows answer `pred` (one-hot logits) to questions with gold labels `gold`"</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(gold)<span class="op">;</span> z <span class="op">=</span> np.full((n, k), <span class="op">-</span><span class="fl">5.0</span>)<span class="op">;</span> z[np.arange(n), pred] <span class="op">=</span> <span class="fl">5.0</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Preds(z, np.eye(k)[gold], np.ones((n, k), <span class="bu">bool</span>), [qtype] <span class="op">*</span> n, gold, qids<span class="op">=</span>[<span class="st">"q"</span>] <span class="op">*</span> n)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>lazy <span class="op">=</span> toy([<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>], [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>test_close(accuracy(lazy), <span class="fl">0.6</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>test_close(f1_score(lazy), macro_f1([<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>], [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>]))    <span class="co"># (0.75 + 0 + 0) / 3</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>test_close(balanced_accuracy(lazy), <span class="dv">1</span> <span class="op">/</span> <span class="dv">3</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>test_eq((matthews_corrcoef(lazy), cohen_kappa(lazy)), (<span class="fl">0.0</span>, <span class="fl">0.0</span>))</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>perfect <span class="op">=</span> toy([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>], [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>])</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>test_eq((f1_score(perfect), matthews_corrcoef(perfect), cohen_kappa(perfect)), (<span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>))</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>near <span class="op">=</span> toy([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>], [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>], k<span class="op">=</span><span class="dv">4</span>, qtype<span class="op">=</span><span class="dv">1</span>)                 <span class="co"># every answer one level off</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> cohen_kappa(near) <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">&lt;</span> cohen_kappa(near, <span class="st">"quadratic"</span>)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>{<span class="st">"lazy"</span>: {f.<span class="va">__name__</span>: <span class="bu">round</span>(f(lazy), <span class="dv">3</span>) <span class="cf">for</span> f <span class="kw">in</span> (accuracy, f1_score, balanced_accuracy, matthews_corrcoef, cohen_kappa)},</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a> <span class="st">"one level off"</span>: {<span class="st">"cohen_kappa"</span>: <span class="bu">round</span>(cohen_kappa(near), <span class="dv">3</span>), <span class="st">"quadratic"</span>: <span class="bu">round</span>(cohen_kappa(near, <span class="st">"quadratic"</span>), <span class="dv">3</span>)}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'lazy': {'accuracy': 0.6,
+  'f1_score': 0.25,
+  'balanced_accuracy': 0.333,
+  'matthews_corrcoef': 0.0,
+  'cohen_kappa': 0.0},
+ 'one level off': {'cohen_kappa': -0.385, 'quadratic': 0.455}}</code></pre>
+</div>
+</div>
+</section>
+<section id="metrics-of-the-probabilities" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-of-the-probabilities">Metrics of the probabilities</h2>
+<p>A decision model reports probabilities, and a run judged only on its answers can’t tell an honest 55% from a reckless 99%. These metrics read the probabilities themselves, and they are the definitions of Laya’s evaluation cell, so <a href="https://sgaseretto.github.io/sysonelib/losses.html#decision_metrics"><code>decision_metrics</code></a> and <a href="https://sgaseretto.github.io/sysonelib/losses.html#answer_metrics"><code>answer_metrics</code></a> give the same numbers:</p>
+<ul>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#log_loss"><code>log_loss</code></a> is the cross-entropy of each row’s probabilities against its gold distribution, the evaluation loss after calibration.</li>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#brier_score"><code>brier_score</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#soft_accuracy"><code>soft_accuracy</code></a> (the probability given to the gold, <span class="math inline">\(\sum_i p_i g_i\)</span>), <a href="https://sgaseretto.github.io/sysonelib/metrics.html#kl_div"><code>kl_div</code></a> and <a href="https://sgaseretto.github.io/sysonelib/metrics.html#tv_distance"><code>tv_distance</code></a> cover choice and noul rows. Laya’s notebook scores a score question by its level instead (next section).</li>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#ece"><code>ece</code></a> bins the answers by their probability and averages, weighted by the bins’ sizes, the gap between how sure the answers were and how often they were right; <a href="https://sgaseretto.github.io/sysonelib/metrics.html#mce"><code>mce</code></a> is the largest gap in any bin. A model whose 80% answers are right 80% of the time scores 0.</li>
+</ul>
+<div id="0063905a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.229081+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.231760+00:00&quot;,&quot;total&quot;:0.002682182000000921}}" data-execution_count="31">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L220" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="mce" class="level3">
+<h3 class="anchored" data-anchor-id="mce">mce</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mce(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, bins:<span class="bu">int</span><span class="op">=</span><span class="dv">15</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Maximum calibration error: the largest gap between confidence and accuracy in any bin</em></p>
+</section>
+</div>
+<div id="d4181f1a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.231843+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.234090+00:00&quot;,&quot;total&quot;:0.002248402000006422}}" data-execution_count="32">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L216" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="ece" class="level3">
+<h3 class="anchored" data-anchor-id="ece">ece</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ece(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, bins:<span class="bu">int</span><span class="op">=</span><span class="dv">15</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Expected calibration error: over equal-width bins of the answers’ probability, the size-weighted gap between confidence and accuracy</em></p>
+</section>
+</div>
+<div id="0bc08446" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.234155+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.236472+00:00&quot;,&quot;total&quot;:0.002320085000008021}}" data-execution_count="33">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L212" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tv_distance" class="level3">
+<h3 class="anchored" data-anchor-id="tv_distance">tv_distance</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tv_distance(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean total variation ½Σ|p − g| over choice and noul rows</em></p>
+</section>
+</div>
+<div id="f0ed3152" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.236551+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.238832+00:00&quot;,&quot;total&quot;:0.002282585999992648}}" data-execution_count="34">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L207" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="kl_div" class="level3">
+<h3 class="anchored" data-anchor-id="kl_div">kl_div</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kl_div(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean KL(gold ‖ p) over choice and noul rows</em></p>
+</section>
+</div>
+<div id="070b1309" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.238896+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.241055+00:00&quot;,&quot;total&quot;:0.0021619599999951333}}" data-execution_count="35">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L203" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="soft_accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="soft_accuracy">soft_accuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> soft_accuracy(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean Σ p·g, the probability given to the gold, over choice and noul rows</em></p>
+</section>
+</div>
+<div id="a7b14040" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.241117+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.243374+00:00&quot;,&quot;total&quot;:0.002260264000000234}}" data-execution_count="36">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L199" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="brier_score" class="level3">
+<h3 class="anchored" data-anchor-id="brier_score">brier_score</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> brier_score(</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean Σ(p − g)² over choice and noul rows</em></p>
+</section>
+</div>
+<div id="e1ae42b4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.243456+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.245692+00:00&quot;,&quot;total&quot;:0.0022377930000061497}}" data-execution_count="37">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L195" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="log_loss" class="level3">
+<h3 class="anchored" data-anchor-id="log_loss">log_loss</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_loss(</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean cross-entropy of each answerable row’s probabilities against its gold distribution</em></p>
+</section>
+</div>
+</section>
+<section id="metrics-of-the-levels-and-of-the-nouls" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-of-the-levels-and-of-the-nouls">Metrics of the levels and of the nouls</h2>
+<p>A score question answers with its expected level, so its error is a distance, not a hit or a miss. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#score_mae"><code>score_mae</code></a> is the mean absolute error of the expected level, and <a href="https://sgaseretto.github.io/sysonelib/metrics.html#within_one"><code>within_one</code></a> the share within one level of the gold, both from Laya’s notebook. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#rps"><code>rps</code></a>, the ranked probability score, compares the two cumulative distributions over the levels, and grows with how much probability sits how many levels away. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#noul_auroc"><code>noul_auroc</code></a> asks whether p(true) ranks the true statements above the false ones, whatever threshold an answer then uses.</p>
+<div id="ca890fc2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.247336+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.249569+00:00&quot;,&quot;total&quot;:0.002235658000003582}}" data-execution_count="39">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L246" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="noul_auroc" class="level3">
+<h3 class="anchored" data-anchor-id="noul_auroc">noul_auroc</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> noul_auroc(</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>AUROC of p(true) against the gold truth over noul rows: how well the probability ranks true statements above false ones</em></p>
+</section>
+</div>
+<div id="0fe0b5c9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.249633+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.251900+00:00&quot;,&quot;total&quot;:0.0022697420000099555}}" data-execution_count="40">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L241" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rps" class="level3">
+<h3 class="anchored" data-anchor-id="rps">rps</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rps(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Ranked probability score over score rows: the squared distance between the cumulative distributions, per level gap (0 is perfect)</em></p>
+</section>
+</div>
+<div id="457cfc58" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.251965+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.254118+00:00&quot;,&quot;total&quot;:0.0021554580000042733}}" data-execution_count="41">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L237" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="within_one" class="level3">
+<h3 class="anchored" data-anchor-id="within_one">within_one</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> within_one(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Share of score rows whose expected level is within one level of the gold’s</em></p>
+</section>
+</div>
+<div id="f85f1494" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.254179+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.256423+00:00&quot;,&quot;total&quot;:0.0022477309999970885}}" data-execution_count="42">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L233" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="score_mae" class="level3">
+<h3 class="anchored" data-anchor-id="score_mae">score_mae</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> score_mae(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Mean absolute error between the expected level and the gold’s, over score rows</em></p>
+</section>
+</div>
+<p>Every metric so far agrees with <a href="https://sgaseretto.github.io/sysonelib/losses.html#decision_metrics"><code>decision_metrics</code></a> on random rows of all three kinds, with soft gold on some rows, unanswerable rows, and temperatures per type and bucket:</p>
+<div id="3eb8cbcd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>n, K <span class="op">=</span> <span class="dv">400</span>, <span class="dv">6</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>qt <span class="op">=</span> rng.choice([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>], n)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>kk <span class="op">=</span> np.where(qt <span class="op">==</span> <span class="dv">2</span>, <span class="dv">2</span>, rng.integers(<span class="dv">3</span>, K <span class="op">+</span> <span class="dv">1</span>, n))</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>mk <span class="op">=</span> np.arange(K)[<span class="va">None</span>] <span class="op">&lt;</span> kk[:, <span class="va">None</span>]</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>lab <span class="op">=</span> np.array([rng.integers(<span class="dv">0</span>, k) <span class="cf">for</span> k <span class="kw">in</span> kk])</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>tg <span class="op">=</span> np.eye(K)[lab]</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> np.flatnonzero(rng.random(n) <span class="op">&lt;</span> <span class="fl">0.3</span>):                      <span class="co"># soft gold on a third of the rows</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> rng.dirichlet(np.ones(kk[i]))<span class="op">;</span> tg[i] <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> tg[i, :kk[i]] <span class="op">=</span> t<span class="op">;</span> lab[i] <span class="op">=</span> t.argmax()</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>un <span class="op">=</span> rng.random(n) <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">;</span> tg[un], lab[un] <span class="op">=</span> <span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>                   <span class="co"># a few unanswerable rows</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>temps <span class="op">=</span> {<span class="st">"choice"</span>: <span class="fl">1.3</span>, <span class="st">"noul"</span>: <span class="fl">0.8</span>, <span class="st">"score:3-5"</span>: <span class="fl">2.0</span>}</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>zz <span class="op">=</span> rng.normal(<span class="dv">0</span>, <span class="dv">2</span>, (n, K))</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>rp <span class="op">=</span> Preds(zz, tg, mk, qt, lab, qids<span class="op">=</span>[<span class="ss">f"q</span><span class="sc">{</span>x<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> x <span class="kw">in</span> rng.integers(<span class="dv">0</span>, <span class="dv">5</span>, n)], act<span class="op">=</span>rng.random(n), temperatures<span class="op">=</span>temps)</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>dm <span class="op">=</span> decision_metrics(np.where(mk, zz, <span class="op">-</span><span class="fl">1e4</span>), tg, mk, qt, lab, temps)</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>mine <span class="op">=</span> {<span class="st">"accuracy"</span>: accuracy, <span class="st">"soft_accuracy"</span>: soft_accuracy, <span class="st">"brier"</span>: brier_score, <span class="st">"kl"</span>: kl_div, <span class="st">"tv"</span>: tv_distance,</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ece"</span>: ece, <span class="st">"score_mae"</span>: score_mae, <span class="st">"within_one"</span>: within_one}</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, f <span class="kw">in</span> mine.items(): test_close(f(rp), dm[k], eps<span class="op">=</span><span class="fl">1e-9</span>)</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>rp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Preds(400 rows: 121 choice, 128 score, 151 noul · 26 unanswerable · calibrated)</code></pre>
+</div>
+</div>
+</section>
+<section id="metrics-of-acting-on-the-answers" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-of-acting-on-the-answers">Metrics of acting on the answers</h2>
+<p>A decision model can hand a case to a person instead of acting on its answer (the act head, in <a href="./losses.html#the-act-head">losses</a>). Acting on the surest answers first, the <em>risk–coverage curve</em> traces the error rate of the answers acted on against the share acted on. A model whose confidence tracks its correctness keeps the error low until it runs out of sure answers.</p>
+<ul>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#aurc"><code>aurc</code></a> is the area under that curve. Lower is better, and a confidence that is unrelated to correctness gives the plain error rate.</li>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy_at_coverage"><code>accuracy_at_coverage</code></a> is the accuracy on the surest <code>coverage</code> share.</li>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#coverage_at_accuracy"><code>coverage_at_accuracy</code></a> is the largest share that keeps <a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy"><code>accuracy</code></a> on the answers acted on.</li>
+<li><a href="https://sgaseretto.github.io/sysonelib/metrics.html#act_auroc"><code>act_auroc</code></a> measures how well the act head’s p(act) separates the answers to act on from the rest.</li>
+</ul>
+<p>Each reads either each answer’s probability (<code>score="confidence"</code>) or p(act) (<code>score="act"</code>). An unanswerable row counts as an error wherever it is acted on, since none of its options is right. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#coverage_at_accuracy"><code>coverage_at_accuracy</code></a> picks its threshold on the same rows it scores, so it flatters the model; a threshold for use is fitted on held-out rows (<a href="./losses.html#the-act-head">[<code>fit_thresholds</code>](https://sgaseretto.github.io/sysonelib/losses.html#fit_thresholds)</a>).</p>
+<div id="302e2280" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.259244+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.261477+00:00&quot;,&quot;total&quot;:0.0022358479999979863}}" data-execution_count="44">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L277" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="act_auroc" class="level3">
+<h3 class="anchored" data-anchor-id="act_auroc">act_auroc</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> act_auroc(</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>How well p(act) separates the rows to act on (answered right) from the rest</em></p>
+</section>
+</div>
+<div id="3e60d891" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.261544+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.263912+00:00&quot;,&quot;total&quot;:0.002370130000002746}}" data-execution_count="45">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L271" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="coverage_at_accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="coverage_at_accuracy">coverage_at_accuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coverage_at_accuracy(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, accuracy:<span class="bu">float</span><span class="op">=</span><span class="fl">0.9</span>, score:<span class="bu">str</span><span class="op">=</span><span class="st">'confidence'</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The largest share of rows the model can act on, surest first, keeping <a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy"><code>accuracy</code></a> on them (fitted on these rows, so optimistic)</em></p>
+</section>
+</div>
+<div id="44f2ea10" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.263975+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.266405+00:00&quot;,&quot;total&quot;:0.002433017000001314}}" data-execution_count="46">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L265" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="accuracy_at_coverage" class="level3">
+<h3 class="anchored" data-anchor-id="accuracy_at_coverage">accuracy_at_coverage</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> accuracy_at_coverage(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, coverage:<span class="bu">float</span><span class="op">=</span><span class="fl">0.8</span>, score:<span class="bu">str</span><span class="op">=</span><span class="st">'confidence'</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Accuracy on the <code>coverage</code> share of rows the model is surest of</em></p>
+</section>
+</div>
+<div id="1b413446" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.266483+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.268777+00:00&quot;,&quot;total&quot;:0.0022965020000071945}}" data-execution_count="47">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L260" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="aurc" class="level3">
+<h3 class="anchored" data-anchor-id="aurc">aurc</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> aurc(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, score:<span class="bu">str</span><span class="op">=</span><span class="st">'confidence'</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Area under the risk–coverage curve: the error rate of the answers acted on, averaged over every coverage from the surest answer to all (lower is better)</em></p>
+</section>
+</div>
+<div id="dc526fc8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.268839+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.271162+00:00&quot;,&quot;total&quot;:0.0023242740000029016}}" data-execution_count="48">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L252" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="selection_scores" class="level3">
+<h3 class="anchored" data-anchor-id="selection_scores">selection_scores</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> selection_scores(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, score:<span class="bu">str</span><span class="op">=</span><span class="st">'confidence'</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>numpy.ndarray:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The score a rule for acting thresholds, per row: each answer’s probability (‘confidence’) or the act head’s p(act) (‘act’)</em></p>
+</section>
+</div>
+<div id="8721ba86" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">2000</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>conf_ <span class="op">=</span> rng.uniform(<span class="fl">0.5</span>, <span class="fl">1.0</span>, n)<span class="op">;</span> right_ <span class="op">=</span> rng.uniform(size<span class="op">=</span>n) <span class="op">&lt;</span> conf_         <span class="co"># confidence tracks correctness</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>blind <span class="op">=</span> rng.uniform(size<span class="op">=</span>n) <span class="op">&lt;</span> <span class="fl">0.6</span>                                             <span class="co"># correct 60% of the time, whatever the confidence</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>mk_ <span class="op">=</span> np.ones((n, <span class="dv">2</span>), <span class="bu">bool</span>)</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>as_preds <span class="op">=</span> <span class="kw">lambda</span> c, r: Preds(np.log(np.stack([<span class="dv">1</span> <span class="op">-</span> c, c], <span class="dv">1</span>).clip(<span class="fl">1e-6</span>)), np.eye(<span class="dv">2</span>)[np.where(r, <span class="dv">1</span>, <span class="dv">0</span>)], mk_, [<span class="dv">0</span>] <span class="op">*</span> n, np.where(r, <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>sure, unsure <span class="op">=</span> as_preds(conf_, right_), as_preds(np.full(n, <span class="fl">0.6</span>), blind)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>test_close(aurc(unsure), <span class="fl">0.4</span>, eps<span class="op">=</span><span class="fl">0.03</span>)                                       <span class="co"># a blind confidence: the error rate</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> aurc(sure) <span class="op">&lt;</span> error_rate(sure) <span class="op">-</span> <span class="fl">0.05</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>test_close(accuracy_at_coverage(sure, <span class="fl">1.0</span>), accuracy(sure))</span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="dv">0</span> <span class="op">&lt;</span> coverage_at_accuracy(sure, <span class="fl">0.9</span>) <span class="op">&lt;</span> <span class="fl">0.6</span></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>{<span class="st">"aurc"</span>: <span class="bu">round</span>(aurc(sure), <span class="dv">3</span>), <span class="st">"error rate"</span>: <span class="bu">round</span>(error_rate(sure), <span class="dv">3</span>), <span class="st">"accuracy on the surest 20%"</span>: <span class="bu">round</span>(accuracy_at_coverage(sure, <span class="fl">0.2</span>), <span class="dv">3</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'aurc': 0.128, 'error rate': 0.25, 'accuracy on the surest 20%': 0.945}</code></pre>
+</div>
+</div>
+<div id="b511c582" class="cell">
+<details class="code-fold">
+<summary>figure code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.2</span>, <span class="fl">2.8</span>))</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> q, name, color <span class="kw">in</span> ((sure, <span class="st">"confidence tracks correctness"</span>, <span class="st">"C0"</span>), (unsure, <span class="st">"a blind confidence"</span>, <span class="st">"C7"</span>)):</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    cv <span class="op">=</span> coverage_curve(selection_scores(q), q.right)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(cv[<span class="st">"coverage"</span>], <span class="dv">1</span> <span class="op">-</span> cv[<span class="st">"accuracy"</span>], color<span class="op">=</span>color, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: AURC </span><span class="sc">{</span>aurc(q)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(cv[<span class="st">"coverage"</span>], <span class="dv">0</span>, <span class="dv">1</span> <span class="op">-</span> cv[<span class="st">"accuracy"</span>], color<span class="op">=</span>color, alpha<span class="op">=</span><span class="fl">0.12</span>)</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"coverage (share of answers acted on, surest first)"</span>, ylabel<span class="op">=</span><span class="st">"error rate of the answers acted on"</span>, ylim<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">0.6</span>))</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">"upper left"</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04a_metrics_files/figure-html/cell-46-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="metric" class="level2">
+<h2 class="anchored" data-anchor-id="metric">Metric</h2>
+<p>Any function of a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> is a metric, and its name names the column it fills. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#metric"><code>Metric</code></a> wraps one when it needs more than that:</p>
+<ul>
+<li>It binds arguments, like <code>Metric(f1_score, average="weighted")</code>.</li>
+<li>It keeps the metric to one kind of question, like <code>Metric(accuracy, qtype="noul")</code>, which is <a href="https://sgaseretto.github.io/sysonelib/losses.html#decision_metrics"><code>decision_metrics</code></a>’ <code>accuracy_noul</code>.</li>
+<li>It composes a name from the function and any argument that differs from its default, so two variants of a metric get two columns.</li>
+</ul>
+<p>The CamelCase constructors are fastai’s names for the metrics that take arguments: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#f1score"><code>F1Score</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#fbeta"><code>FBeta</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>Precision</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#recall"><code>Recall</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#balancedaccuracy"><code>BalancedAccuracy</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#matthewscorrcoef"><code>MatthewsCorrCoef</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#cohenkappa"><code>CohenKappa</code></a>. <a href="https://sgaseretto.github.io/sysonelib/metrics.html#skm_to_sysone"><code>skm_to_sysone</code></a> is fastai’s <code>skm_to_fastai</code>. It turns a scikit-learn metric, <code>func(y_true, y_pred)</code>, or with <code>proba=True</code> <code>func(y_true, probabilities)</code>, into a sysone one, computed per question and averaged.</p>
+<div id="5ce6a8fc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.276106+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.278857+00:00&quot;,&quot;total&quot;:0.002755008999997699}}" data-execution_count="50">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L312" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="skm_to_sysone" class="level3">
+<h3 class="anchored" data-anchor-id="skm_to_sysone">skm_to_sysone</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> skm_to_sysone(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    func, proba:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, qtype:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A scikit-learn style metric <code>func(y_true, y_pred, **kwargs)</code> as a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#metric"><code>Metric</code></a>, computed per question and averaged; with <code>proba</code> it gets each row’s option probabilities instead of its answer</em></p>
+</section>
+</div>
+<div id="74c8bdfe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.278939+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.281113+00:00&quot;,&quot;total&quot;:0.002175985999997465}}" data-execution_count="51">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L310" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cohenkappa" class="level3">
+<h3 class="anchored" data-anchor-id="cohenkappa">CohenKappa</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> CohenKappa(</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    weights:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#cohen_kappa"><code>cohen_kappa</code></a></em></p>
+</section>
+</div>
+<div id="e58be485" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.281178+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.283232+00:00&quot;,&quot;total&quot;:0.002056694000003745}}" data-execution_count="52">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L309" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="matthewscorrcoef" class="level3">
+<h3 class="anchored" data-anchor-id="matthewscorrcoef">MatthewsCorrCoef</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> MatthewsCorrCoef()<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#matthews_corrcoef"><code>matthews_corrcoef</code></a></em></p>
+</section>
+</div>
+<div id="a7b76150" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.283350+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.285390+00:00&quot;,&quot;total&quot;:0.002041986000008933}}" data-execution_count="53">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L308" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="balancedaccuracy" class="level3">
+<h3 class="anchored" data-anchor-id="balancedaccuracy">BalancedAccuracy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> BalancedAccuracy()<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#balanced_accuracy"><code>balanced_accuracy</code></a></em></p>
+</section>
+</div>
+<div id="902e4388" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.285454+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.287542+00:00&quot;,&quot;total&quot;:0.002090155999994181}}" data-execution_count="54">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L307" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="recall-1" class="level3">
+<h3 class="anchored" data-anchor-id="recall-1">Recall</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Recall(</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#recall"><code>recall</code></a></em></p>
+</section>
+</div>
+<div id="6c34f5f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.287605+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.289700+00:00&quot;,&quot;total&quot;:0.0020971480000042675}}" data-execution_count="55">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L306" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="precision-1" class="level3">
+<h3 class="anchored" data-anchor-id="precision-1">Precision</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Precision(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>precision</code></a></em></p>
+</section>
+</div>
+<div id="133700d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.289762+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.291903+00:00&quot;,&quot;total&quot;:0.0021429749999981595}}" data-execution_count="56">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L305" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="fbeta-1" class="level3">
+<h3 class="anchored" data-anchor-id="fbeta-1">FBeta</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> FBeta(</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    beta:<span class="bu">float</span>, average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#fbeta"><code>fbeta</code></a></em></p>
+</section>
+</div>
+<div id="c09ec513" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.291964+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.294059+00:00&quot;,&quot;total&quot;:0.002097649999996065}}" data-execution_count="57">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L304" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="f1score" class="level3">
+<h3 class="anchored" data-anchor-id="f1score">F1Score</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> F1Score(</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>    average:<span class="bu">str</span><span class="op">=</span><span class="st">'macro'</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>fastai’s name: <a href="https://sgaseretto.github.io/sysonelib/metrics.html#f1_score"><code>f1_score</code></a></em></p>
+</section>
+</div>
+<div id="3a9c18af" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.294120+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.296214+00:00&quot;,&quot;total&quot;:0.0020984310000073947}}" data-execution_count="58">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L300" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="as_metric" class="level3">
+<h3 class="anchored" data-anchor-id="as_metric">as_metric</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> as_metric(</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    m</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Metric:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A <a href="https://sgaseretto.github.io/sysonelib/metrics.html#metric"><code>Metric</code></a> from a metric or a plain function of a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a></em></p>
+</section>
+</div>
+<div id="c70f4e14" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.296328+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.298968+00:00&quot;,&quot;total&quot;:0.0026418669999941358}}" data-execution_count="59">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L287" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="metric-1" class="level3">
+<h3 class="anchored" data-anchor-id="metric-1">Metric</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Metric(</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    func, name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, qtype:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A metric of a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a>: <code>func</code> with its arguments bound, over the rows of one question type when <code>qtype</code> is given, reported as <code>name</code></em></p>
+</section>
+</div>
+<div id="30a64c72" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>test_eq([as_metric(m).name <span class="cf">for</span> m <span class="kw">in</span> (accuracy, Metric(top_k_accuracy, k<span class="op">=</span><span class="dv">3</span>), F1Score(), F1Score(<span class="st">"weighted"</span>), FBeta(<span class="dv">2</span>), CohenKappa(<span class="st">"quadratic"</span>),</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>                                     Metric(accuracy, qtype<span class="op">=</span><span class="st">"noul"</span>), Metric(ece, <span class="st">"ece_10_bins"</span>, bins<span class="op">=</span><span class="dv">10</span>))],</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>        [<span class="st">"accuracy"</span>, <span class="st">"top_k_accuracy_3"</span>, <span class="st">"f1_score"</span>, <span class="st">"f1_score_weighted"</span>, <span class="st">"fbeta_2"</span>, <span class="st">"cohen_kappa_quadratic"</span>, <span class="st">"accuracy_noul"</span>, <span class="st">"ece_10_bins"</span>])</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>test_close(Metric(accuracy, qtype<span class="op">=</span><span class="st">"noul"</span>)(rp), dm[<span class="st">"accuracy_noul"</span>])</span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>test_eq(Metric(CohenKappa(<span class="st">"quadratic"</span>), qtype<span class="op">=</span><span class="st">"score"</span>).name, <span class="st">"cohen_kappa_quadratic_score"</span>)</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Metric(accuracy, qtype<span class="op">=</span><span class="st">"yes-no"</span>), contains<span class="op">=</span><span class="st">"qtype must be"</span>)</span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hits(y_true, y_pred): <span class="cf">return</span> <span class="bu">float</span>((y_true <span class="op">==</span> y_pred).mean())                   <span class="co"># a scikit-learn style function</span></span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>test_close(skm_to_sysone(hits)(perfect), <span class="fl">1.0</span>)</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>test_eq(skm_to_sysone(hits, name<span class="op">=</span><span class="st">"hit_rate"</span>).name, <span class="st">"hit_rate"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/metrics.html#metrics_table"><code>metrics_table</code></a> reports metrics as a table, over every row and, with <code>by</code>, per question type, per question id, or per any label of the rows. With no metrics named, it reports accuracy, macro-F1, log loss, Brier and ECE:</p>
+<div id="fec1c9d9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.300872+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.303646+00:00&quot;,&quot;total&quot;:0.002777020000010566}}" data-execution_count="61">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L323" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="metrics_table" class="level3">
+<h3 class="anchored" data-anchor-id="metrics_table">metrics_table</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> metrics_table(</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>    p:__main__.Preds, metrics:NoneType<span class="op">=</span><span class="va">None</span>, by:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A DataFrame of metrics: a row over all rows, and with <code>by</code> (‘qtype’, ‘qid’ or one label per row) a row per group</em></p>
+</section>
+</div>
+<div id="31d57a88" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>metrics_table(rp, [accuracy, F1Score(), BalancedAccuracy(), log_loss, ece, score_mae, noul_auroc, aurc], by<span class="op">=</span><span class="st">"qtype"</span>).<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">balanced_accuracy</th>
+<th data-quarto-table-cell-role="th">log_loss</th>
+<th data-quarto-table-cell-role="th">ece</th>
+<th data-quarto-table-cell-role="th">score_mae</th>
+<th data-quarto-table-cell-role="th">noul_auroc</th>
+<th data-quarto-table-cell-role="th">aurc</th>
+<th data-quarto-table-cell-role="th">rows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">all</th>
+<td>0.334</td>
+<td>0.271</td>
+<td>0.282</td>
+<td>1.932</td>
+<td>0.344</td>
+<td>1.024</td>
+<td>0.469</td>
+<td>0.655</td>
+<td>374</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">choice</th>
+<td>0.200</td>
+<td>0.168</td>
+<td>0.199</td>
+<td>2.371</td>
+<td>0.414</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>0.814</td>
+<td>115</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">noul</th>
+<td>0.496</td>
+<td>0.506</td>
+<td>0.524</td>
+<td>1.520</td>
+<td>0.355</td>
+<td>NaN</td>
+<td>0.469</td>
+<td>0.613</td>
+<td>139</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">score</th>
+<td>0.275</td>
+<td>0.252</td>
+<td>0.275</td>
+<td>1.990</td>
+<td>0.281</td>
+<td>1.024</td>
+<td>NaN</td>
+<td>0.744</td>
+<td>120</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="from-any-backends-answers" class="level2">
+<h2 class="anchored" data-anchor-id="from-any-backends-answers">From any backend’s answers</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds.from_answers"><code>Preds.from_answers</code></a> builds a <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> from records with gold and the answers a backend gave them in the Jev schema: a sysone <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a>, a zero-shot decider, a GLiNER2 decider or Laya’s runtime. It reads each answer back with <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_probs"><code>answer_probs</code></a>, the core’s <a href="./core.html#the-answer-schema">generic function</a> on the question’s kind. Every metric above then applies to any backend, and on the answers of the fixture’s model the shared ones agree with <a href="https://sgaseretto.github.io/sysonelib/losses.html#answer_metrics"><code>answer_metrics</code></a>:</p>
+<div id="bf30843b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.306330+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:38.310016+00:00&quot;,&quot;total&quot;:0.003689295000000925}}" data-execution_count="63">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/metrics.py#L337" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="preds.from_answers" class="level3">
+<h3 class="anchored" data-anchor-id="preds.from_answers">Preds.from_answers</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_answers(</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>    records, answers</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Preds:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The <a href="https://sgaseretto.github.io/sysonelib/metrics.html#preds"><code>Preds</code></a> of answers in the Jev schema to records with gold: any backend’s answers, ready for the metrics</em></p>
+</section>
+</div>
+<div id="acf92a97" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:38.310103+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.241794+00:00&quot;,&quot;total&quot;:0.9316965499999981}}" data-execution_count="64">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> TypedDecisions</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.learner <span class="im">import</span> decision_learner</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="99b86356" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_records(recs, calib<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, <span class="st">"fixtures/tiny-modernbert"</span>, train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>learn.fit(<span class="dv">2</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>answers <span class="op">=</span> [learn.predict(r[<span class="st">"state"</span>], r[<span class="st">"questions"</span>]) <span class="cf">for</span> r <span class="kw">in</span> recs]</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>pa <span class="op">=</span> Preds.from_answers(recs, answers)</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>am <span class="op">=</span> answer_metrics([(r[<span class="st">"questions"</span>], a, r[<span class="st">"gold"</span>]) <span class="cf">for</span> r, a <span class="kw">in</span> <span class="bu">zip</span>(recs, answers)])</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, f <span class="kw">in</span> {<span class="st">"accuracy"</span>: accuracy, <span class="st">"soft_accuracy"</span>: soft_accuracy, <span class="st">"brier"</span>: brier_score, <span class="st">"kl"</span>: kl_div, <span class="st">"tv"</span>: tv_distance, <span class="st">"ece"</span>: ece,</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>             <span class="st">"score_mae"</span>: score_mae, <span class="st">"within_one"</span>: within_one, <span class="st">"macro_f1"</span>: f1_score}.items(): test_close(f(pa), am[k], eps<span class="op">=</span><span class="fl">1e-6</span>)</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>pa, pa.option_keys[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'loss': '1.184', 'grad_norm': '0.3163', 'learning_rate': '0.003', 'epoch': '0.7692'}
+{'loss': '1.28', 'grad_norm': '0.2842', 'learning_rate': '0.003', 'epoch': '1.538'}
+{'train_runtime': '0.7053', 'train_samples_per_second': '283.6', 'train_steps_per_second': '36.87', 'train_loss': '1.22', 'epoch': '2'}</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+  0%|          | 0/26 [00:00&lt;?, ?it/s]
+ 15%|#5        | 4/26 [00:00&lt;00:00, 30.52it/s]
+ 31%|###       | 8/26 [00:00&lt;00:00, 34.39it/s]
+                                              
+
+ 38%|###8      | 10/26 [00:00&lt;00:00, 34.39it/s]
+ 50%|#####     | 13/26 [00:00&lt;00:00, 38.11it/s]
+ 65%|######5   | 17/26 [00:00&lt;00:00, 35.42it/s]
+                                               
+
+ 77%|#######6  | 20/26 [00:00&lt;00:00, 35.42it/s]
+ 81%|########  | 21/26 [00:00&lt;00:00, 36.31it/s]
+ 96%|#########6| 25/26 [00:00&lt;00:00, 37.35it/s]
+                                               
+
+100%|##########| 26/26 [00:00&lt;00:00, 37.35it/s]
+100%|##########| 26/26 [00:00&lt;00:00, 36.86it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(Preds(100 rows: 30 choice, 40 score, 30 noul · 0 unanswerable · T = 1),
+ ['continue', 'human_review', 'observe', 'stop'])</code></pre>
+</div>
+</div>
+</section>
+<section id="which-metric-for-what" class="level2">
+<h2 class="anchored" data-anchor-id="which-metric-for-what">Which metric for what</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>metric</th>
+<th>reads</th>
+<th>rows it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy"><code>accuracy</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#error_rate"><code>error_rate</code></a></td>
+<td>each row’s answer</td>
+<td>every answerable row</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#top_k_accuracy"><code>top_k_accuracy</code></a></td>
+<td>the options’ ranking</td>
+<td>choice and score rows</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#precision"><code>precision</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#recall"><code>recall</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#f1_score"><code>f1_score</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#fbeta"><code>fbeta</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#balanced_accuracy"><code>balanced_accuracy</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#matthews_corrcoef"><code>matthews_corrcoef</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#cohen_kappa"><code>cohen_kappa</code></a></td>
+<td>answers, by class</td>
+<td>per question, then averaged</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#log_loss"><code>log_loss</code></a></td>
+<td>the probabilities against the gold distribution</td>
+<td>every answerable row</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#brier_score"><code>brier_score</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#soft_accuracy"><code>soft_accuracy</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#kl_div"><code>kl_div</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#tv_distance"><code>tv_distance</code></a></td>
+<td>the probabilities against the gold distribution</td>
+<td>choice and noul rows</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#ece"><code>ece</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#mce"><code>mce</code></a></td>
+<td>the answer’s probability against being right</td>
+<td>every answerable row</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#score_mae"><code>score_mae</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#within_one"><code>within_one</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#rps"><code>rps</code></a>, <code>cohen_kappa(weights="quadratic")</code></td>
+<td>the levels</td>
+<td>score rows</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#noul_auroc"><code>noul_auroc</code></a></td>
+<td>p(true)</td>
+<td>noul rows</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/metrics.html#aurc"><code>aurc</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#accuracy_at_coverage"><code>accuracy_at_coverage</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#coverage_at_accuracy"><code>coverage_at_accuracy</code></a>, <a href="https://sgaseretto.github.io/sysonelib/metrics.html#act_auroc"><code>act_auroc</code></a></td>
+<td>a score to act on: confidence or p(act)</td>
+<td>every row; acting on an unanswerable one is an error</td>
+</tr>
+</tbody>
+</table>
+<p>The <a href="./learner.html#metrics">learner</a> takes them as <code>metrics=[...]</code>, <a href="./evaluate.html">[<code>evaluate</code>](https://sgaseretto.github.io/sysonelib/evaluate.html#evaluate)</a> takes them for any backend, and <a href="./interpret.html">interpret</a> puts them beside the confusions and the worst cases.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

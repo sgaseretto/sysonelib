@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="An offline replica of laya-ultrafast on Mind2Web, with one model for both of its halves: a masked diffusion model decides each step’s operation and element through a LoRA adapter, and, with the adapter off, writes what a typing step types. Recorded steps from websites it never trained on, scored step by step.">
+
+<title>A diffusion model as a browser agent – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+<meta property="og:title" content="A diffusion model as a browser agent – sysone">
+<meta property="og:description" content="An offline replica of laya-ultrafast on Mind2Web, with one model for both of its halves: a masked diffusion model decides each step’s operation and element through a LoRA adapter, and, with the adapter off, writes what a typing step types. Recorded steps from websites it never trained on, scored step by step.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/mdlm_yesno.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="A diffusion model as a browser agent – sysone">
+<meta name="twitter:description" content="An offline replica of laya-ultrafast on Mind2Web, with one model for both of its halves: a masked diffusion model decides each step’s operation and element through a LoRA adapter, and, with the adapter off, writes what a typing step types. Recorded steps from websites it never trained on, scored step by step.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/mdlm_yesno.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/mdlm_browser.html">A diffusion model as a browser agent</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-the-model-decides-and-writes" id="toc-how-the-model-decides-and-writes" class="nav-link active" data-scroll-target="#how-the-model-decides-and-writes">How the model decides and writes</a></li>
+  <li><a href="#the-steps" id="toc-the-steps" class="nav-link" data-scroll-target="#the-steps">The steps</a></li>
+  <li><a href="#the-loop" id="toc-the-loop" class="nav-link" data-scroll-target="#the-loop">The loop</a></li>
+  <li><a href="#untrained" id="toc-untrained" class="nav-link" data-scroll-target="#untrained">Untrained</a></li>
+  <li><a href="#writing-by-itself" id="toc-writing-by-itself" class="nav-link" data-scroll-target="#writing-by-itself">Writing, by itself</a></li>
+  <li><a href="#trained" id="toc-trained" class="nav-link" data-scroll-target="#trained">Trained</a></li>
+  <li><a href="#dividing-out-the-shares" id="toc-dividing-out-the-shares" class="nav-link" data-scroll-target="#dividing-out-the-shares">Dividing out the shares</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  <li><a href="#a-better-adapter" id="toc-a-better-adapter" class="nav-link" data-scroll-target="#a-better-adapter">A better adapter</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="mdlm_browser.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/mdlm_browser.html">A diffusion model as a browser agent</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">A diffusion model as a browser agent</h1>
+</div>
+
+<div>
+  <div class="description">
+    An offline replica of laya-ultrafast on Mind2Web, with one model for both of its halves: a masked diffusion model decides each step’s operation and element through a LoRA adapter, and, with the adapter off, writes what a typing step types. Recorded steps from websites it never trained on, scored step by step.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p><a href="https://github.com/cklxx/laya">laya-ultrafast</a> drives a browser with two models. A small encoder decides each step: which operation comes next (click, type, select, or a control such as <em>done</em>) and on which element of the page. When the operation is typing, a small language model writes the text. The decider is fast because it never writes: one forward pass gives a probability to every option.</p>
+<p>A <a href="../mdlm.html">masked diffusion language model</a> can be both. It reads the whole text at once, in both directions, as an encoder does, so sysone’s head reads a decision off it in one pass: the model’s own <em>Yes</em> against its <em>No</em> at a mask placed after each option. And it writes, by filling a row of masks a few tokens at a time. Here <code>dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1</code> does both jobs. A LoRA adapter, trained on Mind2Web steps, makes the decisions; with the adapter switched off the weights are the published model’s again, and they write.</p>
+<p>The test is <a href="https://huggingface.co/datasets/osunlp/Multimodal-Mind2Web">Multimodal-Mind2Web</a>’s <code>test_website</code> split (OpenRAIL): recorded steps of people doing tasks on websites that none of the training steps came from. There is no browser here. The agent’s loop runs over the recordings instead: at each step it decides, writes when it types, and its step is compared with what the person did.</p>
+<section id="how-the-model-decides-and-writes" class="level2">
+<h2 class="anchored" data-anchor-id="how-the-model-decides-and-writes">How the model decides and writes</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    S["a recorded step:&lt;br/&gt;the goal, the page, the history"] --&gt; D["decide the operation and the element:&lt;br/&gt;the adapter on, one forward pass"]
+    D -- "CLICK or SELECT" --&gt; C["compare with&lt;br/&gt;the person's step"]
+    D -- "TYPE_TEXT" --&gt; W["write the text:&lt;br/&gt;the adapter off, 8 unmasking passes"] --&gt; C
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The decision is read off the model, not written by it. Each option ends with a mask, under the instruction <em>mark Yes if it answers the question, otherwise No</em>, and one forward pass gives the model’s logits for the tokens <em>Yes</em> and <em>No</em> at every mask. An option’s score is its Yes minus its No, and the softmax across a question’s options makes the scores probabilities (the <a href="../mdlm.html#reading-a-decision-yes-against-no">diffusion model’s notebook</a> explains why that is a linear head on the model). Writing starts from a row of masks and fills a few at each pass, the most confident first.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/mdlm_yesno.svg" class="img-fluid figure-img"></p>
+<figcaption>A jev row’s masks, the hidden state at each, its product with E[Yes] − E[No], and the softmax across the options; a yes/no question’s one mask and σ(s)</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Jargon">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Jargon
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Step, operation, element</strong>: one action of a recorded task. The operation is what to do (CLICK, TYPE_TEXT or SELECT, or a control: WAIT, SCROLL_DOWN, SCROLL_UP, DONE, BLOCKED), and the element is where to do it, one of up to 45 candidates from the page.</li>
+<li><strong>System One, System Two</strong>: the fast decision (one forward pass, a probability for each option) and the slow writing (one forward pass for every unmasking step).</li>
+<li><strong>Adapter (LoRA)</strong>: a few million weights added beside a model’s layers and trained while the model’s own weights stay as they are. Switched off, the model is the original one exactly.</li>
+<li><strong>Exact match</strong>: the text written is the text the person typed, ignoring case, spacing and surrounding quotes.</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Running this notebook">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Running this notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The test suite skips this notebook (<code>skip_exec</code>). It needs a GPU: it ran as a <a href="../cloud.html">Kaggle job</a> on a T4, <code>remote("11_mdlm_browser.ipynb", on="kaggle", hw="t4")</code>, and the outputs below come from that run. It downloads the model (1.5 GB), the adapter (40 MB) and the text columns of 300 <code>test_website</code> steps and 1,500 <a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a> steps. The outputs come from a run on 2026-10-06 with the first adapter, at <code>revision=FIRST</code>: the repo has held a better one since, and the last section has its scores.</p>
+</div>
+</div>
+<div id="4a9087d4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re, time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch, transformers</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datasets</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.datasets <span class="im">import</span> from_mm_mind2web</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.cloud <span class="im">import</span> job_input</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.inference <span class="im">import</span> Decider</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.mdlm <span class="im">import</span> ENCODER, zero_shot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="8dc12508" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>transformers.utils.logging.set_verbosity_error()<span class="op">;</span> transformers.utils.logging.disable_progress_bar()<span class="op">;</span> datasets.disable_progress_bars()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">200</span>)<span class="op">;</span> pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">20</span>)<span class="op">;</span> pd.set_option(<span class="st">"display.max_colwidth"</span>, <span class="dv">70</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>ADAPTER <span class="op">=</span> job_input(<span class="st">"adapter"</span>) <span class="kw">or</span> <span class="st">"sgaseretto/diffcider-browser"</span>      <span class="co"># the adapter a job was given, or the published one</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>FIRST <span class="op">=</span> <span class="st">"b71cab6fe8b72faf6b2710fc3a8fe272af481d57"</span>                   <span class="co"># the repo's revision with the first adapter, the one this notebook ran</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">"cuda"</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>t_start <span class="op">=</span> time.time()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rate(x) <span class="op">-&gt;</span> <span class="bu">float</span>: <span class="cf">return</span> <span class="bu">float</span>(np.mean(x)) <span class="cf">if</span> <span class="bu">len</span>(x) <span class="cf">else</span> np.nan        <span class="co"># a share, or NaN when there is nothing to count</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"torch </span><span class="sc">{</span>torch<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> · transformers </span><span class="sc">{</span>transformers<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> · </span><span class="sc">{</span>torch<span class="sc">.</span>cuda<span class="sc">.</span>get_device_name(<span class="dv">0</span>) <span class="cf">if</span> device <span class="op">==</span> <span class="st">'cuda'</span> <span class="cf">else</span> device<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>torch 2.11.0+cu128 · transformers 5.16.1 · Tesla T4</code></pre>
+</div>
+</div>
+</section>
+<section id="the-steps" class="level2">
+<h2 class="anchored" data-anchor-id="the-steps">The steps</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/screens.html#from_mm_mind2web"><code>from_mm_mind2web</code></a> reads Multimodal-Mind2Web shard by shard and makes a sysone record of each recorded action; with <code>screenshots=False</code> it reads the text columns only, a small part of the 13.6 GB set. A record asks two questions: <code>operation</code>, which operation comes next, and a target question for the operation the person used, asking which element it acts on. A typing step also keeps what was typed, into which field, and whether the task’s own wording contains it.</p>
+<div id="f0e30d28" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>steps <span class="op">=</span> from_mm_mind2web(<span class="st">"test_website"</span>, n<span class="op">=</span><span class="dv">300</span>, screenshots<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> <span class="bu">next</span>(s <span class="cf">for</span> s <span class="kw">in</span> steps <span class="cf">if</span> s[<span class="st">"typed"</span>] <span class="kw">and</span> s[<span class="st">"typed"</span>][<span class="st">"in_goal"</span>])</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> s[<span class="st">"questions"</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="bu">next</span>(k <span class="cf">for</span> k <span class="kw">in</span> q <span class="cf">if</span> k.endswith(<span class="st">"_target"</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"goal:     "</span>, q[<span class="st">"operation"</span>][<span class="st">"instructions"</span>][<span class="st">"goal"</span>])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"operation:"</span>, <span class="st">" · "</span>.join(q[<span class="st">"operation"</span>][<span class="st">"criteria"</span>]))</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>target<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">len</span>(q[target][<span class="st">'criteria'</span>])<span class="sc">}</span><span class="ss"> elements, such as"</span>, <span class="st">" · "</span>.join(<span class="bu">list</span>(q[target][<span class="st">"criteria"</span>].values())[:<span class="dv">3</span>]))</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"the person:"</span>, s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>], s[<span class="st">"gold"</span>][target][<span class="st">"label"</span>], <span class="st">"and typed"</span>, <span class="bu">repr</span>(s[<span class="st">"typed"</span>][<span class="st">"value"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>goal:      What are the romantic reggae musics from BCD Studio that can be used in tik tok series in andorra
+operation: CLICK · TYPE_TEXT · WAIT · SCROLL_DOWN · SCROLL_UP · DONE · BLOCKED
+type_text_target: 1 elements, such as [26] Input artist name (textbox)
+the person: TYPE_TEXT 26 and typed 'BCD Studio'</code></pre>
+</div>
+</div>
+<p>The 300 steps come from tasks on 9 websites. Most steps are clicks, and a recorded step is never a control: the people always did something.</p>
+<div id="4ec594c0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> target_q(s): <span class="cf">return</span> <span class="bu">next</span>(k <span class="cf">for</span> k <span class="kw">in</span> s[<span class="st">"questions"</span>] <span class="cf">if</span> k.endswith(<span class="st">"_target"</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({<span class="st">"steps"</span>: pd.Series([s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>] <span class="cf">for</span> s <span class="kw">in</span> steps]).value_counts(),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"elements per step"</span>: pd.Series({op: rate([<span class="bu">len</span>(s[<span class="st">"questions"</span>][target_q(s)][<span class="st">"criteria"</span>]) <span class="cf">for</span> s <span class="kw">in</span> steps</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                                         <span class="cf">if</span> s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>] <span class="op">==</span> op])</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                                              <span class="cf">for</span> op <span class="kw">in</span> (<span class="st">"CLICK"</span>, <span class="st">"TYPE_TEXT"</span>, <span class="st">"SELECT"</span>)}).<span class="bu">round</span>(<span class="dv">1</span>)})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">steps</th>
+<th data-quarto-table-cell-role="th">elements per step</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">CLICK</th>
+<td>235</td>
+<td>44.6</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">TYPE_TEXT</th>
+<td>43</td>
+<td>1.2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">SELECT</th>
+<td>22</td>
+<td>8.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>A typing step offers 1.2 fields on average, so its element is nearly given; a click step chooses among 45.</p>
+</section>
+<section id="the-loop" class="level2">
+<h2 class="anchored" data-anchor-id="the-loop">The loop</h2>
+<p>An agent’s step is one call to decide and, when it types, one call to write. <a href="https://sgaseretto.github.io/sysonelib/cli.html#predict"><code>predict</code></a> answers both questions of a step in one batch, the operation and the element; <code>generate</code> writes the text, with the decider’s adapter switched off (it does so unless asked otherwise). The text it writes is asked for from the goal, the page and the field the decider chose:</p>
+<div id="f37b03e1" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>SYSTEM <span class="op">=</span> <span class="st">"You fill in web forms for a user. Answer with the exact text to type, nothing else."</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ask(step, field:<span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"What the writer is asked: the goal, the page and the field"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="ss">f"The user's goal: </span><span class="sc">{</span>step[<span class="st">'questions'</span>][<span class="st">'operation'</span>][<span class="st">'instructions'</span>][<span class="st">'goal'</span>]<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>            <span class="ss">f"The page: </span><span class="sc">{</span>step[<span class="st">'state'</span>][<span class="st">'page'</span>][<span class="st">'title'</span>]<span class="sc">}</span><span class="ch">\n</span><span class="ss">The field: </span><span class="sc">{</span>field<span class="sc">}</span><span class="ch">\n</span><span class="ss">What should be typed into this field?"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> norm(t) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">" "</span>.join(re.sub(<span class="vs">r"</span><span class="dv">^</span><span class="pp">[</span><span class="dv">\s</span><span class="ch">\"</span><span class="pp">'`.:]</span><span class="op">+</span><span class="cf">|</span><span class="pp">[</span><span class="dv">\s</span><span class="ch">\"</span><span class="pp">'`.:]</span><span class="op">+</span><span class="dv">$</span><span class="vs">"</span>, <span class="st">""</span>, <span class="bu">str</span>(t)).casefold().split())</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pick(probs:<span class="bu">dict</span>, prior:<span class="bu">dict</span><span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The likeliest operation; with `prior`, the likeliest once each one's share of the training steps is divided out (one they never had is never picked)"</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> prior <span class="kw">is</span> <span class="va">None</span>: <span class="cf">return</span> <span class="bu">max</span>(probs, key<span class="op">=</span>probs.get)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>((k <span class="cf">for</span> k <span class="kw">in</span> probs <span class="cf">if</span> prior.get(k)), key<span class="op">=</span><span class="kw">lambda</span> k: probs[k] <span class="op">/</span> prior[k])</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> agent(dec, steps, write_steps:<span class="bu">int</span><span class="op">=</span><span class="dv">8</span>, prior:<span class="bu">dict</span><span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Each recorded step: decide the operation and the element, write when the operation is TYPE_TEXT, and compare with the person's step"</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> steps:</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        q, tq <span class="op">=</span> s[<span class="st">"questions"</span>], target_q(s)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()<span class="op">;</span> ans <span class="op">=</span> dec.predict(s[<span class="st">"state"</span>], q)<span class="op">;</span> ms <span class="op">=</span> <span class="dv">1000</span> <span class="op">*</span> (time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        op, el <span class="op">=</span> pick(ans[<span class="st">"operation"</span>][<span class="st">"probabilities"</span>], prior), ans[tq][<span class="st">"choice"</span>]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>        row <span class="op">=</span> {<span class="st">"gold"</span>: s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>], <span class="st">"picked"</span>: op, <span class="st">"operation"</span>: op <span class="op">==</span> s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>],</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>               <span class="st">"element"</span>: el <span class="op">==</span> s[<span class="st">"gold"</span>][tq][<span class="st">"label"</span>], <span class="st">"decide ms"</span>: ms,</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>               <span class="st">"types"</span>: s[<span class="st">"typed"</span>] <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>, <span class="st">"wrote"</span>: <span class="va">None</span>, <span class="st">"text"</span>: <span class="va">None</span>, <span class="st">"write ms"</span>: np.nan}</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> op <span class="op">==</span> <span class="st">"TYPE_TEXT"</span>:</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>            field <span class="op">=</span> re.sub(<span class="vs">r"</span><span class="dv">^</span><span class="ch">\[</span><span class="pp">[^</span><span class="ch">\]</span><span class="pp">]</span><span class="op">*</span><span class="ch">\]</span><span class="dv">\s</span><span class="op">*</span><span class="vs">"</span>, <span class="st">""</span>, q[tq][<span class="st">"criteria"</span>].get(el, <span class="st">""</span>))       <span class="co"># the element as the decider saw it</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>            t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>            row[<span class="st">"wrote"</span>] <span class="op">=</span> dec.generate(ask(s, field), max_new_tokens<span class="op">=</span><span class="dv">16</span>, steps<span class="op">=</span>write_steps, block_size<span class="op">=</span><span class="dv">16</span>, system<span class="op">=</span>SYSTEM)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>            row[<span class="st">"write ms"</span>] <span class="op">=</span> <span class="dv">1000</span> <span class="op">*</span> (time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> s[<span class="st">"typed"</span>]: row[<span class="st">"text"</span>] <span class="op">=</span> norm(row[<span class="st">"wrote"</span>]) <span class="op">==</span> norm(s[<span class="st">"typed"</span>][<span class="st">"value"</span>])</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"step"</span>] <span class="op">=</span> row[<span class="st">"operation"</span>] <span class="kw">and</span> row[<span class="st">"element"</span>] <span class="kw">and</span> (<span class="kw">not</span> row[<span class="st">"types"</span>] <span class="kw">or</span> row[<span class="st">"text"</span>] <span class="kw">is</span> <span class="va">True</span>)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>        out.append(row)</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(out)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> by_operation(df:pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Per operation the person performed: how many steps, how often the operation and the element are right; and how often each operation is picked"</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> df.groupby(<span class="st">"gold"</span>).agg(steps<span class="op">=</span>(<span class="st">"operation"</span>, <span class="st">"size"</span>), operation<span class="op">=</span>(<span class="st">"operation"</span>, <span class="st">"mean"</span>), element<span class="op">=</span>(<span class="st">"element"</span>, <span class="st">"mean"</span>))</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t.join(df[<span class="st">"picked"</span>].value_counts().rename(<span class="st">"picked"</span>), how<span class="op">=</span><span class="st">"outer"</span>).fillna(<span class="dv">0</span>).astype({<span class="st">"steps"</span>: <span class="bu">int</span>, <span class="st">"picked"</span>: <span class="bu">int</span>}).<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> summary(df:pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Accuracy of the operation, of the element, of the text typed into the right field, and of the whole step; the median times"</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>    typed <span class="op">=</span> df[df[<span class="st">"types"</span>] <span class="op">&amp;</span> df[<span class="st">"operation"</span>] <span class="op">&amp;</span> df[<span class="st">"element"</span>]]</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"operation"</span>: df[<span class="st">"operation"</span>].mean(), <span class="st">"element"</span>: df[<span class="st">"element"</span>].mean(), <span class="st">"text, right field"</span>: rate(typed[<span class="st">"text"</span>].astype(<span class="bu">float</span>)),</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>            <span class="st">"step"</span>: df[<span class="st">"step"</span>].mean(), <span class="st">"decide ms"</span>: df[<span class="st">"decide ms"</span>].median(), <span class="st">"write ms"</span>: df[<span class="st">"write ms"</span>].median()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="untrained" class="level2">
+<h2 class="anchored" data-anchor-id="untrained">Untrained</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot</code></a> is the model as published, its own Yes against its No at each option’s slot and nothing trained. On the steps:</p>
+<div id="37e4758b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> zero_shot(ENCODER, device<span class="op">=</span>device)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>runs <span class="op">=</span> {<span class="st">"untrained"</span>: agent(zs, steps)}</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>pd.Series(summary(runs[<span class="st">"untrained"</span>])).<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>operation              0.023
+element                0.247
+text, right field        NaN
+step                   0.000
+decide ms            409.866
+write ms                 NaN
+dtype: float64</code></pre>
+</div>
+</div>
+<p>The operations it picks:</p>
+<div id="a7d625e3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>by_operation(runs[<span class="st">"untrained"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">steps</th>
+<th data-quarto-table-cell-role="th">operation</th>
+<th data-quarto-table-cell-role="th">element</th>
+<th data-quarto-table-cell-role="th">picked</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">CLICK</th>
+<td>235</td>
+<td>0.03</td>
+<td>0.115</td>
+<td>12</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">DONE</th>
+<td>0</td>
+<td>0.00</td>
+<td>0.000</td>
+<td>288</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">SELECT</th>
+<td>22</td>
+<td>0.00</td>
+<td>0.500</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">TYPE_TEXT</th>
+<td>43</td>
+<td>0.00</td>
+<td>0.837</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Untrained, the model answers DONE on 288 of the 300 steps: it puts its Yes on <em>Every requirement is visibly satisfied</em> before any action, and no recorded step is DONE. Its element is right a quarter of the time: 0.115 on the clicks, where 45 elements compete, and 0.84 on the typing steps, which offer 1.2 fields.</p>
+</section>
+<section id="writing-by-itself" class="level2">
+<h2 class="anchored" data-anchor-id="writing-by-itself">Writing, by itself</h2>
+<p>Writing needs no adapter, so the untrained model’s writing is all there is to measure: on every typing step, given the field the person typed into, two ways.</p>
+<ul>
+<li><code>generate</code> answers in the model’s chat format. The fewer unmasking steps, the faster and the rougher the text: with <code>steps=16</code> each of the 16 tokens gets its own pass, with <code>steps=4</code> four are kept at each pass.</li>
+<li><code>fill</code> writes into the slots of a fixed text and leaves the rest as it is, here a JSON string, <code>{"text": "{}"}</code>: the model sees the JSON around the slot, a way to get JSON without asking for it. A slot is 16 masks, all filled, so the text ends at the string’s closing quote.</li>
+</ul>
+<div id="3d659546" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>typing <span class="op">=</span> [s <span class="cf">for</span> s <span class="kw">in</span> steps <span class="cf">if</span> s[<span class="st">"typed"</span>]]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>in_goal <span class="op">=</span> np.array([s[<span class="st">"typed"</span>][<span class="st">"in_goal"</span>] <span class="cf">for</span> s <span class="kw">in</span> typing])</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> measure(write) <span class="op">-&gt;</span> <span class="bu">tuple</span>:</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"How often `write(step)` types what the person typed, overall and by whether the goal says it, its median time, and what it wrote"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    said, ms <span class="op">=</span> [], []</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> typing:</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()<span class="op">;</span> said.append(write(s))<span class="op">;</span> ms.append(<span class="dv">1000</span> <span class="op">*</span> (time.perf_counter() <span class="op">-</span> t0))</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    right <span class="op">=</span> np.array([norm(a) <span class="op">==</span> norm(s[<span class="st">"typed"</span>][<span class="st">"value"</span>]) <span class="cf">for</span> a, s <span class="kw">in</span> <span class="bu">zip</span>(said, typing)])</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"exact"</span>: rate(right), <span class="st">"exact, value in the goal"</span>: rate(right[in_goal]), <span class="st">"exact, value not in the goal"</span>: rate(right[<span class="op">~</span>in_goal]),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ms"</span>: np.median(ms)}, said</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>rows, written <span class="op">=</span> {}, {}</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">16</span>, <span class="dv">8</span>, <span class="dv">4</span>):</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    rows[<span class="ss">f"generate, steps=</span><span class="sc">{</span>n<span class="sc">}</span><span class="ss">"</span>], written[n] <span class="op">=</span> measure(<span class="kw">lambda</span> s: zs.generate(ask(s, s[<span class="st">"typed"</span>][<span class="st">"field"</span>]), max_new_tokens<span class="op">=</span><span class="dv">16</span>, steps<span class="op">=</span>n,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                                                                           block_size<span class="op">=</span><span class="dv">16</span>, system<span class="op">=</span>SYSTEM))</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>rows[<span class="st">"fill, a JSON string"</span>], written[<span class="st">"fill"</span>] <span class="op">=</span> measure(<span class="kw">lambda</span> s: zs.fill(ask(s, s[<span class="st">"typed"</span>][<span class="st">"field"</span>]), <span class="st">'{"text": "</span><span class="sc">{}</span><span class="st">"}'</span>, n<span class="op">=</span><span class="dv">16</span>, system<span class="op">=</span>SYSTEM)[<span class="dv">0</span>])</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(typing)<span class="sc">}</span><span class="ss"> typing steps, </span><span class="sc">{</span><span class="bu">int</span>(in_goal.<span class="bu">sum</span>())<span class="sc">}</span><span class="ss"> of them typing words of the goal"</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).T.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>43 typing steps, 37 of them typing words of the goal</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">exact</th>
+<th data-quarto-table-cell-role="th">exact, value in the goal</th>
+<th data-quarto-table-cell-role="th">exact, value not in the goal</th>
+<th data-quarto-table-cell-role="th">ms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">generate, steps=16</th>
+<td>0.349</td>
+<td>0.405</td>
+<td>0.0</td>
+<td>752.802</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">generate, steps=8</th>
+<td>0.326</td>
+<td>0.378</td>
+<td>0.0</td>
+<td>382.304</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">generate, steps=4</th>
+<td>0.302</td>
+<td>0.351</td>
+<td>0.0</td>
+<td>197.371</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">fill, a JSON string</th>
+<td>0.209</td>
+<td>0.243</td>
+<td>0.0</td>
+<td>753.302</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="0ef65a6c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({<span class="st">"field"</span>: [s[<span class="st">"typed"</span>][<span class="st">"field"</span>] <span class="cf">for</span> s <span class="kw">in</span> typing], <span class="st">"typed"</span>: [s[<span class="st">"typed"</span>][<span class="st">"value"</span>] <span class="cf">for</span> s <span class="kw">in</span> typing],</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"generate, steps=8"</span>: written[<span class="dv">8</span>], <span class="st">"fill"</span>: written[<span class="st">"fill"</span>]}).head(<span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">field</th>
+<th data-quarto-table-cell-role="th">typed</th>
+<th data-quarto-table-cell-role="th">generate, steps=8</th>
+<th data-quarto-table-cell-role="th">fill</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Input artist name</td>
+<td>BCD Studio</td>
+<td>BDC Studio</td>
+<td>Romantic reggae music from BCD Studio for TikTok series in Andorra</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Search</td>
+<td>Devin Booker</td>
+<td>Devin Booker</td>
+<td>Devin Booker jersey</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Enter text to search for campgrounds, tours, or other recreation a...</td>
+<td>Brooks Camp</td>
+<td>Brooks Camp, Katmai National Park, May 22</td>
+<td>Check permit availability for Brooks Camp, Katmai National Park on...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Entry Date</td>
+<td>05/22/2023</td>
+<td>May 22</td>
+<td>2023-05-22T12:00</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Number of Peoples</td>
+<td>4</td>
+<td>4</td>
+<td>Number of Peoples</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>Search by name, location or state</td>
+<td>Yosemite</td>
+<td>Yosemite National Park</td>
+<td>Private Vehicle Pass for Yosemite National Park</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>input</td>
+<td>94587</td>
+<td>Yes</td>
+<td>Private Vehicle Pass for Yosemite National Park, Zip Code 94587</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>input</td>
+<td>12345</td>
+<td>Yes</td>
+<td>Private Vehicle Pass for Yosemite National Park, Zip Code 94587</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>Search</td>
+<td>Johannesburg</td>
+<td>Johburg vegan</td>
+<td>restaurants in Johannesburg</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>What are you looking for?</td>
+<td>Google Pixel 7</td>
+<td>snow cheapest snow Pixel 7 128gb storage</td>
+<td>Find the cheapest snow colored Google Pixel 7 with 128gb storage</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>What are you looking for?</td>
+<td>Nest Hello Video Doorbell</td>
+<td>Nest Hello Video Doorbell 1 star reviews</td>
+<td>Find reviews of a Nest Hello Video Doorbell and filter by 1 star r...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>What are you looking for?</td>
+<td>drip coffee maker</td>
+<td>Black drip coffee makers black</td>
+<td>drip coffee makers on sale, $25-60, black finish</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>On the 43 typing steps of these websites, the model types exactly what the person typed 35% of the time with 16 unmasking steps (753 ms on the T4) and 30% with 4 (197 ms): 41% when the goal’s wording contains the value, and never when it does not, since a zip code, or a date in another format, can’t be read off the goal. Its misses are mostly longer than the person’s text: the park with its name (<em>Yosemite National Park</em> for <em>Yosemite</em>), the search with its filters (<em>Nest Hello Video Doorbell 1 star reviews</em>). <code>fill</code> comes out lower, 21%, though its slot now ends at the closing quote: inside the JSON string it writes the goal’s whole phrase (<em>Romantic reggae music from BCD Studio…</em>), where <code>generate</code> answers with the name.</p>
+</section>
+<section id="trained" class="level2">
+<h2 class="anchored" data-anchor-id="trained">Trained</h2>
+<p>The adapter this notebook runs was trained as in the <a href="../mdlm.html#browser-steps-on-the-real-checkpoint">diffusion model’s notebook</a>: <a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a> on 1,500 steps of the <a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a> split, keeping their websites apart for validation and calibration (<code>groups="website"</code>). It was the first one. The adapter published now trained the same way with two changes, every action offered on every step and the operations balanced, and that is what the cell shows (the last section says why). On a laptop, the same few lines go to a Kaggle T4 as a script with <code>remote("train_browser.py", on="kaggle", hw="t4")</code>:</p>
+<div id="8e6e4546" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> TypedDecisions, RowSampler</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.mdlm <span class="im">import</span> decision_learner</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> from_mm_mind2web(<span class="st">"train"</span>, n<span class="op">=</span><span class="dv">1500</span>, screenshots<span class="op">=</span><span class="va">False</span>, operations<span class="op">=</span><span class="st">"all"</span>)          <span class="co"># every action offered on every step</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_records(train, valid<span class="op">=</span><span class="fl">0.05</span>, calib<span class="op">=</span><span class="fl">0.1</span>, groups<span class="op">=</span><span class="st">"website"</span>, sampler<span class="op">=</span>RowSampler(<span class="st">"oversample"</span>))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, per_device_train_batch_size<span class="op">=</span><span class="dv">4</span>, gradient_accumulation_steps<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, max_steps<span class="op">=</span><span class="dv">150</span>, <span class="bu">eval</span><span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>learn.calibrate()</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>learn.export(<span class="st">"diffcider-browser"</span>)         <span class="co"># the adapter alone, and the model's id and commit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a> takes the export, from the Hub or from a folder, downloads the model it names, and puts the adapter on it; <code>revision=FIRST</code> takes the first adapter from the repo’s history:</p>
+<div id="88934c13" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> zs</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> device <span class="op">==</span> <span class="st">"cuda"</span>: torch.cuda.empty_cache()</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>dec <span class="op">=</span> Decider.load(ADAPTER, revision<span class="op">=</span>FIRST, device<span class="op">=</span>device)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>runs[<span class="st">"diffcider-browser"</span>] <span class="op">=</span> agent(dec, steps)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>pd.Series(summary(runs[<span class="st">"diffcider-browser"</span>])).<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>operation              0.783
+element                0.643
+text, right field        NaN
+step                   0.457
+decide ms            522.593
+write ms                 NaN
+dtype: float64</code></pre>
+</div>
+</div>
+<p>Per operation the person performed:</p>
+<div id="83c977c7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>by_operation(runs[<span class="st">"diffcider-browser"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">steps</th>
+<th data-quarto-table-cell-role="th">operation</th>
+<th data-quarto-table-cell-role="th">element</th>
+<th data-quarto-table-cell-role="th">picked</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">CLICK</th>
+<td>235</td>
+<td>1.0</td>
+<td>0.583</td>
+<td>300</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">SELECT</th>
+<td>22</td>
+<td>0.0</td>
+<td>0.818</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">TYPE_TEXT</th>
+<td>43</td>
+<td>0.0</td>
+<td>0.884</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>The first adapter answers CLICK on every step. 78% of these steps are clicks, and 85% of the training steps; trained on them as they come, it learned that the answer is nearly always CLICK. Its operation is right exactly as often as always clicking, and it never types, so the loop never writes. The element is where it learned: 0.643, and 0.583 on the clicks, among 45 elements.</p>
+</section>
+<section id="dividing-out-the-shares" class="level2">
+<h2 class="anchored" data-anchor-id="dividing-out-the-shares">Dividing out the shares</h2>
+<p>A decision model learns how often each answer is right as well as when. Its probability for an operation is, by Bayes’ rule, proportional to how well the step fits the operation times the operation’s share of the training steps; dividing the share out leaves the first factor, a decision that no longer leans on how common an operation is. The shares come from the operations of the 1,500 training steps, and an operation they never had, a control, is never picked:</p>
+<div id="9ddef830" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>shares <span class="op">=</span> pd.Series([s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>] <span class="cf">for</span> s <span class="kw">in</span> from_mm_mind2web(<span class="st">"train"</span>, n<span class="op">=</span><span class="dv">1500</span>, screenshots<span class="op">=</span><span class="va">False</span>)]).value_counts(normalize<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(shares.<span class="bu">round</span>(<span class="dv">3</span>).to_dict())</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>runs[<span class="st">"diffcider-browser, shares divided out"</span>] <span class="op">=</span> agent(dec, steps, prior<span class="op">=</span>shares.to_dict())</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>by_operation(runs[<span class="st">"diffcider-browser, shares divided out"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'CLICK': 0.847, 'TYPE_TEXT': 0.099, 'SELECT': 0.055}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">steps</th>
+<th data-quarto-table-cell-role="th">operation</th>
+<th data-quarto-table-cell-role="th">element</th>
+<th data-quarto-table-cell-role="th">picked</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">CLICK</th>
+<td>235</td>
+<td>0.749</td>
+<td>0.583</td>
+<td>176</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">SELECT</th>
+<td>22</td>
+<td>1.000</td>
+<td>0.818</td>
+<td>31</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">TYPE_TEXT</th>
+<td>43</td>
+<td>0.953</td>
+<td>0.884</td>
+<td>93</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>With the shares divided out it types on 93 steps and selects on 31, and gets 41 of the 43 typing steps and all 22 select steps; but it now types or selects on 59 click steps too, and the operation as a whole is right 79.7% of the time. That is exactly what the rule <em>the rarest action offered</em> gets. A step offers the actions its candidate elements allow, its own element always among them, so every typing step offers TYPE_TEXT and every select step SELECT, while 176 of these 300 steps offer CLICK alone: divided out, the adapter follows the actions on offer (the <a href="../screens.html#one-step-one-record">screens</a> notebook has the finding).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/screens_offered.svg" class="img-fluid figure-img"></p>
+<figcaption>Three steps’ operation menus with the actions offered, and with every action offered: the rule the rarest action offered reads the answer off the first, and says SELECT on every step of the second</figcaption>
+</figure>
+</div>
+<p>The rule on three small steps (<a href="../figures.html#what-the-operation-question-offers">figures</a>): offered the actions its candidates allow, each step’s menu holds its own operation, and a click step whose candidates are all clickable offers CLICK alone, so picking the rarest action on the menu is right every time. Offered every action, the rule can only say SELECT.</p>
+<p>When it types, the same decider writes with its adapter off, so what it typed is what the untrained model writes:</p>
+<div id="491d49b6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>done <span class="op">=</span> runs[<span class="st">"diffcider-browser, shares divided out"</span>]</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>done[done[<span class="st">"wrote"</span>].notna()][[<span class="st">"gold"</span>, <span class="st">"element"</span>, <span class="st">"wrote"</span>, <span class="st">"text"</span>]].head(<span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">gold</th>
+<th data-quarto-table-cell-role="th">element</th>
+<th data-quarto-table-cell-role="th">wrote</th>
+<th data-quarto-table-cell-role="th">text</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">3</th>
+<td>CLICK</td>
+<td>True</td>
+<td>BCD Studio</td>
+<td>None</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>TYPE_TEXT</td>
+<td>True</td>
+<td>BDC Studio</td>
+<td>False</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>CLICK</td>
+<td>True</td>
+<td>Romantic reggae music</td>
+<td>None</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">8</th>
+<td>CLICK</td>
+<td>False</td>
+<td>Trending songs</td>
+<td>None</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">9</th>
+<td>CLICK</td>
+<td>False</td>
+<td>Canada</td>
+<td>None</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">14</th>
+<td>CLICK</td>
+<td>True</td>
+<td>Rock playlist</td>
+<td>None</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">15</th>
+<td>CLICK</td>
+<td>False</td>
+<td>Rock</td>
+<td>None</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">22</th>
+<td>TYPE_TEXT</td>
+<td>True</td>
+<td>Devin Booker</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">26</th>
+<td>CLICK</td>
+<td>True</td>
+<td>Add to Cart</td>
+<td>None</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">38</th>
+<td>TYPE_TEXT</td>
+<td>True</td>
+<td>Katmai National Park</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Where it types into the right field, the text is right on 31% of the steps (<em>text, right field</em> below), as writing by itself measured.</p>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>Step by step on the 300 steps:</p>
+<div id="9785d560" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>clicks <span class="op">=</span> rate([s[<span class="st">"gold"</span>][<span class="st">"operation"</span>][<span class="st">"label"</span>] <span class="op">==</span> <span class="st">"CLICK"</span> <span class="cf">for</span> s <span class="kw">in</span> steps])</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({<span class="st">"always CLICK"</span>: {<span class="st">"operation"</span>: clicks}} <span class="op">|</span> {k: summary(v) <span class="cf">for</span> k, v <span class="kw">in</span> runs.items()}).T.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">operation</th>
+<th data-quarto-table-cell-role="th">element</th>
+<th data-quarto-table-cell-role="th">text, right field</th>
+<th data-quarto-table-cell-role="th">step</th>
+<th data-quarto-table-cell-role="th">decide ms</th>
+<th data-quarto-table-cell-role="th">write ms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">always CLICK</th>
+<td>0.783</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">untrained</th>
+<td>0.023</td>
+<td>0.247</td>
+<td>NaN</td>
+<td>0.000</td>
+<td>409.866</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">diffcider-browser</th>
+<td>0.783</td>
+<td>0.643</td>
+<td>NaN</td>
+<td>0.457</td>
+<td>522.593</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">diffcider-browser, shares divided out</th>
+<td>0.797</td>
+<td>0.643</td>
+<td>0.306</td>
+<td>0.447</td>
+<td>520.765</td>
+<td>485.217</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>For scale, <a href="https://github.com/cklxx/laya/blob/main/docs/finetune_browser_agent.md">laya-ultrafast’s write-up</a> reports, for its fine-tuned encoders, the right operation 88 to 89% of the time (54% untrained) and the right element 63% (322M parameters) and 66% (421M) of the time, against 10% untrained, in 17 to 23 ms and 41 to 50 ms a step. Those numbers are not on these steps: it also scored held-out Mind2Web pages with about 45 candidates each, but it trained on Mind2Web together with 5,244 generated goals, 700 real DONE pages and on-policy corrections, and its operations include DONE.</p>
+</section>
+<section id="a-better-adapter" class="level2">
+<h2 class="anchored" data-anchor-id="a-better-adapter">A better adapter</h2>
+<p>Two changes make an adapter that decides the operation: every action offered on every step while it trains (<code>from_mm_mind2web(..., operations="all")</code>), so that the offered actions never give the answer away, and the operations balanced (<code>RowSampler("oversample")</code>), so that clicking is not the safe answer. The <a href="../mdlm.html#every-action-offered">diffusion model’s notebook</a> trains it and three other variants and scores them all on these 300 steps; the published <code>sgaseretto/diffcider-browser</code> holds it, and <code>Decider.load(ADAPTER)</code>, without a revision, runs it. On these steps:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>operation</th>
+<th>element</th>
+<th>step</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>always CLICK</td>
+<td>0.783</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>the rarest action offered</td>
+<td>0.797</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>the first adapter (this notebook)</td>
+<td>0.783</td>
+<td>0.643</td>
+<td>0.457</td>
+</tr>
+<tr class="even">
+<td>the published adapter</td>
+<td><strong>0.853</strong></td>
+<td><strong>0.647</strong></td>
+<td><strong>0.470</strong></td>
+</tr>
+</tbody>
+</table>
+<p>It picks the operation from the goal, the page and the steps before, and beats the rule: CLICK on 96.6% of the click steps, TYPE_TEXT on 42% of the typing steps, SELECT on half the select steps. Offered every action on every step, it leans toward typing and selecting (57% right), having trained on the operations in equal shares: offer it the actions the page’s elements allow.</p>
+<div id="fd96bf15" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"the whole notebook: </span><span class="sc">{</span>(time.time() <span class="op">-</span> t_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> minutes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>the whole notebook: 13.6 minutes</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

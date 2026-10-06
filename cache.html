@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="FeatureCache: a frozen encoder runs once over the training rows, its outputs are stored as a memory-mapped Arrow dataset, and the head trains at thousands of rows per second; plus the linear head fitted by LBFGS.">
+
+<title>cache – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="cache – sysone">
+<meta property="og:description" content="FeatureCache: a frozen encoder runs once over the training rows, its outputs are stored as a memory-mapped Arrow dataset, and the head trains at thousands of rows per second; plus the linear head fitted by LBFGS.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/cache_modes.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="cache – sysone">
+<meta name="twitter:description" content="FeatureCache: a frozen encoder runs once over the training rows, its outputs are stored as a memory-mapped Arrow dataset, and the head trains at thousands of rows per second; plus the linear head fitted by LBFGS.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/cache_modes.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./cache.html">cache</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-key" id="toc-the-key" class="nav-link active" data-scroll-target="#the-key">The key</a></li>
+  <li><a href="#featurecache" id="toc-featurecache" class="nav-link" data-scroll-target="#featurecache">FeatureCache</a></li>
+  <li><a href="#training-from-the-cache" id="toc-training-from-the-cache" class="nav-link" data-scroll-target="#training-from-the-cache">Training from the cache</a></li>
+  <li><a href="#the-linear-head" id="toc-the-linear-head" class="nav-link" data-scroll-target="#the-linear-head">The linear head</a></li>
+  <li><a href="#what-a-cache-costs" id="toc-what-a-cache-costs" class="nav-link" data-scroll-target="#what-a-cache-costs">What a cache costs</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="cache.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">cache</h1>
+</div>
+
+<div>
+  <div class="description">
+    <code>FeatureCache</code>: a frozen encoder runs once over the training rows, its outputs are stored as a memory-mapped Arrow dataset, and the head trains at thousands of rows per second; plus the linear head fitted by LBFGS.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>With the encoder frozen, its output for a row never changes, so running it every epoch is waste. The head-only regime runs it once: <code>masks</code> mode stores the vectors at the anchors, k × width per row, which is all a head without layers reads; <code>rows</code> mode stores the whole output, for the two-layer head. The cache is an Arrow dataset on disk, memory-mapped when read, keyed by everything the encoder’s outputs depend on: the encoder (id, revision and a fingerprint of its weights), the template and transforms, the rows’ tokens, and for image rows the images themselves; a second run with the same encoder starts from it and any of these changes rebuilds it. The gold is not part of the key: targets and labels are read from the current rows every time, so correcting a label never costs an encoder pass and never serves the old one. Option shuffling and text augmentation are off while a cache is in use: its rows are static.</p>
+<p>How <code>features</code> serves a split:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TB
+    K["key(split): encoder id, revision and weights fingerprint,&lt;br/&gt;template, transforms, mode, dtype, the rows' tokens (and images)"] --&gt; Q{"on disk?"}
+    Q -- no --&gt; E["encode once: eval mode, no gradient,&lt;br/&gt;length-sorted batches within windows of rows"]
+    E --&gt; W["save_to_disk: Arrow"]
+    W --&gt; R
+    Q -- yes --&gt; R["load_from_disk: memory-mapped"]
+    R --&gt; G["targets and labels re-attached&lt;br/&gt;from the rows as they are now"]
+    G --&gt; D["the dataset the Trainer reads"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>And what each mode keeps of one row:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/cache_modes.svg" class="img-fluid figure-img"></p>
+<figcaption>The encoder’s output for one row, and the anchor vectors a masks cache keeps</figcaption>
+</figure>
+</div>
+<p><em>Drawn in <a href="./figures.html#what-a-feature-cache-stores">figures</a>.</em></p>
+<div id="44ab20e2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-modernbert"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_json(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, head<span class="op">=</span><span class="st">"mlp"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>learn</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Learner(fixtures/tiny-modernbert · regime head · head 0 layers/laya · cache None · loss soft_ce · 4,545 of 275,457 params train)</code></pre>
+</div>
+</div>
+<section id="the-key" class="level2">
+<h2 class="anchored" data-anchor-id="the-key">The key</h2>
+<div id="399c519b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.599064+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.606066+00:00&quot;,&quot;total&quot;:0.007004399999999578}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L48" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="images_fingerprint" class="level3">
+<h3 class="anchored" data-anchor-id="images_fingerprint">images_fingerprint</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> images_fingerprint(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    cases, keys:<span class="bu">tuple</span><span class="op">=</span>(<span class="st">'image'</span>,)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A digest of the images a split’s states hold: each file’s path, size and modification time, or the inline bytes</em></p>
+</section>
+</div>
+<div id="49510c30" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.606140+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.608727+00:00&quot;,&quot;total&quot;:0.0025902499999972406}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L40" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rows_fingerprint" class="level3">
+<h3 class="anchored" data-anchor-id="rows_fingerprint">rows_fingerprint</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rows_fingerprint(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    rows</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A digest of the rows’ ids, markers and types, and each side stream’s ids</em></p>
+</section>
+</div>
+<div id="ebc2fb50" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.608800+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.611414+00:00&quot;,&quot;total&quot;:0.0026169900000070356}}" data-execution_count="6">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L30" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="weights_fingerprint" class="level3">
+<h3 class="anchored" data-anchor-id="weights_fingerprint">weights_fingerprint</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> weights_fingerprint(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    module:torch.nn.modules.module.Module</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A digest of a module’s weights from every tensor’s shape, sum and sum of squares (one pass, no copies kept)</em></p>
+</section>
+</div>
+<div id="99b0aca0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.611486+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.613660+00:00&quot;,&quot;total&quot;:0.002176186999989227}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L26" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="default_cache_dir" class="level3">
+<h3 class="anchored" data-anchor-id="default_cache_dir">default_cache_dir</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> default_cache_dir()<span class="op">-&gt;</span>pathlib.Path:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em><code>SYSONE_CACHE</code>, else <code>~/.cache/sysone/features</code></em></p>
+</section>
+</div>
+<div id="21ca257f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>enc_fp, rows_fp <span class="op">=</span> weights_fingerprint(learn.model.encoder), rows_fingerprint(data.rows(<span class="st">"train"</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>test_eq(weights_fingerprint(learn.model.encoder), enc_fp)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>test_ne(weights_fingerprint(torch.nn.Linear(<span class="dv">3</span>, <span class="dv">3</span>)), enc_fp)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>enc_fp, rows_fp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>('1497513b9f787829', '672e788b2c9e4af1')</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: a sampled fingerprint misses most weight changes">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: a sampled fingerprint misses most weight changes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The first <a href="https://sgaseretto.github.io/sysonelib/cache.html#weights_fingerprint"><code>weights_fingerprint</code></a> hashed the parameter count and the first 4,096 values of the first, middle and last tensors, which is cheap, and blind to everything else: nudging a norm inside the encoder left the key unchanged, so the cache would have served features of the old weights. It now digests every tensor’s name, shape, sum and sum of squares, one pass over the weights with no copies kept:</p>
+</div>
+</div>
+<div id="a9a7d006" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sampled_fingerprint(module):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The first version: the parameter count and the first 4,096 values of the first, middle and last tensors"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    ps <span class="op">=</span> <span class="bu">list</span>(module.parameters())</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> hashlib.sha1(<span class="bu">str</span>(<span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> ps)).encode())</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> p <span class="kw">in</span> (ps[<span class="dv">0</span>], ps[<span class="bu">len</span>(ps) <span class="op">//</span> <span class="dv">2</span>], ps[<span class="op">-</span><span class="dv">1</span>]): h.update(p.detach().<span class="bu">float</span>().flatten()[:<span class="dv">4096</span>].numpy().tobytes())</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> h.hexdigest()[:<span class="dv">16</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>enc <span class="op">=</span> learn.model.encoder</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> sampled_fingerprint(enc), weights_fingerprint(enc)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>enc.embeddings.norm.weight.data <span class="op">+=</span> <span class="fl">0.01</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>after <span class="op">=</span> sampled_fingerprint(enc), weights_fingerprint(enc)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>enc.embeddings.norm.weight.data <span class="op">-=</span> <span class="fl">0.01</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>test_eq(after[<span class="dv">0</span>], before[<span class="dv">0</span>])<span class="op">;</span> test_ne(after[<span class="dv">1</span>], before[<span class="dv">1</span>])</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>{<span class="st">"sampled"</span>: (before[<span class="dv">0</span>], after[<span class="dv">0</span>]), <span class="st">"every tensor"</span>: (before[<span class="dv">1</span>], after[<span class="dv">1</span>])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'sampled': ('d4e2c143bd1f6c2e', 'd4e2c143bd1f6c2e'),
+ 'every tensor': ('1497513b9f787829', 'cfa0b5288824b5ca')}</code></pre>
+</div>
+</div>
+</section>
+<section id="featurecache" class="level2">
+<h2 class="anchored" data-anchor-id="featurecache">FeatureCache</h2>
+<div id="1775f0a7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.615335+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.617963+00:00&quot;,&quot;total&quot;:0.002631298000011384}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L63" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="featurecache-1" class="level3">
+<h3 class="anchored" data-anchor-id="featurecache-1">FeatureCache</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> FeatureCache(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    model:sysone.models.EncoderDecisionModel, <span class="co"># its encoder is run; it must be frozen</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    data:sysone.data.TypedDecisions, <span class="co"># bound data; the rows to encode</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    mode:<span class="bu">str</span><span class="op">=</span><span class="st">'masks'</span>, <span class="co"># 'masks' (k × width per row) or 'rows' (n_tokens × width per row)</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    cache_dir:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># default_cache_dir() when None</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">16</span>, <span class="co"># rows per encoder pass</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    dtype:<span class="bu">str</span><span class="op">=</span><span class="st">'float16'</span>, <span class="co"># storage dtype</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Encoder outputs at the anchors (<code>masks</code>) or at every position (<code>rows</code>), computed once, stored as memory-mapped Arrow</em></p>
+</section>
+</div>
+<div id="4428c6b0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.619801+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.622760+00:00&quot;,&quot;total&quot;:0.0029619150000002037}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L79" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="featurecache.key" class="level3">
+<h3 class="anchored" data-anchor-id="featurecache.key">FeatureCache.key</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> key(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    split:<span class="bu">str</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The cache key of a split: everything the encoder’s outputs depend on</em></p>
+</section>
+</div>
+<p><code>_encode</code> runs the encoder in eval mode over the rows and yields each row with its features: its k option vectors (read the way the head reads them, at the anchors or as span means), or the vectors at its n tokens. A head that reads more gets it cached too: a side stream’s pooled vector (<code>query</code>) and the row’s first position (<code>first</code>, for an act head). Within a window of rows it batches them by length, so little of each batch is padding, and moves each batch’s features off the device in one transfer; rows still come out in their original order. A side stream (a protein that several questions ask about) is encoded once for the whole pass, under <a href="https://sgaseretto.github.io/sysonelib/models.html#stream_memo"><code>stream_memo</code></a>, although its rows fall into different batches. Before the pass, <code>_prefill_streams</code> encodes the distinct stream inputs sorted by their own length. A batch of rows sorted by text length can hold proteins of any length, and every one of them would be padded to the longest, so the stream is filled in first, in batches of similar lengths. <code>features</code> returns the cached dataset, computing it on the first call:</p>
+<div id="317f812a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.631690+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.635386+00:00&quot;,&quot;total&quot;:0.0036982010000059518}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L157" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="featurecache.features" class="level3">
+<h3 class="anchored" data-anchor-id="featurecache.features">FeatureCache.features</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> features(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    split:<span class="bu">str</span><span class="op">=</span><span class="st">'train'</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>datasets.arrow_dataset.Dataset:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The split’s rows with their cached features (computed on first use)</em></p>
+</section>
+</div>
+<div id="3fb7b072" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>cdir <span class="op">=</span> Path(tempfile.mkdtemp())</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fc <span class="op">=</span> FeatureCache(learn.model, data, <span class="st">"masks"</span>, cache_dir<span class="op">=</span>cdir)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()<span class="op">;</span> tr <span class="op">=</span> fc.features(<span class="st">"train"</span>)<span class="op">;</span> first <span class="op">=</span> time.time() <span class="op">-</span> t0</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()<span class="op">;</span> tr2 <span class="op">=</span> fc.features(<span class="st">"train"</span>)<span class="op">;</span> second <span class="op">=</span> time.time() <span class="op">-</span> t0</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>tr, <span class="bu">round</span>(first, <span class="dv">3</span>), <span class="bu">round</span>(second, <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(Dataset({
+     features: ['input_ids', 'markers', 'qtype', 'n_tokens', 'anchors', 'target', 'label', 'answerable', 'case', 'qid', 'case_idx', 'variant'],
+     num_rows: 55
+ }),
+ 0.114,
+ 0.042)</code></pre>
+</div>
+</div>
+<div id="41b5c1fb" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(tr), <span class="bu">len</span>(data.rows(<span class="st">"train"</span>)))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>test_eq([<span class="bu">list</span>(x) <span class="cf">for</span> x <span class="kw">in</span> tr[<span class="st">"input_ids"</span>]], data.rows(<span class="st">"train"</span>)[<span class="st">"input_ids"</span>])      <span class="co"># length-sorted batches, original order</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>test_eq(tr[<span class="dv">0</span>][<span class="st">"anchors"</span>].shape, (<span class="bu">len</span>(tr[<span class="dv">0</span>][<span class="st">"markers"</span>]), learn.model.head.width))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(<span class="bu">list</span>(cdir.iterdir())), <span class="dv">1</span>)    <span class="co"># the second call re-used the first's files</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The cached anchors are exactly what the encoder gives at the markers, so a head without layers scores them as it scores the live encoder’s output (up to the float16 storage):</p>
+<div id="0273572c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> collate([tr[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">6</span>)], <span class="dv">3</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>live <span class="op">=</span> learn.model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> b.items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"anchors"</span>, <span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>cached <span class="op">=</span> learn.model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> b.items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>test_close(cached, live, eps<span class="op">=</span><span class="fl">2e-2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Changing the template changes the key, and so does training the encoder:</p>
+<div id="6aa928f2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>k0 <span class="op">=</span> fc.key(<span class="st">"train"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>learn.model.encoder.embeddings.norm.weight.data <span class="op">+=</span> <span class="fl">0.01</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>test_ne(fc.key(<span class="st">"train"</span>), k0)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>learn.model.encoder.embeddings.norm.weight.data <span class="op">-=</span> <span class="fl">0.01</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>test_eq(fc.key(<span class="st">"train"</span>), k0)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: the first cache served stale labels">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: the first cache served stale labels
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The key leaves the gold out on purpose, since correcting a label should not cost an encoder pass. But the first cache also kept the targets it was built with, so a corrected label kept serving the old one. <code>features</code> now reads targets and labels from the current rows every time it opens a cache.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: image rows lost their ids in the cache">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: image rows lost their ids in the cache
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Rows built on read (image rows, and rows with per-epoch augmentation) came back without the case, question and position the static rows carry, so a cache filled from image rows stored empty ids. Metrics were unaffected, since they read the gold and not the ids. But a per-case look at a multimodal learner’s cached predictions found every row under one empty id, and the <a href="./tutorials/web_screens.html">screens tutorial</a>’s first run stopped on it. <a href="https://sgaseretto.github.io/sysonelib/data.html#lazyrows"><code>LazyRows</code></a> now returns the ids with each row. <code>features</code> also refreshes them from the current rows along with the gold, which repairs caches filled before the fix.</p>
+</div>
+</div>
+<p>Changing the gold keeps the key, and the cache serves the new targets:</p>
+<div id="bf0a4812" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>has_stop <span class="op">=</span> <span class="kw">lambda</span> r: <span class="st">"stop"</span> <span class="kw">in</span> r[<span class="st">"questions"</span>].get(<span class="st">"action"</span>, {}).get(<span class="st">"criteria"</span>, {})</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>relabel <span class="op">=</span> [<span class="bu">dict</span>(r, gold<span class="op">=</span>{<span class="op">**</span>r[<span class="st">"gold"</span>], <span class="st">"action"</span>: {<span class="st">"label"</span>: <span class="st">"stop"</span>}}) <span class="cf">if</span> has_stop(r) <span class="cf">else</span> r <span class="cf">for</span> r <span class="kw">in</span> recs]</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> TypedDecisions.from_records(relabel[:<span class="dv">15</span>], valid<span class="op">=</span>relabel[<span class="dv">15</span>:], calib<span class="op">=</span><span class="dv">0</span>).bind(learn.data.builder.tok, <span class="st">"laya"</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> TypedDecisions.from_records(recs[:<span class="dv">15</span>], valid<span class="op">=</span>recs[<span class="dv">15</span>:], calib<span class="op">=</span><span class="dv">0</span>).bind(learn.data.builder.tok, <span class="st">"laya"</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>f1, f2 <span class="op">=</span> FeatureCache(learn.model, d1, <span class="st">"masks"</span>, cache_dir<span class="op">=</span>cdir), FeatureCache(learn.model, d2, <span class="st">"masks"</span>, cache_dir<span class="op">=</span>cdir)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>test_eq(f1.key(<span class="st">"train"</span>), f2.key(<span class="st">"train"</span>))</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>old, new <span class="op">=</span> f1.features(<span class="st">"train"</span>), f2.features(<span class="st">"train"</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> new[<span class="st">"qid"</span>].index(<span class="st">"action"</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>test_eq((old[<span class="st">"label"</span>][i] <span class="op">!=</span> <span class="dv">3</span>, new[<span class="st">"label"</span>][i], <span class="bu">list</span>(new[<span class="st">"target"</span>][i])), (<span class="va">True</span>, <span class="dv">3</span>, [<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="training-from-the-cache" class="level2">
+<h2 class="anchored" data-anchor-id="training-from-the-cache">Training from the cache</h2>
+<p>A learner made with <code>cache="masks"</code> trains from the cached anchors: its datasets are the cached features, and the encoder never runs after the first pass. <code>cache="rows"</code> does the same for a head with layers.</p>
+<div id="a4a68159" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>lc <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, cache<span class="op">=</span><span class="st">"masks"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>cdir)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()<span class="op">;</span> lc.fit_one_cycle(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)<span class="op">;</span> cached_time <span class="op">=</span> time.time() <span class="op">-</span> t0</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>lc.recorder.metrics[<span class="op">-</span><span class="dv">1</span>][<span class="st">"accuracy"</span>], <span class="bu">round</span>(cached_time, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.2', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.124', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.1429', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.25', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0047', 'eval_samples_per_second': '5336', 'eval_steps_per_second': '426.9', 'epoch': '1'}
+{'loss': '1.233', 'grad_norm': '0.0003667', 'learning_rate': '0.002714', 'epoch': '1.429'}
+{'eval_loss': '1.191', 'eval_accuracy': '0.24', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.08404', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0', 'eval_accuracy_score': '0.4', 'eval_accuracy_noul': '0.25', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0043', 'eval_samples_per_second': '5812', 'eval_steps_per_second': '464.9', 'epoch': '2'}
+{'loss': '1.21', 'grad_norm': '0.0002659', 'learning_rate': '0.0001297', 'epoch': '2.857'}
+{'eval_loss': '1.191', 'eval_accuracy': '0.28', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.04404', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0', 'eval_accuracy_score': '0.4', 'eval_accuracy_noul': '0.375', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0044', 'eval_samples_per_second': '5730', 'eval_steps_per_second': '458.4', 'epoch': '3'}
+{'train_runtime': '0.0622', 'train_samples_per_second': '2652', 'train_steps_per_second': '337.6', 'train_loss': '1.23', 'epoch': '3'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(0.28, 0.37)</code></pre>
+</div>
+</div>
+<div id="8ff53c5c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>test_eq(lc.model.head.layers, <span class="dv">0</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"anchors"</span> <span class="kw">in</span> lc.dataset(<span class="st">"train"</span>).column_names, <span class="va">True</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(lc.recorder.metrics), <span class="dv">3</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>lr_ <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, cache<span class="op">=</span><span class="st">"rows"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>cdir)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>lr_.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"hidden"</span> <span class="kw">in</span> lr_.dataset(<span class="st">"train"</span>).column_names, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.32', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.08401', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.1429', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.625', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0161', 'eval_samples_per_second': '1555', 'eval_steps_per_second': '124.4', 'epoch': '1'}
+{'train_runtime': '0.1942', 'train_samples_per_second': '283.1', 'train_steps_per_second': '36.04', 'train_loss': '1.229', 'epoch': '1'}</code></pre>
+</div>
+</div>
+<p>A head that reads more than the anchors gets it cached beside them: here an act head (the row’s first position is cached as <code>first</code>) over span readouts, which train from the cache and score it exactly as the live encoder’s output:</p>
+<div id="5bc9e9db" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>la <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, cache<span class="op">=</span><span class="st">"masks"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>cdir,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                                     act<span class="op">=</span><span class="va">True</span>, readout<span class="op">=</span><span class="st">"span"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>la.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>ca <span class="op">=</span> la.dataset(<span class="st">"train"</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="st">"first"</span> <span class="kw">in</span> ca.column_names, ca[<span class="dv">0</span>][<span class="st">"first"</span>].shape), (<span class="va">True</span>, (la.model.head.width,)))</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>live <span class="op">=</span> FeatureCache(la.model, data, <span class="st">"masks"</span>, cache_dir<span class="op">=</span>Path(tempfile.mkdtemp())).key(<span class="st">"train"</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>test_ne(live, FeatureCache(lc.model, data, <span class="st">"masks"</span>, cache_dir<span class="op">=</span>cdir).key(<span class="st">"train"</span>))          <span class="co"># other vectors, another key</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>la.model.<span class="bu">eval</span>()</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> collate([data.rows(<span class="st">"valid"</span>)[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)], data.builder.tok.pad_token_id)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    lz, az <span class="op">=</span> la.model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> b.items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    cv <span class="op">=</span> la.dataset(<span class="st">"valid"</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    cz, caz <span class="op">=</span> la.model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> collate([cv[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)]).items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>test_close(cz, lz, eps<span class="op">=</span><span class="fl">1e-2</span>)<span class="op">;</span> test_close(caz, az, eps<span class="op">=</span><span class="fl">1e-2</span>)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, cache<span class="op">=</span><span class="st">"masks"</span>, head<span class="op">=</span><span class="st">"linear"</span>, act<span class="op">=</span><span class="va">True</span>, preset<span class="op">=</span><span class="st">"cpu"</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>                                                  cache_dir<span class="op">=</span>cdir).fit_linear(), contains<span class="op">=</span><span class="st">"alone"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.52', 'eval_accuracy': '0.32', 'eval_soft_accuracy': '0.3753', 'eval_brier': '0.2634', 'eval_kl': '0.4492', 'eval_tv': '0.3658', 'eval_ece': '0.1037', 'eval_score_mae': '0.8417', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.1429', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.625', 'eval_n_unanswerable': 0, 'eval_act_auroc': '0.6985', 'eval_act_brier': '0.2267', 'eval_runtime': '0.0056', 'eval_samples_per_second': '4446', 'eval_steps_per_second': '355.7', 'epoch': '1'}
+{'train_runtime': '0.0281', 'train_samples_per_second': '1960', 'train_steps_per_second': '249.4', 'train_loss': '1.6', 'epoch': '1'}</code></pre>
+</div>
+</div>
+<p>Unfreezing sets the cache aside, since features of a frozen encoder go stale once it trains, and freezing brings it back:</p>
+<div id="6476813b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>lc.unfreeze()</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>test_eq((lc.cache, lc.model.frozen), (<span class="va">None</span>, <span class="va">False</span>))</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>lc.freeze()</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>test_eq(lc.cache, <span class="st">"masks"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-linear-head" class="level2">
+<h2 class="anchored" data-anchor-id="the-linear-head">The linear head</h2>
+<p>SetFit’s recommended head is a logistic regression fitted on frozen embeddings, in seconds on a CPU. Its counterpart here is <code>head="linear"</code>: one weight vector shared by every anchor, <span class="math inline">\(z_i = w^\top h_{m_i} + b\)</span>, softmaxed across the row, fitted on all cached training rows at once by LBFGS on the soft cross-entropy, with an L2 penalty, and no backpropagation through anything but the scorer. Features are standardised for the fit and the standardisation is folded back into the weights, so the result is a plain <code>Linear</code> scorer. It is the first baseline a run can report, and a check that the cache holds what the head needs.</p>
+<div id="9c063b18" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.640296+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.643763+00:00&quot;,&quot;total&quot;:0.003469604000002846}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L195" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="learner.fit_linear" class="level3">
+<h3 class="anchored" data-anchor-id="learner.fit_linear">Learner.fit_linear</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_linear(</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    l2:<span class="bu">float</span><span class="op">=</span><span class="fl">0.001</span>, max_iter:<span class="bu">int</span><span class="op">=</span><span class="dv">200</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Fit a linear scorer on the cached anchors by LBFGS (needs cache=‘masks’ and head=‘linear’)</em></p>
+</section>
+</div>
+<div id="d73f9f37" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>llin <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, head<span class="op">=</span><span class="st">"linear"</span>, cache<span class="op">=</span><span class="st">"masks"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, cache_dir<span class="op">=</span>cdir)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> llin.fit_linear()</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>fit, llin.validate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'train_loss': 0.9562579989433289, 'seconds': 0.06},
+ {'accuracy': 0.44,
+  'soft_accuracy': 0.408012961289173,
+  'brier': 0.3349677548258288,
+  'kl': 0.684707086938573,
+  'tv': 0.3746062292806761,
+  'ece': 0.27436781583365943,
+  'score_mae': 0.6895297660196107,
+  'within_one': 0.7,
+  'n': 25,
+  'accuracy_choice': 0.5714285714285714,
+  'accuracy_score': 0.2,
+  'accuracy_noul': 0.625,
+  'n_unanswerable': 0})</code></pre>
+</div>
+</div>
+<div id="bc4292c5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.643957+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.644443+00:00&quot;,&quot;total&quot;:0.00048790200000325967}}" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.losses <span class="im">import</span> soft_ce</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="8c6ce6dc" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>test_eq(llin.model.head.scorer_kind, <span class="st">"linear"</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>A, M, T <span class="op">=</span> _stack_anchors(llin.dataset(<span class="st">"train"</span>))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> llin.model.head.forward_anchors(A, M, torch.zeros(<span class="bu">len</span>(A), dtype<span class="op">=</span>torch.<span class="bu">long</span>))</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">float</span>(soft_ce(z, T, M).detach()), fit[<span class="st">"train_loss"</span>], eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: lc.fit_linear(), contains<span class="op">=</span><span class="st">"head='linear'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A head that standardises its own input (<code>standardize=True</code>, the multimodal application’s default) takes the fit’s statistics itself, and the scorer keeps the weights as fitted; it scores the cached anchors with the same loss:</p>
+<div id="ea8cf04d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>lstd <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, head<span class="op">=</span><span class="st">"linear"</span>, cache<span class="op">=</span><span class="st">"masks"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, cache_dir<span class="op">=</span>cdir, standardize<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>fit_s <span class="op">=</span> lstd.fit_linear()</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>test_eq(lstd.model.head.standardizer_fitted, <span class="va">True</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>z_s <span class="op">=</span> lstd.model.head.forward_anchors(A, M, torch.zeros(<span class="bu">len</span>(A), dtype<span class="op">=</span>torch.<span class="bu">long</span>))</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">float</span>(soft_ce(z_s, T, M).detach()), fit_s[<span class="st">"train_loss"</span>], eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>test_close(fit_s[<span class="st">"train_loss"</span>], fit[<span class="st">"train_loss"</span>], eps<span class="op">=</span><span class="fl">1e-4</span>)          <span class="co"># the same fit, standardised in the head or folded into it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="what-a-cache-costs" class="level2">
+<h2 class="anchored" data-anchor-id="what-a-cache-costs">What a cache costs</h2>
+<p>The size of a cache follows from the rows: <span class="math inline">\(\sum_i k_i \times \text{width} \times 2\)</span> bytes in <code>masks</code> mode, <span class="math inline">\(\sum_i n_i \times \text{width} \times 2\)</span> bytes in <code>rows</code> mode, in float16.</p>
+<div id="80a569f5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:40.645746+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.648133+00:00&quot;,&quot;total&quot;:0.0023894450000057077}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cache.py#L222" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cache_size" class="level3">
+<h3 class="anchored" data-anchor-id="cache_size">cache_size</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cache_size(</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    rows, width:<span class="bu">int</span>, mode:<span class="bu">str</span><span class="op">=</span><span class="st">'masks'</span>, bytes_per:<span class="bu">int</span><span class="op">=</span><span class="dv">2</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Bytes a feature cache of <code>rows</code> takes</em></p>
+</section>
+</div>
+<div id="37bb9997" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>test_eq(cache_size(data.rows(<span class="st">"train"</span>), <span class="dv">64</span>), <span class="bu">sum</span>(<span class="bu">len</span>(m) <span class="cf">for</span> m <span class="kw">in</span> data.rows(<span class="st">"train"</span>)[<span class="st">"markers"</span>]) <span class="op">*</span> <span class="dv">128</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>{m: <span class="ss">f"</span><span class="sc">{</span>cache_size(data.rows(<span class="st">'train'</span>), <span class="dv">64</span>, m) <span class="op">/</span> <span class="fl">1e3</span><span class="sc">:.0f}</span><span class="ss"> kB"</span> <span class="cf">for</span> m <span class="kw">in</span> (<span class="st">"masks"</span>, <span class="st">"rows"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'masks': '25 kB', 'rows': '2114 kB'}</code></pre>
+</div>
+</div>
+<p>For the real thing, typed-decisions’ 6,000 training rows on ModernBERT-large’s tokenizer and width:</p>
+<div id="528204cf" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> AutoTokenizer</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>td <span class="op">=</span> TypedDecisions.from_hub(<span class="st">"LocalLLaMA/typed-decisions"</span>, calib<span class="op">=</span><span class="dv">0</span>).bind(AutoTokenizer.from_pretrained(<span class="st">"answerdotai/ModernBERT-large"</span>), <span class="st">"laya"</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> td.rows(<span class="st">"train"</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>{m: <span class="ss">f"</span><span class="sc">{</span>cache_size(rows, <span class="dv">1024</span>, m) <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.0f}</span><span class="ss"> MB"</span> <span class="cf">for</span> m <span class="kw">in</span> (<span class="st">"masks"</span>, <span class="st">"rows"</span>)}, <span class="bu">len</span>(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre><code>({'masks': '44 MB', 'rows': '3575 MB'}, 6000)</code></pre>
+<p>That is 3.55 options and 291 tokens per row on average (76 of the 6,000 rows have their state cut at 512 tokens). <code>masks</code> mode fits in memory anywhere; <code>rows</code> mode is memory-mapped from disk.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

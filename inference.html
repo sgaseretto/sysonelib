@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Decider: typed answers in the Jev schema from a trained model, in memory or loaded from an export folder that Laya’s runtimes can read too.">
+
+<title>inference – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="inference – sysone">
+<meta property="og:description" content="Decider: typed answers in the Jev schema from a trained model, in memory or loaded from an export folder that Laya’s runtimes can read too.">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="inference – sysone">
+<meta name="twitter:description" content="Decider: typed answers in the Jev schema from a trained model, in memory or loaded from an export folder that Laya’s runtimes can read too.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./inference.html">inference</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#decider" id="toc-decider" class="nav-link active" data-scroll-target="#decider">Decider</a>
+  <ul class="collapse">
+  <li><a href="#answering" id="toc-answering" class="nav-link" data-scroll-target="#answering">Answering</a></li>
+  <li><a href="#wide-option-sets" id="toc-wide-option-sets" class="nav-link" data-scroll-target="#wide-option-sets">Wide option sets</a></li>
+  </ul></li>
+  <li><a href="#export" id="toc-export" class="nav-link" data-scroll-target="#export">Export</a></li>
+  <li><a href="#decider.load" id="toc-decider.load" class="nav-link" data-scroll-target="#decider.load">Decider.load</a>
+  <ul class="collapse">
+  <li><a href="#laya-compatibility" id="toc-laya-compatibility" class="nav-link" data-scroll-target="#laya-compatibility">Laya compatibility</a></li>
+  <li><a href="#side-streams-and-the-act-head-in-an-export" id="toc-side-streams-and-the-act-head-in-an-export" class="nav-link" data-scroll-target="#side-streams-and-the-act-head-in-an-export">Side streams and the act head in an export</a></li>
+  </ul></li>
+  <li><a href="#load_learner" id="toc-load_learner" class="nav-link" data-scroll-target="#load_learner">load_learner</a></li>
+  <li><a href="#writing-text" id="toc-writing-text" class="nav-link" data-scroll-target="#writing-text">Writing text</a></li>
+  <li><a href="#onnx" id="toc-onnx" class="nav-link" data-scroll-target="#onnx">ONNX</a></li>
+  <li><a href="#serving" id="toc-serving" class="nav-link" data-scroll-target="#serving">Serving</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="inference.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">inference</h1>
+</div>
+
+<div>
+  <div class="description">
+    <code>Decider</code>: typed answers in the Jev schema from a trained model, in memory or loaded from an export folder that Laya’s runtimes can read too.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p><code>Decider.predict(state, questions)</code> returns the Jev answer schema, so a model trained with sysone drops into anything written for Jev or Laya. It builds one row per question with the saved template and transforms, batches them (padding to the longest, markers padded and masked), runs one forward pass, divides each row’s logits by its bucket’s temperature, and fills the schema. Several questions are several rows of one batch; the cost grows with questions, never with a second pass.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    IN["state + questions"] --&gt; TF["transforms,&lt;br/&gt;once per state"]
+    TF --&gt; RB["RowBuilder:&lt;br/&gt;one row per question"]
+    RB --&gt; BA["batches of&lt;br/&gt;batch_size rows"]
+    BA --&gt; FW["one forward pass&lt;br/&gt;per batch"]
+    FW --&gt; TE["logits ÷ the bucket's&lt;br/&gt;temperature"]
+    TE --&gt; SM["softmax over each&lt;br/&gt;row's options"]
+    SM --&gt; FA["fill_answer:&lt;br/&gt;the Jev schema"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>A small trained learner to work with, the fixture encoder with Laya’s head:</p>
+<div id="43f92a13" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.855916+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.856356+00:00&quot;,&quot;total&quot;:0.000443528999994669}}" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> TypedDecisions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="ba062c1f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-modernbert"</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_json(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"full"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">2</span>, lr<span class="op">=</span><span class="fl">2e-3</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>learn.calibrate(min_rows<span class="op">=</span><span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.36', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.116', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.2857', 'eval_accuracy_score': '0.4', 'eval_accuracy_noul': '0.375', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0415', 'eval_samples_per_second': '602.6', 'eval_steps_per_second': '48.21', 'epoch': '1'}
+{'loss': '1.266', 'grad_norm': '0.2904', 'learning_rate': '0.001', 'epoch': '1.429'}
+{'eval_loss': '1.191', 'eval_accuracy': '0.36', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.116', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.2857', 'eval_accuracy_score': '0.4', 'eval_accuracy_noul': '0.375', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0386', 'eval_samples_per_second': '647.4', 'eval_steps_per_second': '51.79', 'epoch': '2'}
+{'train_runtime': '0.7272', 'train_samples_per_second': '151.3', 'train_steps_per_second': '19.25', 'train_loss': '1.229', 'epoch': '2'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'choice': 0.9999,
+ 'choice:3-5': 0.9999,
+ 'score': 0.9999,
+ 'score:3-5': 0.9999,
+ 'noul': 1.0,
+ 'noul:2': 1.0}</code></pre>
+</div>
+</div>
+<section id="decider" class="level2">
+<h2 class="anchored" data-anchor-id="decider">Decider</h2>
+<div id="98884d6b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.858458+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.871111+00:00&quot;,&quot;total&quot;:0.012655680999998253}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L35" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider-1" class="level3">
+<h3 class="anchored" data-anchor-id="decider-1">Decider</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Decider(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    model:sysone.models.EncoderDecisionModel, <span class="co"># encoder and head</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    builder:sysone.template.RowBuilder, <span class="co"># the template and transforms of training</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    temperatures:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># per type and option-count bucket</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    device:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># where to run; the model stays where it is by default (`Decider.load` picks CUDA, MPS, CPU)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    dtype:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># autocast dtype; fp16 on CUDA, none (fp32) elsewhere</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">64</span>, <span class="co"># rows per forward pass</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    digits:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4</span>, <span class="co"># rounding of reported numbers, as Laya rounds</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span><span class="op">=</span><span class="st">'sysone'</span>, <span class="co"># the model name reported by the HTTP API</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    chunk:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># score choices wider than this coarse to fine, in chunks of at most `chunk` options</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    meta:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># the export's sysone.json, when loaded from one</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    act_threshold:<span class="bu">float</span> <span class="op">|</span> <span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># act where the act score ≥ this, per type and bucket (fitted by `learn.calibrate`)</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    act_score:<span class="bu">str</span><span class="op">=</span><span class="st">'head'</span>, <span class="co"># the act score: the act head's p(act) ('head') or the calibrated top probability ('confidence')</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Typed answers from a decision model and the row builder it was trained with</em></p>
+</section>
+</div>
+<div id="42bae20c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.871190+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.873543+00:00&quot;,&quot;total&quot;:0.00235587200000964}}" data-execution_count="6">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L29" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="default_device" class="level3">
+<h3 class="anchored" data-anchor-id="default_device">default_device</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> default_device()<span class="op">-&gt;</span>torch.device:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>CUDA, then MPS, then CPU</em></p>
+</section>
+</div>
+<section id="answering" class="level3">
+<h3 class="anchored" data-anchor-id="answering">Answering</h3>
+<p><a href="https://sgaseretto.github.io/sysonelib/datasets.html#_rows"><code>_rows</code></a> runs the transforms once per state and builds the rows from the transformed record, so a transform that changes a question, such as a <a href="https://sgaseretto.github.io/sysonelib/data.html#shortlist"><code>Shortlist</code></a>, is seen by the answer too. <a href="https://sgaseretto.github.io/sysonelib/interpret.html#_scores"><code>_scores</code></a> runs the rows in chunks of <code>batch_size</code> and returns their logits and, from a model with an act head, each row’s p(act) (<code>_logits</code> keeps only the logits); <a href="https://sgaseretto.github.io/sysonelib/evaluate.html#_probs"><code>_probs</code></a> (and <code>_probs_record</code>, for a record already transformed) turns each row’s logits into option probabilities at its bucket’s temperature; <code>_answer</code> fills the schema.</p>
+<div id="c7c5a370" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.879784+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.882756+00:00&quot;,&quot;total&quot;:0.0029749899999984564}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L131" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.predict_batch" class="level3">
+<h3 class="anchored" data-anchor-id="decider.predict_batch">Decider.predict_batch</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict_batch(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    states:<span class="bu">list</span>, questions:<span class="bu">dict</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Answers for many states, their rows sharing forward passes</em></p>
+</section>
+</div>
+<div id="c81837c8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.882832+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.885077+00:00&quot;,&quot;total&quot;:0.0022472200000009934}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L126" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.predict" class="level3">
+<h3 class="anchored" data-anchor-id="decider.predict">Decider.predict</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    state, questions:<span class="bu">dict</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Answers <code>{qid: answer}</code> in the Jev schema for one state</em></p>
+</section>
+</div>
+<div id="86d40f94" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.885153+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.887715+00:00&quot;,&quot;total&quot;:0.0025650740000031647}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L117" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.answer" class="level3">
+<h3 class="anchored" data-anchor-id="decider.answer">Decider.answer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> answer(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    state, questions:<span class="bu">dict</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Answers in the Jev schema for one state, and the number of input tokens they took</em></p>
+</section>
+</div>
+</section>
+<section id="wide-option-sets" class="level3">
+<h3 class="anchored" data-anchor-id="wide-option-sets">Wide option sets</h3>
+<p>Options share <code>head_max_len</code>, which is Laya’s known weakness above about twenty options (0.425 on Banking77’s 77 intents). With <code>chunk=n</code> a wider choice is scored coarse to fine, the pattern the laya-browser servers use: its options are dealt into interleaved chunks of at most n, each chunk is a row of a first pass, and the chunk winners meet in one row of a second pass. An option’s probability is its chunk winner’s probability in the final row times its own within its chunk, which sums to one over all the options. The transforms run first, once, so a question is chunked as they leave it (a <a href="https://sgaseretto.github.io/sysonelib/data.html#shortlist"><code>Shortlist</code></a> may have made it narrow enough already).</p>
+<p>A learner answers from the model in memory, before any export: <code>learn.decider()</code> wraps its model, builder and temperatures in a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a>, and <code>learn.predict</code> is a shortcut.</p>
+<div id="e094277b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> recs[<span class="dv">1</span>]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>ans <span class="op">=</span> learn.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ans</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'action': {'type': 'choice',
+  'choice': 'continue',
+  'probabilities': {'continue': 0.2501,
+   'human_review': 0.2501,
+   'observe': 0.2498,
+   'stop': 0.2499},
+  'confidence': 0.0,
+  'answer_confidence': 0.2501},
+ 'needs_review': {'type': 'noul',
+  'noul': 0.5001,
+  'confidence': 0.5001,
+  'answer_confidence': 0.5001},
+ 'outcome': {'type': 'choice',
+  'choice': 'failure',
+  'probabilities': {'failure': 0.25,
+   'harmful': 0.25,
+   'partial': 0.25,
+   'success': 0.25},
+  'confidence': 0.0,
+  'answer_confidence': 0.25},
+ 'risk': {'type': 'score',
+  'score': 1.4999,
+  'legend': {'0': 'Benign: read-only or clearly safe actions.',
+   '1': 'Low: routine writes within scope.',
+   '2': 'Moderate: irreversible or out-of-scope actions.',
+   '3': 'High: destructive, security-relevant, or policy-violating actions.'},
+  'probabilities': {'0': 0.2501, '1': 0.25, '2': 0.25, '3': 0.25},
+  'confidence': 0.0,
+  'answer_confidence': 0.2501},
+ 'urgency': {'type': 'score',
+  'score': 1.5002,
+  'legend': {'0': 'No time pressure; can wait indefinitely.',
+   '1': 'Routine; handle within the normal queue.',
+   '2': 'Elevated; should be handled within the same week.',
+   '3': 'Critical; requires action within the same day.'},
+  'probabilities': {'0': 0.2499, '1': 0.25, '2': 0.2501, '3': 0.25},
+  'confidence': 0.0,
+  'answer_confidence': 0.2501}}</code></pre>
+</div>
+</div>
+<div id="086ef696" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">list</span>(ans), <span class="bu">list</span>(rec[<span class="st">"questions"</span>]))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>test_eq({a[<span class="st">"type"</span>] <span class="cf">for</span> a <span class="kw">in</span> ans.values()}, {<span class="st">"choice"</span>, <span class="st">"noul"</span>, <span class="st">"score"</span>})</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> qid, a <span class="kw">in</span> ans.items():</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> a[<span class="st">"type"</span>] <span class="op">!=</span> <span class="st">"noul"</span>: test_close(<span class="bu">sum</span>(a[<span class="st">"probabilities"</span>].values()), <span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>test_eq(learn.decider().predict_batch([rec[<span class="st">"state"</span>], recs[<span class="dv">2</span>][<span class="st">"state"</span>]], rec[<span class="st">"questions"</span>])[<span class="dv">0</span>], ans)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>test_eq(learn.decider().predict_batch([], rec[<span class="st">"questions"</span>]), [])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Questions whose definitions cannot be answered fail with the question’s name, as Laya’s runtime does:</p>
+<div id="fe500e9d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>jev <span class="op">=</span> learn.decider()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: jev.predict(<span class="st">"x"</span>, {<span class="st">"q"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Pick"</span>, <span class="st">"criteria"</span>: []}}), contains<span class="op">=</span><span class="st">"'q'"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>test_eq(jev.predict(<span class="st">"x"</span>, {}), {})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Coarse to fine on a 40-option question with chunks of 8: five first-pass rows and one final row, and the probabilities still sum to one:</p>
+<div id="c33f3fb7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>wide_q <span class="op">=</span> {<span class="st">"intent"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"What does the customer want?"</span>, <span class="st">"criteria"</span>: [<span class="ss">f"intent </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>)]}}</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>wide_jev <span class="op">=</span> learn.decider(chunk<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>aw <span class="op">=</span> wide_jev.predict(<span class="st">"my card has not arrived yet"</span>, wide_q)[<span class="st">"intent"</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(aw[<span class="st">"probabilities"</span>]), aw[<span class="st">"chunks"</span>]), (<span class="dv">40</span>, <span class="dv">5</span>))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">sum</span>(aw[<span class="st">"probabilities"</span>].values()), <span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>test_eq(wide_jev.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]), jev.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))   <span class="co"># narrow questions: unchanged</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>aw[<span class="st">"choice"</span>], aw[<span class="st">"answer_confidence"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>('intent 5', 0.025)</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="export" class="level2">
+<h2 class="anchored" data-anchor-id="export">Export</h2>
+<p><code>learn.export(path)</code> writes one folder that sysone and, when the template allows, Laya can read:</p>
+<pre><code>my-jev/
+  sysone.json         template, transforms, head shape, temperatures, encoder reference, regime, metrics, training record
+  environment.txt     every installed package, name==version
+  head.safetensors    type embedding, head layers, scorer
+  tokenizer/          (or processor/ for multimodal encoders)
+  streams/&lt;name&gt;/     each side stream's tokenizer
+  encoder/            the encoder's config, and its weights when they are bundled (a stream encoder: text/, sides/&lt;name&gt;/ and its own file)
+  adapter/            the adapter, when it is kept (merge=False)
+  rl_agent_config.json + model.safetensors   Laya's format, when the template is Laya's</code></pre>
+<ul>
+<li><code>sysone.json</code> also holds the <a href="./record.html">training record</a> under <code>training</code>: the commit, packages, hardware, data, settings and fits that made the model. <code>environment.txt</code> lists every installed package, to rebuild the environment from.</li>
+<li>Adapters are merged at export, so a LoRA or MiCA run ships as a plain encoder; <code>merge=False</code> keeps the adapter in <code>adapter/</code>, for further training or for a model that also works without it (the <a href="./mdlm.html">diffusion model</a> writes with its base model). Over a Hub encoder whose own weights did not train, the adapter goes alone: the export names the encoder and the commit it trained on, megabytes instead of the encoder’s gigabytes, and <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a> puts the adapter back on it. A local encoder, or one whose weights trained too, is bundled under the adapter.</li>
+<li>A head-only run on a Hub encoder stays small: the export holds the head and the encoder’s id and revision, and <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a> pulls the encoder. <code>bundle=True</code> copies the weights in; a local encoder is always bundled.</li>
+<li>When the template, the head and the transforms are Laya’s, <code>laya="auto"</code> also writes <code>rl_agent_config.json</code> and a single <code>model.safetensors</code> with Laya’s parameter names, which <code>laya.Agent</code>, <code>laya[serve]</code> and <code>laya-mlx</code> load as they are. The encoder weights then live in that file only, and <code>encoder/</code> holds the config.</li>
+</ul>
+<p>What decides the encoder’s part of an export:</p>
+<pre class="{mermaid}"><code>flowchart TB
+    X["learn.export(path)"] --&gt; AD{"adapters kept?&lt;br/&gt;(merge=False)"}
+    AD -- yes --&gt; BT{"a local encoder, or did its own&lt;br/&gt;weights train too?"}
+    BT -- yes --&gt; KEEP["encoder/: the weights under the adapter,&lt;br/&gt;and adapter/ beside them"]
+    BT -- no --&gt; ALONE["adapter/ alone, and the encoder's id&lt;br/&gt;at the commit it trained on&lt;br/&gt;(bundle=True copies the weights in)"]
+    AD -- no --&gt; T{"did the encoder train?&lt;br/&gt;(the regime is not head, or it trained before a freeze)"}
+    T -- yes --&gt; BUN["bundled: its weights are written"]
+    T -- no --&gt; LOC{"a local encoder?"}
+    LOC -- yes --&gt; BUN
+    LOC -- no --&gt; REF["the encoder's id and revision only&lt;br/&gt;(bundle=True copies the weights in)"]
+    BUN --&gt; LY{"Laya's template, head&lt;br/&gt;and no inference transforms?"}
+    LY -- yes --&gt; LF["rl_agent_config.json + model.safetensors:&lt;br/&gt;Laya's format, the adapters merged"]
+    LY -- no --&gt; ENC["encoder/: a plain encoder, the adapters merged"]</code></pre>
+<div id="55e2ccf5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.895785+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.900600+00:00&quot;,&quot;total&quot;:0.0048174429999932045}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L199" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="export_learner" class="level3">
+<h3 class="anchored" data-anchor-id="export_learner">export_learner</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> export_learner(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    learn:sysone.learner.Learner, path, merge:<span class="bu">bool</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, bundle:<span class="bu">bool</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, laya:<span class="bu">str</span><span class="op">=</span><span class="st">'auto'</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    dtype:NoneType<span class="op">=</span><span class="va">None</span>, name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>pathlib.Path:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Write a learner’s model, template, transforms and temperatures to <code>path</code> (what <code>learn.export</code> calls); <code>merge</code> defaults to the learner’s <code>merge_adapters</code></em></p>
+</section>
+</div>
+<div id="5516e647" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"my-jev"</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>learn.export(out)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> out.iterdir()), <span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> (out <span class="op">/</span> <span class="st">"encoder"</span>).iterdir())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(['encoder',
+  'head.safetensors',
+  'model.safetensors',
+  'rl_agent_config.json',
+  'sysone.json',
+  'tokenizer'],
+ ['config.json'])</code></pre>
+</div>
+</div>
+<div id="4df64130" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>meta <span class="op">=</span> json.loads((out <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>test_eq((meta[<span class="st">"encoder"</span>][<span class="st">"weights"</span>], meta[<span class="st">"head"</span>][<span class="st">"regime"</span>], meta[<span class="st">"template"</span>][<span class="st">"row"</span>]), (<span class="st">"laya"</span>, <span class="st">"full"</span>, RowTemplate.preset(<span class="st">"laya"</span>).row))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads((out <span class="op">/</span> <span class="st">"rl_agent_config.json"</span>).read_text())[<span class="st">"head_layers"</span>], <span class="dv">2</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>{k: meta[k] <span class="cf">for</span> k <span class="kw">in</span> (<span class="st">"encoder"</span>, <span class="st">"head"</span>, <span class="st">"temperature"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'encoder': {'id': 'fixtures/tiny-modernbert',
+  'revision': None,
+  'source': 'transformers',
+  'hidden_size': 64,
+  'family': 'modernbert',
+  'modality': 'text',
+  'dtype': 'float32',
+  'weights': 'laya'},
+ 'head': {'width': 64,
+  'layers': 2,
+  'scorer': 'laya',
+  'dropout': 0.1,
+  'nhead': 1,
+  'standardize': False,
+  'readout': 'anchor',
+  'query': None,
+  'query_width': None,
+  'pair_dim': 256,
+  'act': False,
+  'regime': 'full'},
+ 'temperature': {'choice': 0.9999,
+  'choice:3-5': 0.9999,
+  'score': 0.9999,
+  'score:3-5': 0.9999,
+  'noul': 1.0,
+  'noul:2': 1.0}}</code></pre>
+</div>
+</div>
+<div id="85d231f0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>tr <span class="op">=</span> meta[<span class="st">"training"</span>]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(tr), [<span class="st">"code"</span>, <span class="st">"data"</span>, <span class="st">"environment"</span>, <span class="st">"hardware"</span>, <span class="st">"model"</span>, <span class="st">"recorded"</span>, <span class="st">"tracking"</span>, <span class="st">"training"</span>])</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>test_eq(tr[<span class="st">"model"</span>][<span class="st">"regime"</span>], learn.model.regime)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">any</span>(l.startswith(<span class="st">"torch=="</span>) <span class="cf">for</span> l <span class="kw">in</span> (out <span class="op">/</span> <span class="st">"environment.txt"</span>).read_text().splitlines())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="decider.load" class="level2">
+<h2 class="anchored" data-anchor-id="decider.load">Decider.load</h2>
+<p><code>Decider.load(path)</code> reads a folder (or a Hub repo, with a subfolder written <code>owner/repo/subfolder</code>) and picks the backend: a <code>sysone.json</code> loads the sysone head over its encoder, a bare <code>rl_agent_config.json</code> loads a Laya checkpoint as it is, and a GLiNER2 checkpoint loads the GLiNER2 backend (<code>sysone.gliner</code>, which needs the <code>gliner2</code> package). Backends register in <code>DECIDER_BACKENDS</code>. Underneath, <a href="https://sgaseretto.github.io/sysonelib/inference.html#load_export"><code>load_export</code></a> rebuilds an export’s model (with the <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec"><code>EncoderSpec</code></a> of its encoder), row builder and <code>sysone.json</code>; <a href="#load_learner">[<code>load_learner</code>](https://sgaseretto.github.io/sysonelib/inference.html#load_learner)</a> builds on it too.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    P["Decider.load(folder, Hub id,&lt;br/&gt;or owner/repo/subfolder)"] --&gt; S{"sysone.json?"}
+    S -- yes --&gt; SY["the sysone head over its encoder"]
+    S -- no --&gt; L{"rl_agent_config.json?"}
+    L -- yes --&gt; LA["a Laya checkpoint, as it is"]
+    L -- no --&gt; G{"a GLiNER2 checkpoint?"}
+    G -- yes --&gt; GL["the GLiNER2 backend"]
+    G -- no --&gt; E["ValueError naming the three formats"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div id="4ef36d84" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.907544+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.910245+00:00&quot;,&quot;total&quot;:0.002703022000005717}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L328" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.load-1" class="level3">
+<h3 class="anchored" data-anchor-id="decider.load-1">Decider.load</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    path, device:NoneType<span class="op">=</span><span class="va">None</span>, subfolder:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The decider stored at <code>path</code> (a folder, a Hub repo, or <code>owner/repo/subfolder</code>): sysone, Laya or GLiNER2</em></p>
+</section>
+</div>
+<div id="71b1f193" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.910353+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.914406+00:00&quot;,&quot;total&quot;:0.004055829000009226}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L258" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_export" class="level3">
+<h3 class="anchored" data-anchor-id="load_export">load_export</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_export(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    path, adapter:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The model, row builder and <code>sysone.json</code> of a sysone export folder; <code>adapter=False</code> leaves out an adapter the export kept</em></p>
+</section>
+</div>
+<div id="737cfe26" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.914481+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.916962+00:00&quot;,&quot;total&quot;:0.0024840220000044155}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L252" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="export_spec" class="level3">
+<h3 class="anchored" data-anchor-id="export_spec">export_spec</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> export_spec(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    ref:<span class="bu">dict</span>, encoder, builder:sysone.template.RowBuilder</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.models.EncoderSpec:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec"><code>EncoderSpec</code></a> of an export’s encoder, from what the export holds: the encoder’s id and revision, its configuration, the tokenizer, the template</em></p>
+</section>
+</div>
+<p>The exported folder gives the same answers as the model in memory:</p>
+<div id="93729924" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>jev <span class="op">=</span> Decider.load(out, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>jev</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Decider(my-jev · laya template · cpu · 6 temperatures)</code></pre>
+</div>
+</div>
+<div id="539f49d5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs[:<span class="dv">6</span>]:</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    test_eq(jev.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>]), learn.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>], device<span class="op">=</span><span class="st">"cpu"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="laya-compatibility" class="level3">
+<h3 class="anchored" data-anchor-id="laya-compatibility">Laya compatibility</h3>
+<p>The same folder loads in <code>laya.Agent</code>, Laya’s own runtime, which rebuilds the rows with its own code and reads the temperatures from <code>rl_agent_config.json</code>. Its answers match sysone’s on every fixture case (Laya adds an <code>action</code> field, from an action head sysone does not train; it is written as zeros, so Laya reports an action probability of 1):</p>
+<div id="261de8a1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.917202+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.917685+00:00&quot;,&quot;total&quot;:0.00048563699999704113}}" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> laya</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="f687b343" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>agent <span class="op">=</span> laya.Agent(<span class="bu">str</span>(out), device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs:</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    ours, theirs <span class="op">=</span> jev.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>]), agent.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>])[<span class="st">"answers"</span>]</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> qid <span class="kw">in</span> ours:</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> ours[qid], theirs[qid]</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        test_eq(a[<span class="st">"type"</span>], b[<span class="st">"type"</span>])</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> key <span class="kw">in</span> (<span class="st">"choice"</span>, <span class="st">"score"</span>, <span class="st">"noul"</span>, <span class="st">"confidence"</span>, <span class="st">"answer_confidence"</span>):</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> key <span class="kw">in</span> a: test_close(a[key], b[key], eps<span class="op">=</span><span class="fl">2e-4</span>) <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(a[key], <span class="bu">str</span>) <span class="cf">else</span> test_eq(a[key], b[key])</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"probabilities"</span> <span class="kw">in</span> a: test_close(<span class="bu">list</span>(a[<span class="st">"probabilities"</span>].values()), <span class="bu">list</span>(b[<span class="st">"probabilities"</span>].values()), eps<span class="op">=</span><span class="fl">2e-4</span>)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>theirs[qid]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'type': 'score',
+ 'score': 1.5003,
+ 'legend': {'0': 'No time pressure; can wait indefinitely.',
+  '1': 'Routine; handle within the normal queue.',
+  '2': 'Elevated; should be handled within the same week.',
+  '3': 'Critical; requires action within the same day.'},
+ 'probabilities': {'0': 0.2499, '1': 0.2499, '2': 0.2501, '3': 0.2501},
+ 'confidence': 0.0,
+ 'answer_confidence': 0.2501,
+ 'action': {'act_probability': 1.0}}</code></pre>
+</div>
+</div>
+<p>A head-only run on a Hub encoder exports only the head and the encoder’s reference; here the fixture encoder is local, so it is bundled, and <code>laya=False</code> skips Laya’s format:</p>
+<div id="015fed7b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>lh <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>lh.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>out2 <span class="op">=</span> lh.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"head-only"</span>, laya<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> out2.iterdir()), [<span class="st">"encoder"</span>, <span class="st">"environment.txt"</span>, <span class="st">"head.safetensors"</span>, <span class="st">"sysone.json"</span>, <span class="st">"tokenizer"</span>])</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads((out2 <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"weights"</span>], <span class="st">"encoder"</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>test_eq(Decider.load(out2, device<span class="op">=</span><span class="st">"cpu"</span>).predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]), lh.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.36', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.04401', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.2857', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.625', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0386', 'eval_samples_per_second': '648.4', 'eval_steps_per_second': '51.87', 'epoch': '1'}
+{'train_runtime': '0.2571', 'train_samples_per_second': '214', 'train_steps_per_second': '27.23', 'train_loss': '1.233', 'epoch': '1'}</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: an export after freezing dropped the trained encoder">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: an export after freezing dropped the trained encoder
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The first export looked only at the current regime: after <code>unfreeze</code>, <code>fit</code> and <code>freeze</code>, the regime reads <code>head</code>, so it wrote the head and a reference to the Hub encoder, and the encoder the head had been trained on was lost. <code>_run</code> now marks the model when its encoder trains, and the export bundles the encoder whenever that mark is set. The same review found the dtype problem: a checkpoint stored in bf16 was served in bf16 though its head was trained on float32 features; the export now records the dtype the encoder trained in, and the loader restores it.</p>
+</div>
+</div>
+<p>An encoder that trained is exported even when the regime is back to <code>head</code> (unfreeze, fit, freeze), since the head was trained on it; and the export records the dtype the encoder trained in, which the loader restores, rather than the dtype a checkpoint happens to be stored in:</p>
+<div id="d64d5067" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>lf <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>lf.unfreeze()<span class="op">;</span> lf.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)<span class="op">;</span> lf.freeze()</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>lf.model.spec.<span class="bu">id</span> <span class="op">=</span> <span class="st">"someone/an-encoder-on-the-hub"</span>          <span class="co"># as if it came from the Hub</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>outf <span class="op">=</span> lf.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"refrozen"</span>, laya<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads((outf <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"weights"</span>], <span class="st">"encoder"</span>)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>test_eq(Decider.load(outf, device<span class="op">=</span><span class="st">"cpu"</span>).predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]), lf.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>bf <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"bf16-encoder"</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>AutoModel.from_pretrained(FIX).to(torch.bfloat16).save_pretrained(bf)<span class="op">;</span> AutoTokenizer.from_pretrained(FIX).save_pretrained(bf)</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>lb <span class="op">=</span> sysone.learner.decision_learner(data, <span class="bu">str</span>(bf), train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">next</span>(lb.model.encoder.parameters()).dtype, torch.float32)</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>outb <span class="op">=</span> lb.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"bf16"</span>, bundle<span class="op">=</span><span class="va">False</span>, laya<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads((outb <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"dtype"</span>], <span class="st">"float32"</span>)</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">next</span>(Decider.load(outb, device<span class="op">=</span><span class="st">"cpu"</span>).model.encoder.parameters()).dtype, torch.float32)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.36', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.116', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.2857', 'eval_accuracy_score': '0.4', 'eval_accuracy_noul': '0.375', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0387', 'eval_samples_per_second': '645.2', 'eval_steps_per_second': '51.62', 'epoch': '1'}
+{'train_runtime': '0.3473', 'train_samples_per_second': '158.4', 'train_steps_per_second': '20.16', 'train_loss': '1.233', 'epoch': '1'}</code></pre>
+</div>
+</div>
+<p>A wide question whose options a transform thins out still answers, the removed options at probability 0:</p>
+<div id="7cc11589" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.918969+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.919467+00:00&quot;,&quot;total&quot;:0.0005010759999919401}}" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.template <span class="im">import</span> Transform, transform</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="8d8fa208" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="at">@transform</span>(<span class="st">"DropEven"</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DropEven(Transform):</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, record):   <span class="co"># drops "intent 0", "intent 2", ...: every option whose number is even, and says so</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>        keep <span class="op">=</span> <span class="kw">lambda</span> c: <span class="bu">int</span>(<span class="bu">str</span>(c).split()[<span class="op">-</span><span class="dv">1</span>]) <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">1</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        qs <span class="op">=</span> {q: {<span class="op">**</span>d, <span class="st">"criteria"</span>: [c <span class="cf">for</span> c <span class="kw">in</span> d[<span class="st">"criteria"</span>] <span class="cf">if</span> keep(c)]} <span class="cf">for</span> q, d <span class="kw">in</span> record[<span class="st">"questions"</span>].items()}</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        dropped <span class="op">=</span> {q: [c <span class="cf">for</span> c <span class="kw">in</span> d[<span class="st">"criteria"</span>] <span class="cf">if</span> <span class="kw">not</span> keep(c)] <span class="cf">for</span> q, d <span class="kw">in</span> record[<span class="st">"questions"</span>].items()}</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {<span class="op">**</span>record, <span class="st">"questions"</span>: qs, <span class="st">"dropped"</span>: dropped}</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>thin <span class="op">=</span> Decider(learn.model, RowBuilder(learn.data.builder.tok, learn.data.builder.template, [DropEven()]), chunk<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>aw2 <span class="op">=</span> thin.predict(<span class="st">"my card has not arrived"</span>, wide_q)[<span class="st">"intent"</span>]</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(aw2[<span class="st">"probabilities"</span>]), aw2[<span class="st">"probabilities"</span>][<span class="st">"intent 0"</span>], aw2[<span class="st">"shortlisted"</span>], aw2[<span class="st">"chunks"</span>]), (<span class="dv">40</span>, <span class="fl">0.0</span>, <span class="va">True</span>, <span class="dv">5</span>))</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">sum</span>(aw2[<span class="st">"probabilities"</span>].values()), <span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A LoRA run can keep its adapter, for further training, and still load:</p>
+<div id="a947f1ba" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>ll <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"lora"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>ll.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">5e-3</span>)</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>out3 <span class="op">=</span> ll.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"lora"</span>, merge<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>test_eq((out3 <span class="op">/</span> <span class="st">"adapter"</span> <span class="op">/</span> <span class="st">"adapter_config.json"</span>).exists(), <span class="va">True</span>)</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> probs(a): <span class="cf">return</span> <span class="bu">list</span>(a[<span class="st">"probabilities"</span>].values()) <span class="cf">if</span> <span class="st">"probabilities"</span> <span class="kw">in</span> a <span class="cf">else</span> [a[<span class="st">"noul"</span>]]</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>a3 <span class="op">=</span> Decider.load(out3, device<span class="op">=</span><span class="st">"cpu"</span>).predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>b3 <span class="op">=</span> ll.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> qid <span class="kw">in</span> a3: test_close(probs(a3[qid]), probs(b3[qid]), eps<span class="op">=</span><span class="fl">1e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.191', 'eval_accuracy': '0.4', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.07598', 'eval_score_mae': '0.838', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.4286', 'eval_accuracy_score': '0.3', 'eval_accuracy_noul': '0.5', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0425', 'eval_samples_per_second': '588.3', 'eval_steps_per_second': '47.06', 'epoch': '1'}
+{'train_runtime': '0.3787', 'train_samples_per_second': '145.2', 'train_steps_per_second': '18.48', 'train_loss': '1.23', 'epoch': '1'}</code></pre>
+</div>
+</div>
+<p>Not bundled (<code>bundle=False</code>, what an encoder on the Hub gets when only the adapter trained), the export holds the adapter alone and the encoder’s reference, and loads back to the same answers:</p>
+<div id="daeab77a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>out4 <span class="op">=</span> ll.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"lora-alone"</span>, merge<span class="op">=</span><span class="va">False</span>, bundle<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>test_eq(((out4 <span class="op">/</span> <span class="st">"encoder"</span>).exists(), json.loads((out4 <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"weights"</span>]), (<span class="va">False</span>, <span class="st">"adapter"</span>))</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>a4 <span class="op">=</span> Decider.load(out4, device<span class="op">=</span><span class="st">"cpu"</span>).predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> qid <span class="kw">in</span> a4: test_close(probs(a4[qid]), probs(b3[qid]), eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">getattr</span>(ll.model, <span class="st">"base_trained"</span>, <span class="va">False</span>), <span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A Laya checkpoint loads as a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> directly. Copying only Laya’s files out of the export makes a plain Laya checkpoint, and it answers exactly as the sysone export does:</p>
+<div id="7b1f3f30" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>laya_only <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"laya-only"</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>shutil.copytree(out, laya_only, ignore<span class="op">=</span>shutil.ignore_patterns(<span class="st">"sysone.json"</span>, <span class="st">"head.safetensors"</span>))</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>jl <span class="op">=</span> Decider.load(laya_only, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>test_eq(jl.name, <span class="st">"laya"</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>test_eq(jl.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]), jev.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>On real weights: Laya’s published typed-decisions checkpoint, loaded by <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a> (the budgets, 1,024 / 256, and nine temperatures come from its config) and scored on the test split with <code>sysone.evaluate</code>:</p>
+<div id="890d956c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datasets <span class="im">import</span> load_dataset</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.evaluate <span class="im">import</span> evaluate</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>laya_td <span class="op">=</span> Decider.load(<span class="st">"convaiinnovations/laya/typed-decisions"</span>)</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>evaluate(laya_td, load_dataset(<span class="st">"LocalLLaMA/typed-decisions"</span>, <span class="st">"all"</span>, split<span class="op">=</span><span class="st">"test"</span>), by<span class="op">=</span><span class="st">"workflow"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The run, pasted (2026-09-26, M3 Pro, MPS, fp32):</p>
+<pre><code>accuracy 0.766 (choice 0.733, score 0.723, noul 0.857) on 2,000 decisions; soft accuracy 0.509, Brier 0.066, KL 0.122,
+ECE 0.213, score MAE 0.242, within one level 0.995; latency p50 444 ms per case (five questions, one forward pass)
+by workflow: agent_trace_observability 0.730, customer_service 0.764, invoice_processing 0.804, security_incidents 0.766</code></pre>
+<p>0.766 is the accuracy Laya’s fine-tuning notebook reports for this checkpoint. On the first 40 test cases, 200 decisions, <code>laya.Agent</code> on the same checkpoint gives the same answer to every one, with probabilities within 0.002 of sysone’s (float noise on MPS; the mean difference is 0.0002).</p>
+</section>
+<section id="side-streams-and-the-act-head-in-an-export" class="level3">
+<h3 class="anchored" data-anchor-id="side-streams-and-the-act-head-in-an-export">Side streams and the act head in an export</h3>
+<p>An export of a model with side streams saves each stream’s tokenizer under <code>streams/</code>, the stream encoder as transformers folders plus its own small file, and the head’s whole shape: its readout, its query and its act head. The act threshold fitted by <code>calibrate</code> goes into <code>sysone.json</code>, and the loaded <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> reports <code>action</code> exactly as the learner’s did. On the fixture, a stream of free-text notes stands in for a protein: the tiny ModernBERT reads the row, a tiny ESM reads the notes, and a pair head scores the options against the notes’ vector:</p>
+<div id="fa884436" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.920822+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.921347+00:00&quot;,&quot;total&quot;:0.0005273049999914292}}" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> AutoConfig, EsmConfig, EsmModel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="dc5f732e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> notes_spec():</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A spec whose encoder is the fixture's text encoder beside a tiny ESM over a `notes` stream"</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    tk <span class="op">=</span> AutoTokenizer.from_pretrained(FIX)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> loader(spec, dtype<span class="op">=</span>torch.float32, <span class="op">**</span>kw):</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>        side <span class="op">=</span> EsmModel(EsmConfig(vocab_size<span class="op">=</span><span class="bu">len</span>(tk), hidden_size<span class="op">=</span><span class="dv">32</span>, num_hidden_layers<span class="op">=</span><span class="dv">1</span>, num_attention_heads<span class="op">=</span><span class="dv">2</span>, intermediate_size<span class="op">=</span><span class="dv">64</span>,</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>                                  max_position_embeddings<span class="op">=</span><span class="dv">64</span>, pad_token_id<span class="op">=</span>tk.pad_token_id, position_embedding_type<span class="op">=</span><span class="st">"absolute"</span>,</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>                                  token_dropout<span class="op">=</span><span class="va">False</span>), add_pooling_layer<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>        special <span class="op">=</span> (tk.cls_token_id, tk.sep_token_id, tk.pad_token_id)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> StreamEncoder(AutoModel.from_pretrained(FIX, dtype<span class="op">=</span>dtype), {<span class="st">"notes"</span>: SideEncoder(side, special)}).to(dtype)</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> EncoderSpec(FIX, AutoConfig.from_pretrained(FIX), tk, loader<span class="op">=</span>loader, streams<span class="op">=</span>[TokenStream(<span class="st">"notes"</span>, tk, max_len<span class="op">=</span><span class="dv">24</span>)])</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>srecs <span class="op">=</span> [<span class="bu">dict</span>(r, state<span class="op">=</span>{<span class="st">"text"</span>: json.dumps(r[<span class="st">"state"</span>]), <span class="st">"notes"</span>: <span class="ss">f"note </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">: the customer wrote </span><span class="sc">{</span>i <span class="op">%</span> <span class="dv">3</span><span class="sc">}</span><span class="ss"> times"</span>}) <span class="cf">for</span> i, r <span class="kw">in</span> <span class="bu">enumerate</span>(recs)]</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>sdata <span class="op">=</span> TypedDecisions.from_records(srecs, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>, tfms<span class="op">=</span>[Stream(<span class="st">"notes"</span>)])</span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>slearn <span class="op">=</span> sysone.learner.decision_learner(sdata, notes_spec(), train<span class="op">=</span><span class="st">"head"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, head<span class="op">=</span><span class="st">"pair"</span>,</span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>                                         query<span class="op">=</span><span class="st">"stream:notes"</span>, act<span class="op">=</span><span class="va">True</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>slearn.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)<span class="op">;</span> slearn.calibrate(act_accuracy<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb46-19"><a href="#cb46-19" aria-hidden="true" tabindex="-1"></a>sq <span class="op">=</span> srecs[<span class="dv">1</span>]</span>
+<span id="cb46-20"><a href="#cb46-20" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> slearn.predict(sq[<span class="st">"state"</span>], sq[<span class="st">"questions"</span>])</span>
+<span id="cb46-21"><a href="#cb46-21" aria-hidden="true" tabindex="-1"></a>sout <span class="op">=</span> slearn.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"notes-jev"</span>)</span>
+<span id="cb46-22"><a href="#cb46-22" aria-hidden="true" tabindex="-1"></a>sjev <span class="op">=</span> Decider.load(sout, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb46-23"><a href="#cb46-23" aria-hidden="true" tabindex="-1"></a>test_eq(sjev.predict(sq[<span class="st">"state"</span>], sq[<span class="st">"questions"</span>]), before)</span>
+<span id="cb46-24"><a href="#cb46-24" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> (sout <span class="op">/</span> <span class="st">"streams"</span>).iterdir()), [<span class="st">"notes"</span>])</span>
+<span id="cb46-25"><a href="#cb46-25" aria-hidden="true" tabindex="-1"></a>test_eq((sout <span class="op">/</span> <span class="st">"encoder"</span> <span class="op">/</span> <span class="st">"stream_encoder.json"</span>).exists(), <span class="va">True</span>)</span>
+<span id="cb46-26"><a href="#cb46-26" aria-hidden="true" tabindex="-1"></a>test_eq(sjev.act_threshold, slearn.act_threshold)</span>
+<span id="cb46-27"><a href="#cb46-27" aria-hidden="true" tabindex="-1"></a><span class="bu">next</span>(<span class="bu">iter</span>(before.values()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.464', 'eval_accuracy': '0.24', 'eval_soft_accuracy': '0.3767', 'eval_brier': '0.26', 'eval_kl': '0.4434', 'eval_tv': '0.366', 'eval_ece': '0.08419', 'eval_score_mae': '0.8379', 'eval_within_one': '0.6', 'eval_n': 25, 'eval_accuracy_choice': '0.1429', 'eval_accuracy_score': '0.2', 'eval_accuracy_noul': '0.375', 'eval_n_unanswerable': 0, 'eval_act_auroc': '0.6667', 'eval_act_brier': '0.1778', 'eval_runtime': '0.0385', 'eval_samples_per_second': '649.7', 'eval_steps_per_second': '51.98', 'epoch': '1'}
+{'train_runtime': '0.1417', 'train_samples_per_second': '388.1', 'train_steps_per_second': '49.39', 'train_loss': '1.553', 'epoch': '1'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'type': 'choice',
+ 'choice': 'stop',
+ 'probabilities': {'continue': 0.25,
+  'human_review': 0.25,
+  'observe': 0.25,
+  'stop': 0.25},
+ 'confidence': 0.0,
+ 'answer_confidence': 0.25,
+ 'action': {'act_probability': 0.1058, 'act': False}}</code></pre>
+</div>
+</div>
+<div id="7e861b39" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>slearn.calibrate(act_accuracy<span class="op">=</span><span class="fl">0.5</span>, act_score<span class="op">=</span><span class="st">"confidence"</span>)          <span class="co"># the other rule, exported and loaded back</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>cjev <span class="op">=</span> Decider.load(slearn.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"notes-conf"</span>), device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>test_eq((cjev.act_score, cjev.predict(sq[<span class="st">"state"</span>], sq[<span class="st">"questions"</span>])), (<span class="st">"confidence"</span>, slearn.predict(sq[<span class="st">"state"</span>], sq[<span class="st">"questions"</span>])))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="124d8e46" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"action"</span> <span class="kw">in</span> <span class="bu">next</span>(<span class="bu">iter</span>(before.values())), <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="load_learner" class="level2">
+<h2 class="anchored" data-anchor-id="load_learner">load_learner</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a> gives a model’s answers; <code>load_learner(path, data)</code> gives its learner back, to keep training, evaluate or interpret a model trained elsewhere (on a Colab VM, a Kaggle kernel, a SageMaker job, or last week), as fastai’s <a href="https://sgaseretto.github.io/sysonelib/inference.html#load_learner"><code>load_learner</code></a> does. fastai pickles its <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a>; sysone rebuilds one from the export instead:</p>
+<ul>
+<li>the model, from its weights (<a href="https://sgaseretto.github.io/sysonelib/inference.html#load_export"><code>load_export</code></a>), with its encoder’s <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec"><code>EncoderSpec</code></a> rebuilt from what the export holds, so the next export names the same encoder;</li>
+<li>the rows, from the template and transforms the model trained with, bound to <code>data</code> (data without transforms of its own takes the export’s);</li>
+<li>the regime it trained in, or another one (<code>train=</code>). An adapter the export kept comes back through <a href="https://sgaseretto.github.io/sysonelib/models.html#set_regime"><code>set_regime</code></a>, as in a new learner, so <code>freeze</code> and <code>unfreeze</code> know its parameters, and then takes its weights. A LoRA merged into the encoder goes on with a new adapter of the same settings, which starts at zero: the answers are the export’s until it trains;</li>
+<li>its temperatures, act threshold, loss and learning rate.</li>
+</ul>
+<p>An encoder that came in the export (anything but a Hub reference) is marked as trained, so a later export bundles it again rather than pointing at the Hub’s. And the learner keeps the export’s training record as <code>resumed_from</code>, which its own exports write into theirs: the record of a model trained further says what it continued.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: a pickled model broke across transformers versions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: a pickled model broke across transformers versions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Pickling, as fastai does, was tried first. The learner itself cannot be pickled: transformers’ <code>Trainer</code> inside it holds a weak reference. A pickled <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> saves, and loads back with the same answers once <code>torch.load</code> is given <code>weights_only=False</code> (since PyTorch 2.6 it refuses to unpickle arbitrary objects, which can run code). But under transformers 5.0, the version Kaggle runs, that pickle, made with 5.17, failed: <code>'ModernBertConfig' object has no attribute 'reference_compile'</code>. A pickle stores objects as one version of a library lays them out; an export stores weights and a configuration, and the same export loaded under both versions with the same answers. An export is also safe to load from the Hub, and a head-only model’s export holds the head, not a copy of the encoder.</p>
+</div>
+</div>
+<div id="f6b8488c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.925872+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.930130+00:00&quot;,&quot;total&quot;:0.004261663999997722}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L349" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_learner-1" class="level3">
+<h3 class="anchored" data-anchor-id="load_learner-1">load_learner</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_learner(</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    path, data:sysone.data.TypedDecisions, train:NoneType<span class="op">=</span><span class="va">None</span>, lora:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, subfolder:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.learner.Learner:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a> on <code>data</code> from a sysone export (a folder or a Hub repo), to keep training, evaluate or interpret it; <a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a> changes its regime</em></p>
+</section>
+</div>
+<p>Each kind of export comes back answering as it was exported. The full fine-tune above, in Laya’s format, trains on:</p>
+<div id="028e7be1" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>fresh <span class="op">=</span> <span class="kw">lambda</span>: TypedDecisions.from_json(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>rl <span class="op">=</span> load_learner(out, fresh(), preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>test_eq((rl.model.regime, rl.model.spec.<span class="bu">id</span>, rl.temperatures, rl.model.encoder_trained),</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>        (jev.model.regime, json.loads((out <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())[<span class="st">"encoder"</span>][<span class="st">"id"</span>], jev.temperatures, <span class="va">True</span>))</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs[:<span class="dv">6</span>]: test_eq(rl.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>], device<span class="op">=</span><span class="st">"cpu"</span>), jev.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>]))</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>rl.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>An export that kept its adapter comes back with the same parameters trainable, and finds them again after <code>freeze</code> and <code>unfreeze</code>; here with MiCA, whose fixed matrices must stay fixed, and with the LoRA export above:</p>
+<div id="b7fefbaf" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>trainable <span class="op">=</span> <span class="kw">lambda</span> m: {n <span class="cf">for</span> n, p <span class="kw">in</span> m.encoder.named_parameters() <span class="cf">if</span> p.requires_grad}</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>lmc <span class="op">=</span> sysone.learner.decision_learner(data, FIX, train<span class="op">=</span><span class="st">"mica"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>lmc.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">5e-3</span>)</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>outm <span class="op">=</span> lmc.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"mica"</span>, merge<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>rlm <span class="op">=</span> load_learner(outm, fresh(), preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>test_eq((rlm.model.regime, trainable(rlm.model)), (<span class="st">"mica"</span>, trainable(lmc.model)))</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>rlm.freeze()<span class="op">;</span> rlm.unfreeze()</span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>test_eq(trainable(rlm.model), trainable(lmc.model))</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>am, bm <span class="op">=</span> rlm.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>], device<span class="op">=</span><span class="st">"cpu"</span>), Decider.load(outm, device<span class="op">=</span><span class="st">"cpu"</span>).predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> qid <span class="kw">in</span> am: test_close(probs(am[qid]), probs(bm[qid]), eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>rl3 <span class="op">=</span> load_learner(out3, fresh(), preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>test_eq((rl3.model.regime, trainable(rl3.model)), (<span class="st">"lora"</span>, trainable(ll.model)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Folding an adapter into the encoder changes the weights under the next one, so that export must carry them; an adapter that came alone goes out alone again:</p>
+<div id="710fa8d2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>rlx <span class="op">=</span> load_learner(outm, fresh(), train<span class="op">=</span><span class="st">"lora"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>)      <span class="co"># MiCA folded into the encoder, a new LoRA over it</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>test_eq(rlx.model.base_trained, <span class="va">True</span>)</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: rlx.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"x"</span>, merge<span class="op">=</span><span class="va">False</span>, bundle<span class="op">=</span><span class="va">False</span>), contains<span class="op">=</span><span class="st">"must be exported"</span>)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>rl4 <span class="op">=</span> load_learner(out4, fresh(), preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>test_eq((rl4.model.regime, rl4.model.base_trained), (<span class="st">"lora"</span>, <span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A head-only export can go on in another regime. A new LoRA adapter starts at zero, so the answers stay the export’s until it trains:</p>
+<div id="40916114" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>rl2 <span class="op">=</span> load_learner(out2, fresh(), train<span class="op">=</span><span class="st">"lora"</span>, preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>test_eq(rl2.model.regime, <span class="st">"lora"</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>test_eq(rl2.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>], device<span class="op">=</span><span class="st">"cpu"</span>), lh.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Trained on and exported again, the encoder that came in the export is bundled again (it is not the Hub’s), its id stays the one it started from, and the new record names what it continued:</p>
+<div id="b2d07539" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>rlf <span class="op">=</span> load_learner(outf, fresh(), preset<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>rlf.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>outf2 <span class="op">=</span> rlf.export(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"refrozen-more"</span>, laya<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>mf <span class="op">=</span> json.loads((outf2 <span class="op">/</span> <span class="st">"sysone.json"</span>).read_text())</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>test_eq((mf[<span class="st">"encoder"</span>][<span class="st">"id"</span>], mf[<span class="st">"encoder"</span>][<span class="st">"weights"</span>]), (<span class="st">"someone/an-encoder-on-the-hub"</span>, <span class="st">"encoder"</span>))</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>prev <span class="op">=</span> mf[<span class="st">"training"</span>][<span class="st">"resumed_from"</span>]</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>test_eq((prev[<span class="st">"source"</span>], <span class="bu">len</span>(prev[<span class="st">"training"</span>][<span class="st">"training"</span>][<span class="st">"fits"</span>]), <span class="bu">len</span>(mf[<span class="st">"training"</span>][<span class="st">"training"</span>][<span class="st">"fits"</span>])), (<span class="st">"refrozen"</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Side streams and the act head come back too; and a Laya checkpoint, which has no sysone record, is for <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a>:</p>
+<div id="0e4002ae" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>rls <span class="op">=</span> load_learner(sout, TypedDecisions.from_records(srecs, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>, tfms<span class="op">=</span>[Stream(<span class="st">"notes"</span>)]), preset<span class="op">=</span><span class="st">"cpu"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>test_eq((rls.predict(sq[<span class="st">"state"</span>], sq[<span class="st">"questions"</span>]), rls.act_threshold), (before, sjev.act_threshold))</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: load_learner(laya_only, fresh()), contains<span class="op">=</span><span class="st">"not a sysone export"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="writing-text" class="level2">
+<h2 class="anchored" data-anchor-id="writing-text">Writing text</h2>
+<p>A decision model built on a generative model (the <a href="./mdlm.html">masked diffusion model</a>) can also write. <code>sample(config, model, ids, **kw)</code> is the generic function that writes: given token ids, with masks where text is wanted and <code>max_new_tokens</code> more masks appended, it returns the ids with every mask filled. It dispatches on the model’s config class, so each family brings its own way of writing, a diffusion model’s unmasking or an autoregressive model’s decoding, and a model that cannot write says so.</p>
+<p><code>Decider.generate(prompt)</code> writes an answer to a prompt in the model’s chat format, and <code>Decider.fill(prompt, template)</code> writes only into the slots of a fixed text, a JSON value say, leaving the rest as it is. A slot is a fixed number of masks (<code>n</code>), and a diffusion model fills every one of them, often writing on past its value into what the template says next; so a slot’s text ends at its closing quote when the template quotes it, and otherwise where the template’s next text begins (<code>stop</code> sets another end). Both run the model’s encoder with its adapters switched off unless asked (<code>adapter=True</code>): the adapter learned to decide, and the base model is the one that learned to write. <a href="https://sgaseretto.github.io/sysonelib/inference.html#adapters_off"><code>adapters_off</code></a> is that switch, peft’s <code>disable_adapter</code> when there are adapters.</p>
+<div id="d0db4d52" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.936272+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.939321+00:00&quot;,&quot;total&quot;:0.003051432000006571}}" data-execution_count="25">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L450" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.fill" class="level3">
+<h3 class="anchored" data-anchor-id="decider.fill">Decider.fill</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fill(</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    prompt, template:<span class="bu">str</span>, n:<span class="bu">int</span><span class="op">=</span><span class="dv">16</span>, slot:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{}</span><span class="st">'</span>, adapter:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, system:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, stop:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The texts the model writes into <code>template</code>’s slots (each <code>slot</code> becomes <code>n</code> masks) after <code>prompt</code>, the rest of the template kept as it is; each ends at <code>stop</code>, by default at its closing quote or where the template’s next text begins</em></p>
+</section>
+</div>
+<div id="b45ea553" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.939397+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.941913+00:00&quot;,&quot;total&quot;:0.0025180960000028563}}" data-execution_count="26">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L431" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decider.generate" class="level3">
+<h3 class="anchored" data-anchor-id="decider.generate">Decider.generate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate(</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    prompt, max_new_tokens:<span class="bu">int</span><span class="op">=</span><span class="dv">64</span>, adapter:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, system:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The text the model writes for <code>prompt</code> (a string or chat messages), with its base model unless <code>adapter</code></em></p>
+</section>
+</div>
+<div id="3ff47e94" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.941986+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.944220+00:00&quot;,&quot;total&quot;:0.0022371510000027683}}" data-execution_count="27">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L400" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="adapters_off" class="level3">
+<h3 class="anchored" data-anchor-id="adapters_off">adapters_off</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> adapters_off(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    model</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Run a model’s encoder without its peft adapters, as its base model (or as it is, when it has none)</em></p>
+</section>
+</div>
+<div id="1f4cb8b8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>wtok <span class="op">=</span> learn.data.builder.tok</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: learn.decider().generate(<span class="st">"Hello"</span>), contains<span class="op">=</span><span class="st">"no sampler for a ModernBertConfig"</span>)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _EchoConfig: <span class="st">"a writer's config: its sampler fills every mask with the first token of the row"</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _echo(config:_EchoConfig, model, ids, tokenizer<span class="op">=</span><span class="va">None</span>, max_new_tokens:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>, <span class="op">**</span>kw):</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.cat([ids, torch.full((ids.shape[<span class="dv">0</span>], max_new_tokens), tokenizer.mask_token_id)], <span class="dv">1</span>)</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.where(x <span class="op">==</span> tokenizer.mask_token_id, x[:, :<span class="dv">1</span>], x)</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>sample.register(_echo)</span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>test_eq(sample(_EchoConfig(), <span class="va">None</span>, torch.tensor([[<span class="dv">5</span>, wtok.mask_token_id]]), tokenizer<span class="op">=</span>wtok, max_new_tokens<span class="op">=</span><span class="dv">1</span>).tolist(), [[<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>]])</span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>methods(sample)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A slot is a fixed number of masks, and a diffusion model fills them all. Asked for a JSON string, the <a href="./mdlm.html">real model</a> wrote its value and then more JSON, <code>Gorillaz", "album": "first studio album", "genre":</code>, so a quoted slot ends at its closing quote (an escaped quote doesn’t end it), and any other at the template’s next text. A sampler that always writes such a text shows it:</p>
+<div id="c478126d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _WriterConfig: <span class="st">"a writer's config: its sampler writes the same text into a row's masks, over and over"</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _writes(config:_WriterConfig, model, ids, tokenizer<span class="op">=</span><span class="va">None</span>, max_new_tokens:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>, <span class="op">**</span>kw):</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>    said, x <span class="op">=</span> tokenizer(<span class="st">'Ada", "age": 36, "x'</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>).input_ids, ids.clone()</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>    at <span class="op">=</span> (x[<span class="dv">0</span>] <span class="op">==</span> tokenizer.mask_token_id).nonzero().flatten()</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>    x[<span class="dv">0</span>, at] <span class="op">=</span> torch.tensor((said <span class="op">*</span> <span class="bu">len</span>(at))[:<span class="bu">len</span>(at)])</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>sample.register(_writes)</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Encoder: config <span class="op">=</span> _WriterConfig()</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Model: encoder <span class="op">=</span> _Encoder()</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Writer(Decider):</span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A decider over the writer alone"</span></span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, builder): <span class="va">self</span>.model, <span class="va">self</span>.builder, <span class="va">self</span>.device, <span class="va">self</span>.dtype <span class="op">=</span> _Model(), builder, torch.device(<span class="st">"cpu"</span>), <span class="va">None</span></span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> _Writer(learn.data.builder)</span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>test_eq((w.fill(<span class="st">"Who?"</span>, <span class="st">'{"name": "</span><span class="sc">{}</span><span class="st">"}'</span>, n<span class="op">=</span><span class="dv">12</span>), w.fill(<span class="st">"Who?"</span>, <span class="st">'{"name": "</span><span class="sc">{}</span><span class="st">"}'</span>, n<span class="op">=</span><span class="dv">12</span>, stop<span class="op">=</span><span class="st">","</span>)), ([<span class="st">"Ada"</span>], [<span class="st">'Ada"'</span>]))</span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>test_eq((_slot_end(<span class="st">'{"text": "'</span>, <span class="st">'"}'</span>), _slot_end(<span class="st">"Name: "</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">Age: "</span>), _slot_end(<span class="st">"I like "</span>, <span class="st">""</span>)), (<span class="st">'"'</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">Age: "</span>, <span class="va">None</span>))</span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a>test_eq((_cut(<span class="st">'say </span><span class="ch">\\</span><span class="st">"hi</span><span class="ch">\\</span><span class="st">" now", "x'</span>, <span class="st">'"'</span>), _cut(<span class="st">"Ada</span><span class="ch">\n</span><span class="st">Age: 36"</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">Age: "</span>), _cut(<span class="st">'"'</span>, <span class="st">'"'</span>)), (<span class="st">'say </span><span class="ch">\\</span><span class="st">"hi</span><span class="ch">\\</span><span class="st">" now'</span>, <span class="st">"Ada"</span>, <span class="st">""</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="onnx" class="level2">
+<h2 class="anchored" data-anchor-id="onnx">ONNX</h2>
+<p>For serving a text model on CPUs without PyTorch, <a href="https://sgaseretto.github.io/sysonelib/inference.html#export_onnx"><code>export_onnx</code></a> writes an ordinary export plus <code>model.onnx</code>: the encoder and the head as one graph that returns a score for every position. The gather at the anchors and the softmax stay outside the graph, in numpy, so one graph serves any number of options. <a href="https://sgaseretto.github.io/sysonelib/inference.html#onnxdecider"><code>OnnxDecider</code></a> runs it with onnxruntime (<code>sysone[onnx]</code>) and answers as the <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> does; it is a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> whose logits come from the graph.</p>
+<pre class="{mermaid}"><code>flowchart LR
+    subgraph ONNX["model.onnx (any batch, any length)"]
+        I["input_ids,&lt;br/&gt;attention_mask, qtype"] --&gt; E["encoder"] --&gt; H["head layers&lt;br/&gt;and scorer"] --&gt; S["a score for every&lt;br/&gt;position (batch, L)"]
+    end
+    S --&gt; GA["numpy: the scores&lt;br/&gt;at marker_pos"] --&gt; SM["softmax over&lt;br/&gt;the options"]</code></pre>
+<p>Keeping the gather outside the graph is what lets one exported graph serve questions with any number of options: the graph never sees K.</p>
+<div id="4c036548" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.952261+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.955064+00:00&quot;,&quot;total&quot;:0.0028058729999997922}}" data-execution_count="30">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L492" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="onnxdecider" class="level3">
+<h3 class="anchored" data-anchor-id="onnxdecider">OnnxDecider</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> OnnxDecider(</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>    session, builder:sysone.template.RowBuilder, temperatures:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">64</span>,</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>    digits:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4</span>, name:<span class="bu">str</span><span class="op">=</span><span class="st">'sysone'</span>, chunk:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, meta:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> whose logits come from an exported ONNX graph run by onnxruntime</em></p>
+</section>
+</div>
+<div id="596e083e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.955138+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.958441+00:00&quot;,&quot;total&quot;:0.0033060989999995627}}" data-execution_count="31">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L471" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="export_onnx" class="level3">
+<h3 class="anchored" data-anchor-id="export_onnx">export_onnx</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> export_onnx(</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>    learn:sysone.learner.Learner, path, <span class="op">**</span>kw</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>pathlib.Path:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An export (see <a href="https://sgaseretto.github.io/sysonelib/inference.html#export_learner"><code>export_learner</code></a>) with the model as <code>model.onnx</code> beside it</em></p>
+</section>
+</div>
+<div id="cc2bc2fb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.958516+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.960741+00:00&quot;,&quot;total&quot;:0.0022280839999950786}}" data-execution_count="32">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L461" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="positionscores" class="level3">
+<h3 class="anchored" data-anchor-id="positionscores">PositionScores</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> PositionScores(</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>    model:sysone.models.EncoderDecisionModel</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The encoder and the head as one module that scores every position: the graph <a href="https://sgaseretto.github.io/sysonelib/inference.html#export_onnx"><code>export_onnx</code></a> writes</em></p>
+</section>
+</div>
+<div id="69eecfbf" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: export_onnx(slearn, Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"x"</span>), contains<span class="op">=</span><span class="st">"PyTorch"</span>)   <span class="co"># a side stream and an act head: PyTorch only</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="17a5e8af" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>out4 <span class="op">=</span> export_onnx(learn, Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"onnx-jev"</span>)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>ox <span class="op">=</span> OnnxDecider.load(out4)</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs[:<span class="dv">6</span>]:</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> ox.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>]), jev.predict(rc[<span class="st">"state"</span>], rc[<span class="st">"questions"</span>])</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> qid <span class="kw">in</span> a: test_close(probs(a[qid]), probs(b[qid]), eps<span class="op">=</span><span class="fl">2e-4</span>)</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>ox, (out4 <span class="op">/</span> <span class="st">"model.onnx"</span>).stat().st_size</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(OnnxDecider(onnx-jev · onnxruntime · 6 temperatures), 669769)</code></pre>
+</div>
+</div>
+</section>
+<section id="serving" class="level2">
+<h2 class="anchored" data-anchor-id="serving">Serving</h2>
+<p><code>serve_app(decider)</code> is the forty-line FastAPI app: <code>POST /v1/systemone</code> takes the Jev request body (<code>state</code>, <code>questions</code>, an optional <code>model</code>) and answers <code>{model, answers, usage}</code>, and <code>GET /health</code> reports the model and device. SageMaker’s routes are there too, so the same app serves a SageMaker endpoint: <code>GET /ping</code>, and <code>POST /invocations</code> with one request body or a list of them. Malformed bodies get 400 and unanswerable questions 422, as Laya’s server does, and so does any other error in the request’s content (a field a transform needs, an unreadable image). Images travel inline, as base64 data URLs: a path in <code>state.image</code> would make the server open files of its own choosing on a client’s behalf, so paths are refused unless <code>allow_image_paths=True</code>. For Laya-format text exports, <code>laya[serve]</code> serves the same route; this app covers what Laya’s runtimes cannot load (other templates, multimodal encoders). <code>sysone serve my-jev</code> runs it (needs <code>sysone[serve]</code>).</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">sequenceDiagram
+    participant C as client
+    participant A as serve_app (FastAPI)
+    participant D as Decider
+    C-&gt;&gt;A: POST /v1/systemone {state, questions, model?}
+    alt not JSON, no questions object, or no state
+        A--&gt;&gt;C: 400
+    else more than max_questions
+        A--&gt;&gt;C: 413
+    else an image given as a server path
+        A--&gt;&gt;C: 422: send it inline as a data URL
+    else
+        A-&gt;&gt;D: predict(state, questions)
+        D--&gt;&gt;A: answers, or an error in the request's content (422)
+        A--&gt;&gt;C: {model, answers, usage}
+    end
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div id="49b73cfc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.963692+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:39.967202+00:00&quot;,&quot;total&quot;:0.003513686000005123}}" data-execution_count="34">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/inference.py#L529" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="serve_app" class="level3">
+<h3 class="anchored" data-anchor-id="serve_app">serve_app</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> serve_app(</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>    decider:__main__.Decider, max_questions:<span class="bu">int</span><span class="op">=</span><span class="dv">64</span>, allow_image_paths:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A FastAPI app answering <code>POST /v1/systemone</code> and <code>GET /health</code> with <code>decider</code>, and SageMaker’s <code>GET /ping</code> and <code>POST /invocations</code></em></p>
+</section>
+</div>
+<div id="48cc8931" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:39.967303+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:40.468759+00:00&quot;,&quot;total&quot;:0.5014601390000024}}" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.testclient <span class="im">import</span> TestClient</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="468539c0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> TestClient(serve_app(jev))</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> client.post(<span class="st">"/v1/systemone"</span>, json<span class="op">=</span>{<span class="st">"state"</span>: rec[<span class="st">"state"</span>], <span class="st">"questions"</span>: rec[<span class="st">"questions"</span>], <span class="st">"model"</span>: <span class="st">"jev-latest"</span>})</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>test_eq(r.status_code, <span class="dv">200</span>)</span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>test_eq(r.json()[<span class="st">"answers"</span>], json.loads(json.dumps(jev.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]))))</span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>test_eq(client.post(<span class="st">"/v1/systemone"</span>, json<span class="op">=</span>{<span class="st">"state"</span>: <span class="st">"x"</span>, <span class="st">"questions"</span>: {<span class="st">"q"</span>: {<span class="st">"type"</span>: <span class="st">"rank"</span>, <span class="st">"instructions"</span>: <span class="st">"?"</span>}}}).status_code, <span class="dv">422</span>)</span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>test_eq(client.post(<span class="st">"/v1/systemone"</span>, content<span class="op">=</span><span class="st">b"not json"</span>).status_code, <span class="dv">400</span>)</span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>test_eq(client.post(<span class="st">"/v1/systemone"</span>, json<span class="op">=</span>{<span class="st">"state"</span>: {<span class="st">"image"</span>: <span class="st">"/etc/passwd"</span>, <span class="st">"text"</span>: <span class="st">"x"</span>}, <span class="st">"questions"</span>: rec[<span class="st">"questions"</span>]}).status_code, <span class="dv">422</span>)</span>
+<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>test_eq(client.get(<span class="st">"/ping"</span>).status_code, <span class="dv">200</span>)</span>
+<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>r2 <span class="op">=</span> client.post(<span class="st">"/invocations"</span>, json<span class="op">=</span>[{<span class="st">"state"</span>: rec[<span class="st">"state"</span>], <span class="st">"questions"</span>: rec[<span class="st">"questions"</span>]}] <span class="op">*</span> <span class="dv">2</span>)</span>
+<span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a>test_eq([a[<span class="st">"answers"</span>] <span class="cf">for</span> a <span class="kw">in</span> r2.json()], [r.json()[<span class="st">"answers"</span>]] <span class="op">*</span> <span class="dv">2</span>)</span>
+<span id="cb72-11"><a href="#cb72-11" aria-hidden="true" tabindex="-1"></a>client.get(<span class="st">"/health"</span>).json(), r.json()[<span class="st">"usage"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'status': 'ok', 'model': 'my-jev', 'device': 'cpu'},
+ {'input_tokens': 923, 'output_tokens': 0})</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

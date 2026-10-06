@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Row templates, transforms and the row builder: how a state and one typed question become one token row with an anchor in front of every option.">
+
+<title>template – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="template – sysone">
+<meta property="og:description" content="Row templates, transforms and the row builder: how a state and one typed question become one token row with an anchor in front of every option.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/row_layouts.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="template – sysone">
+<meta name="twitter:description" content="Row templates, transforms and the row builder: how a state and one typed question become one token row with an anchor in front of every option.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/row_layouts.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./template.html">template</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#transforms" id="toc-transforms" class="nav-link active" data-scroll-target="#transforms">Transforms</a>
+  <ul class="collapse">
+  <li><a href="#side-streams" id="toc-side-streams" class="nav-link" data-scroll-target="#side-streams">Side streams</a></li>
+  </ul></li>
+  <li><a href="#rowtemplate" id="toc-rowtemplate" class="nav-link" data-scroll-target="#rowtemplate">RowTemplate</a>
+  <ul class="collapse">
+  <li><a href="#presets" id="toc-presets" class="nav-link" data-scroll-target="#presets">Presets</a></li>
+  <li><a href="#options-blocks-per-kind-and-chat-rows" id="toc-options-blocks-per-kind-and-chat-rows" class="nav-link" data-scroll-target="#options-blocks-per-kind-and-chat-rows">Options blocks per kind, and chat rows</a></li>
+  </ul></li>
+  <li><a href="#rowbuilder" id="toc-rowbuilder" class="nav-link" data-scroll-target="#rowbuilder">RowBuilder</a>
+  <ul class="collapse">
+  <li><a href="#tokenizing-a-record" id="toc-tokenizing-a-record" class="nav-link" data-scroll-target="#tokenizing-a-record">Tokenizing a record</a></li>
+  <li><a href="#assembling-a-row" id="toc-assembling-a-row" class="nav-link" data-scroll-target="#assembling-a-row">Assembling a row</a></li>
+  <li><a href="#building-rows" id="toc-building-rows" class="nav-link" data-scroll-target="#building-rows">Building rows</a></li>
+  <li><a href="#side-stream-inputs" id="toc-side-stream-inputs" class="nav-link" data-scroll-target="#side-stream-inputs">Side stream inputs</a></li>
+  <li><a href="#showing-rows" id="toc-showing-rows" class="nav-link" data-scroll-target="#showing-rows">Showing rows</a></li>
+  <li><a href="#budgets" id="toc-budgets" class="nav-link" data-scroll-target="#budgets">Budgets</a></li>
+  <li><a href="#answer-slots-and-shared-slots" id="toc-answer-slots-and-shared-slots" class="nav-link" data-scroll-target="#answer-slots-and-shared-slots">Answer slots and shared slots</a></li>
+  <li><a href="#laya-parity" id="toc-laya-parity" class="nav-link" data-scroll-target="#laya-parity">Laya parity</a></li>
+  <li><a href="#serialising-a-builder" id="toc-serialising-a-builder" class="nav-link" data-scroll-target="#serialising-a-builder">Serialising a builder</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="template.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">template</h1>
+</div>
+
+<div>
+  <div class="description">
+    Row templates, transforms and the row builder: how a state and one typed question become one token row with an anchor in front of every option.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>One question becomes one row: the instructions, then every option behind its own anchor token, then the state. Laya’s row on ModernBERT’s tokenizer reads</p>
+<pre><code>[CLS] choice question: {instructions} [SEP] [MASK] opt₁ [MASK] opt₂ … [SEP] {state} [SEP]</code></pre>
+<p>and the encoder’s vector at each <code>[MASK]</code> is what the head scores. This notebook builds that row in three pieces: <em>transforms</em> normalise a record, a <a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate"><code>RowTemplate</code></a> says what the row looks like and how many tokens each part may use, and a <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a> applies both with a tokenizer, segment by segment, so every anchor position is known exactly. The tests use the fixture tokenizer, a small BPE shaped like ModernBERT’s (same special tokens, same <code>[MASK]</code> that swallows the space before it):</p>
+<div id="0aec2e03" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> AutoTokenizer.from_pretrained(<span class="st">"fixtures/tiny-modernbert"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> recs[<span class="dv">0</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>tok.cls_token, tok.sep_token, tok.mask_token, tok(<span class="st">" [MASK]"</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>('[CLS]', '[SEP]', '[MASK]', [4])</code></pre>
+</div>
+</div>
+<p>What happens to a record, in order:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    R["record&lt;br/&gt;state · questions · gold"] --&gt; T["transforms&lt;br/&gt;Field, Regex, Truncate, Shuffle, Image"]
+    T --&gt; S["segments of each question's row&lt;br/&gt;specials · text runs · options · state"]
+    S --&gt; K["one tokenizer call&lt;br/&gt;for the whole case"]
+    K --&gt; B["budgets&lt;br/&gt;options, then question, then state"]
+    B --&gt; L["layout in template order,&lt;br/&gt;each anchor's position recorded"]
+    L --&gt; ROW["Row(ids, markers, qtype, target)"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The state is tokenized once however many questions ask about it, and every segment is tokenized on its own, so the position of every anchor is known exactly rather than searched for afterwards.</p>
+<section id="transforms" class="level2">
+<h2 class="anchored" data-anchor-id="transforms">Transforms</h2>
+<p>A transform is a small callable that takes a record and returns a record, plus <code>to_json()</code> so the list can be written into <code>sysone.json</code> and rebuilt at inference: a row at inference must be the row at training, byte for byte. Records here are whole cases (<code>state</code>, <code>questions</code>, optional <code>gold</code>), so one transform sees a state once, however many questions ask about it. <code>train_only=True</code> marks augmentation that must not run at inference.</p>
+<div id="a803eeff" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.303278+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.316644+00:00&quot;,&quot;total&quot;:0.013368944999996302}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L53" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="apply_tfms" class="level3">
+<h3 class="anchored" data-anchor-id="apply_tfms">apply_tfms</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_tfms(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    tfms, record:<span class="bu">dict</span>, train:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Run <code>tfms</code> over a record; <code>train_only</code> ones only when <a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a></em></p>
+</section>
+</div>
+<div id="ada93fbb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.316740+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.319126+00:00&quot;,&quot;total&quot;:0.002389424999989842}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L51" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tfms_from_json" class="level3">
+<h3 class="anchored" data-anchor-id="tfms_from_json">tfms_from_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tfms_from_json(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    ds</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</div>
+<div id="457298db" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.319220+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.321436+00:00&quot;,&quot;total&quot;:0.0022183650000044963}}" data-execution_count="6">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L50" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tfms_to_json" class="level3">
+<h3 class="anchored" data-anchor-id="tfms_to_json">tfms_to_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tfms_to_json(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    tfms</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</div>
+<div id="0dfb1a11" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.321511+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.323906+00:00&quot;,&quot;total&quot;:0.0023970300000115685}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L34" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="transform" class="level3">
+<h3 class="anchored" data-anchor-id="transform">Transform</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Transform(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args, <span class="op">**</span>kwargs</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Base class: <code>__call__(record) -&gt; record</code>, <code>to_json()</code>, and <code>train_only</code> for augmentation</em></p>
+</section>
+</div>
+<div id="967a7cf8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.323982+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.326317+00:00&quot;,&quot;total&quot;:0.0023389609999924232}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L26" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="transform-1" class="level3">
+<h3 class="anchored" data-anchor-id="transform-1">transform</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Register a <a href="https://sgaseretto.github.io/sysonelib/template.html#transform"><code>Transform</code></a> subclass under <code>name</code> so exports that use it stay loadable</em></p>
+</section>
+</div>
+<p>Most transforms act on text in three places, the state, each question’s instructions and each option’s description, and never on the labels, which are answer keys. <a href="https://sgaseretto.github.io/sysonelib/template.html#_map_text"><code>_map_text</code></a> walks a structured state and applies a function to every string leaf:</p>
+<div id="a3d9c025" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.329520+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.331884+00:00&quot;,&quot;total&quot;:0.0023671940000014047}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L93" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="lower" class="level3">
+<h3 class="anchored" data-anchor-id="lower">Lower</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Lower(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    state:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, instructions:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, options:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Lower-case the state, the instructions and the option descriptions</em></p>
+</section>
+</div>
+<div id="3f2e88a6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.331976+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.334462+00:00&quot;,&quot;total&quot;:0.002489832999998498}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L85" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="regex" class="level3">
+<h3 class="anchored" data-anchor-id="regex">Regex</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Regex(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    pattern:<span class="bu">str</span>, repl:<span class="bu">str</span><span class="op">=</span><span class="st">''</span>, state:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, instructions:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, options:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Replace <code>pattern</code> with <code>repl</code> in the state, the instructions and the option descriptions</em></p>
+</section>
+</div>
+<div id="be37611b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> Regex(<span class="vs">r"https</span><span class="op">?</span><span class="vs">://</span><span class="dv">\S</span><span class="op">+</span><span class="vs">"</span>, <span class="st">"&lt;url&gt;"</span>)({<span class="st">"state"</span>: {<span class="st">"page"</span>: <span class="st">"see https://x.com/a now"</span>}, <span class="st">"questions"</span>: {}})</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>test_eq(r[<span class="st">"state"</span>], {<span class="st">"page"</span>: <span class="st">"see &lt;url&gt; now"</span>})</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>low <span class="op">=</span> Lower()(rec)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>test_eq(low[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"instructions"</span>], rec[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"instructions"</span>].lower())</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">list</span>(low[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>]), <span class="bu">list</span>(rec[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#field"><code>Field</code></a> renders a structured state to text with a format string (nested keys use format’s own <code>{page[title]}</code> syntax, lists and dicts are written as JSON); <a href="https://sgaseretto.github.io/sysonelib/template.html#truncate"><code>Truncate</code></a> cuts the state text to a character budget, before tokenization, which is cheaper than letting the tokenizer see a 50 kB page:</p>
+<div id="ff466f00" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.336543+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.338824+00:00&quot;,&quot;total&quot;:0.002284620000011728}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L114" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="truncate" class="level3">
+<h3 class="anchored" data-anchor-id="truncate">Truncate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Truncate(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    state_chars:<span class="bu">int</span>, side:<span class="bu">str</span><span class="op">=</span><span class="st">'right'</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Cut the state text to <code>state_chars</code> characters, keeping the start (<code>side='right'</code>) or the end</em></p>
+</section>
+</div>
+<div id="6b52e314" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.338917+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.341160+00:00&quot;,&quot;total&quot;:0.002246377999995275}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L105" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="field" class="level3">
+<h3 class="anchored" data-anchor-id="field">Field</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Field(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    state:<span class="bu">str</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Render a dict state to text with a format string, e.g.&nbsp;<code>Field(state='{page[title]}\n{page[text]}')</code></em></p>
+</section>
+</div>
+<div id="3fa58219" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> {<span class="st">"page"</span>: {<span class="st">"title"</span>: <span class="st">"Shop"</span>, <span class="st">"text"</span>: <span class="st">"Shirts"</span>}, <span class="st">"recent_actions"</span>: [<span class="st">"open"</span>, <span class="st">"search"</span>]}</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>test_eq(Field(<span class="st">"</span><span class="sc">{page[title]}</span><span class="ch">\n</span><span class="sc">{page[text]}</span><span class="ch">\n</span><span class="st">recent actions: </span><span class="sc">{recent_actions}</span><span class="st">"</span>)({<span class="st">"state"</span>: st, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>],</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Shop</span><span class="ch">\n</span><span class="st">Shirts</span><span class="ch">\n</span><span class="st">recent actions: ["open", "search"]'</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>test_eq(Truncate(<span class="dv">5</span>)({<span class="st">"state"</span>: <span class="st">"abcdefgh"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"abcde"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>test_eq(Truncate(<span class="dv">5</span>, side<span class="op">=</span><span class="st">"left"</span>)({<span class="st">"state"</span>: <span class="st">"abcdefgh"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"defgh"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#shuffle"><code>Shuffle</code></a> reorders the options of choice questions, a training-time augmentation so the head cannot learn option positions. Gold answers are keyed by label, so they follow the options for free. Score levels are ordered and nouls have a fixed false/true order, so both are left alone. The permutation depends on the seed, the epoch (set by the <a href="https://sgaseretto.github.io/sysonelib/learner.html#optionshuffle"><code>OptionShuffle</code></a> callback in <code>sysone.learner</code>) and the case, so a run is reproducible and every epoch sees a new order:</p>
+<div id="2f89648d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.343081+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.345488+00:00&quot;,&quot;total&quot;:0.002411006000002658}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L125" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="shuffle" class="level3">
+<h3 class="anchored" data-anchor-id="shuffle">Shuffle</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Shuffle(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    options:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, train_only:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, seed:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Shuffle the options of choice questions (training only by default)</em></p>
+</section>
+</div>
+<div id="8a105a55" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sh <span class="op">=</span> Shuffle(seed<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> sh(rec)[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(a), <span class="bu">sorted</span>(rec[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>]))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>test_eq(sh(rec)[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>], a)                  <span class="co"># same epoch, same order</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>sh.set_epoch(<span class="dv">1</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>test_ne(<span class="bu">list</span>(sh(rec)[<span class="st">"questions"</span>][<span class="st">"action"</span>][<span class="st">"criteria"</span>]), <span class="bu">list</span>(a))     <span class="co"># a new epoch, a new order</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>test_eq(sh(rec)[<span class="st">"questions"</span>][<span class="st">"urgency"</span>], rec[<span class="st">"questions"</span>][<span class="st">"urgency"</span>])   <span class="co"># score levels keep their order</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> is the multimodal transform: it takes the image out of a state such as <code>{"text": ..., "image": "shots/0412.png"}</code>, loads it (a path, bytes or a PIL image), resizes it so its long side is <code>side</code> pixels, and keeps it in <code>record["images"]</code> for the processor, leaving the text as the state. It needs pillow (<code>sysone[multimodal]</code>), imported only when called.</p>
+<p><code>box</code> crops a region first, as (left, top, right, bottom) in the image’s own pixels, clipped to the image. It exists for screenshots of whole web pages. A Mind2Web page is 1,280 pixels wide and, at the median, 4,600 tall, so resized whole to 1,024 pixels on its long side it would be about 280 pixels wide, and its text unreadable. <code>Image(side=1024, box=(0, 0, 1280, 1280))</code> keeps the top 1,280 × 1,280 pixels instead, the first screen and a little more, where the element to act on is most of the time (the <a href="./tutorials/web_screens.html">screens tutorial</a> measures this). A screenshot smaller than the box passes through whole, so the same transform serves both the training pages and an agent’s viewport at inference. An <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> without a box describes itself as it did before <code>box</code> existed, so feature caches and exports made before stay valid.</p>
+<div id="41d1989d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.348800+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.351321+00:00&quot;,&quot;total&quot;:0.0025241769999979624}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L161" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="image" class="level3">
+<h3 class="anchored" data-anchor-id="image">Image</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Image(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    key:<span class="bu">str</span><span class="op">=</span><span class="st">'image'</span>, side:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">1024</span>, box:<span class="bu">tuple</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Move the image at <code>state[key]</code> into <code>record['images']</code>, cropped to <code>box</code> if given, resized to <code>side</code> px on the long side</em></p>
+</section>
+</div>
+<div id="699888e6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.351413+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.354680+00:00&quot;,&quot;total&quot;:0.003269871000000535}}" data-execution_count="20">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L143" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_image" class="level3">
+<h3 class="anchored" data-anchor-id="load_image">load_image</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_image(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    img, side:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, box:<span class="bu">tuple</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A PIL RGB image from a path, a base64 data URL, bytes or a PIL image, cropped to <code>box</code> (left, top, right, bottom), resized so its long side is <code>side</code></em></p>
+</section>
+</div>
+<div id="cd6397ad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.355094+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.386011+00:00&quot;,&quot;total&quot;:0.030919474000000946}}" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>test_eq(Image()({<span class="st">"state"</span>: <span class="st">"no image"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"no image"</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>test_eq(Image()({<span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">"only text"</span>}, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"only text"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> base64, io</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PIL <span class="im">import</span> Image <span class="im">as</span> PILImage</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> io.BytesIO()<span class="op">;</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">8</span>, <span class="dv">4</span>), <span class="st">"red"</span>).save(buf, <span class="st">"PNG"</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>test_eq(load_image(<span class="st">"data:image/png;base64,"</span> <span class="op">+</span> base64.b64encode(buf.getvalue()).decode(), side<span class="op">=</span><span class="dv">16</span>).size, (<span class="dv">16</span>, <span class="dv">8</span>))</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>js <span class="op">=</span> tfms_to_json([Field(<span class="st">"</span><span class="sc">{a}</span><span class="st">"</span>), Regex(<span class="vs">r"https</span><span class="op">?</span><span class="vs">://</span><span class="dv">\S</span><span class="op">+</span><span class="vs">"</span>, <span class="st">"&lt;url&gt;"</span>), Truncate(<span class="dv">1500</span>), Shuffle()])</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>js</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<pre><code>[{'name': 'Field', 'state': '{a}'},
+ {'name': 'Regex',
+  'pattern': 'https?://\\S+',
+  'repl': '&lt;url&gt;',
+  'state': True,
+  'instructions': True,
+  'options': True},
+ {'name': 'Truncate', 'state_chars': 1500, 'side': 'right'},
+ {'name': 'Shuffle', 'options': True, 'train_only': True, 'seed': 0}]</code></pre>
+</div>
+</div>
+<div id="101f600d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>page <span class="op">=</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">1280</span>, <span class="dv">4600</span>), <span class="st">"white"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>test_eq(load_image(page, side<span class="op">=</span><span class="dv">1024</span>, box<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1280</span>, <span class="dv">1280</span>)).size, (<span class="dv">1024</span>, <span class="dv">1024</span>))            <span class="co"># the top of a tall page, then resized</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>test_eq(load_image(PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">1280</span>, <span class="dv">800</span>)), box<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1280</span>, <span class="dv">1280</span>)).size, (<span class="dv">1280</span>, <span class="dv">800</span>))   <span class="co"># smaller than the box: whole</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>test_eq(Image(side<span class="op">=</span><span class="dv">1024</span>).to_json(), {<span class="st">"name"</span>: <span class="st">"Image"</span>, <span class="st">"key"</span>: <span class="st">"image"</span>, <span class="st">"side"</span>: <span class="dv">1024</span>})       <span class="co"># no box: the same description as before</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>test_eq(Transform.from_json(Image(side<span class="op">=</span><span class="dv">1024</span>, box<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1280</span>, <span class="dv">1280</span>]).to_json()).box, (<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1280</span>, <span class="dv">1280</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="83b522e4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>back <span class="op">=</span> tfms_from_json(js)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>test_eq([t.to_json() <span class="cf">for</span> t <span class="kw">in</span> back], js)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>test_eq(apply_tfms(back, {<span class="st">"state"</span>: {<span class="st">"a"</span>: <span class="st">"go to http://x.y"</span>}, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"go to &lt;url&gt;"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="side-streams" class="level3">
+<h3 class="anchored" data-anchor-id="side-streams">Side streams</h3>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> moves an image out of the state because a multimodal encoder reads it differently from text. The same holds for any input that has its own tokenizer or its own encoder: a protein sequence for a protein language model, a SMILES string for a chemistry model, a table for a table encoder. <code>Stream(key, stream)</code> moves <code>state[key]</code> into <code>record["streams"][stream]</code>. The rest of the state stays text, and the builder turns each stream into extra inputs of its own (see <a href="#side-stream-inputs">Side stream inputs</a> below):</p>
+<div id="bbaa0567" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.387732+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.390111+00:00&quot;,&quot;total&quot;:0.0023821420000018634}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L180" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stream" class="level3">
+<h3 class="anchored" data-anchor-id="stream">Stream</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Stream(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    key:<span class="bu">str</span>, stream:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Move <code>state[key]</code> out of the text and into the side stream <code>stream</code> (named <code>key</code> by default), which the encoder reads on its own</em></p>
+</section>
+</div>
+<div id="0222bf6d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> Stream(<span class="st">"sequence"</span>, <span class="st">"protein"</span>)({<span class="st">"state"</span>: {<span class="st">"sequence"</span>: <span class="st">"MKTAYIAK"</span>, <span class="st">"organism"</span>: <span class="st">"Homo sapiens"</span>}, <span class="st">"questions"</span>: {}})</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>test_eq((r[<span class="st">"state"</span>], r[<span class="st">"streams"</span>]), ({<span class="st">"organism"</span>: <span class="st">"Homo sapiens"</span>}, {<span class="st">"protein"</span>: <span class="st">"MKTAYIAK"</span>}))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>test_eq(Stream(<span class="st">"sequence"</span>)({<span class="st">"state"</span>: {<span class="st">"sequence"</span>: <span class="st">"MK"</span>, <span class="st">"text"</span>: <span class="st">"context"</span>}, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"context"</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>test_eq(Stream(<span class="st">"sequence"</span>)({<span class="st">"state"</span>: <span class="st">"plain text"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"plain text"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A transform of your own registers by name, so an export that uses it loads anywhere the class is importable:</p>
+<div id="a280b83a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="at">@transform</span>(<span class="st">"MaskEmails"</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MaskEmails(Transform):</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, repl<span class="op">=</span><span class="st">"&lt;email&gt;"</span>): store_attr()</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, record): <span class="cf">return</span> _map_record(record, <span class="kw">lambda</span> s: re.sub(<span class="vs">r"</span><span class="dv">\S</span><span class="op">+</span><span class="vs">@</span><span class="dv">\S</span><span class="op">+</span><span class="vs">"</span>, <span class="va">self</span>.repl, s), options<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>test_eq(Transform.from_json({<span class="st">"name"</span>: <span class="st">"MaskEmails"</span>})({<span class="st">"state"</span>: <span class="st">"from a@b.com"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"from &lt;email&gt;"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="rowtemplate" class="level2">
+<h2 class="anchored" data-anchor-id="rowtemplate">RowTemplate</h2>
+<p>A <a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate"><code>RowTemplate</code></a> is one format string plus the special tokens and the budgets. <code>row</code> may use <code>{start}</code>, <code>{sep}</code>, <code>{end}</code>, <code>{mask}</code> and <code>{image}</code> for the special tokens, <code>{type}</code> and <code>{instructions}</code> for the question, <code>{options}</code> for the options and <code>{state}</code> for the state; <code>option</code> is the text of one option, with exactly one <code>{mask}</code>: before its <code>{text}</code>, Laya’s <em>anchor</em>, or after it, an <em>answer slot</em> as in <code>"{text}: {mask}"</code>. Budgets are Laya’s: every option at most <code>option_tokens</code> text tokens, question and options within <code>head_max_len</code>, the whole row within <code>max_len</code>, and the state gets what is left.</p>
+<div id="cbb98462" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.393615+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.397203+00:00&quot;,&quot;total&quot;:0.003591041000007067}}" data-execution_count="25">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L211" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate-1" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate-1">RowTemplate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> RowTemplate(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    start:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="st">'[CLS]'</span>, <span class="co"># token that opens the row</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    sep:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="st">'[SEP]'</span>, <span class="co"># token between sections</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    mask:<span class="bu">str</span><span class="op">=</span><span class="st">'[MASK]'</span>, <span class="co"># the anchor, or answer slot, of every option; must be one token</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    end:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="st">'[SEP]'</span>, <span class="co"># token that closes the row</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    image:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># image placeholder token, for processor encoders</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    row:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{start}{type}</span><span class="st"> question: </span><span class="sc">{instructions}{sep}{options}{sep}{state}{end}</span><span class="st">'</span>, <span class="co"># the row's format string</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    option:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{mask}</span><span class="st"> </span><span class="sc">{text}</span><span class="st">'</span>, <span class="co"># one option's format string, with exactly one {mask}, before or after its {text}</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">512</span>, <span class="co"># tokens per row, image positions included</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    head_max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">192</span>, <span class="co"># tokens for the question and its options</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    option_tokens:<span class="bu">int</span><span class="op">=</span><span class="dv">48</span>, <span class="co"># text tokens per option</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    truncate:<span class="bu">str</span><span class="op">=</span><span class="st">'right'</span>, <span class="co"># cut long states on the "right", "left", or "auto" (left for conversation lists, as Laya does)</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    option_sep:<span class="bu">str</span><span class="op">=</span><span class="st">''</span>, <span class="co"># text between options; tokenizer rows concatenate the option chunks</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    kinds:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># per question type, an options block that replaces the defaults: {"header", "option", "sep"}</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    tfms:<span class="bu">list</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># transforms saved with the template</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># preset name, for display</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>How a question and a state are laid out as one row, which special tokens it uses, and the token budgets</em></p>
+</section>
+</div>
+<div id="ae5768b3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.399184+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.401525+00:00&quot;,&quot;total&quot;:0.002343370000005507}}" data-execution_count="27">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L264" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.hash" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.hash">RowTemplate.hash</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="bu">hash</span>()<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A short digest of the template and its transforms, part of the feature-cache key</em></p>
+</section>
+</div>
+<div id="9e7401a9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.401602+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.403895+00:00&quot;,&quot;total&quot;:0.002295248999999444}}" data-execution_count="28">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L259" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.replace" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.replace">RowTemplate.replace</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> replace(</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A copy with some fields changed</em></p>
+</section>
+</div>
+<div id="11c5580c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.403983+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.406375+00:00&quot;,&quot;total&quot;:0.0023943549999927427}}" data-execution_count="29">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L254" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.from_json" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.from_json">RowTemplate.from_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_json(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    d:<span class="bu">dict</span>, tfms:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The template described by a <code>to_json()</code> result</em></p>
+</section>
+</div>
+<div id="7b867a1a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.406453+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.408760+00:00&quot;,&quot;total&quot;:0.0023105180000015935}}" data-execution_count="30">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L249" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.to_json" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.to_json">RowTemplate.to_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> to_json()<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The template as it is written to <code>sysone.json</code> (transforms are written beside it); <code>kinds</code> only when set, so older templates keep their hash</em></p>
+</section>
+</div>
+<section id="presets" class="level3">
+<h3 class="anchored" data-anchor-id="presets">Presets</h3>
+<p><code>laya</code> is read off ModernBERT’s tokenizer and Laya’s runtime, including its truncation rule (a conversation list keeps its end); given a tokenizer, it takes that tokenizer’s cls, sep and mask tokens, as Laya’s runtime does, so mmBERT’s <code>&lt;bos&gt;</code>, <code>&lt;eos&gt;</code> and <code>&lt;mask&gt;</code> work unchanged. <code>gliner</code> is GLiNER2’s own layout on the Decide tokenizer with its trained <code>[L]</code> as the anchor, and, as GLiNER2’s processor builds it, no <code>[CLS]</code> or <code>[SEP]</code> around the row. <code>neomme</code> is NeoMME’s: a <code>&lt;doc&gt;</code> prefix, <code>&lt;mask&gt;</code>, <code>&lt;img&gt;</code>, no separator tokens and nothing appended, so the sections and the options are separated by newlines, and each option is <code>&lt;mask&gt;</code> directly followed by its text (NeoMME’s tokenizer merges a space into the next word, and its masks were trained in place of whole tokens); <code>neomme_page_first</code> puts the page, image and text, before the question, the layout NeoMME’s pretraining saw for pages. <code>modernvbert</code> is Laya’s layout on ModernBERT’s <code>[CLS]</code>, <code>[SEP]</code> and <code>[MASK]</code>, with the image, ModernVBERT’s <code>&lt;image&gt;</code> block, between the options and the state, and a longer row budget for the image’s tokens (see <a href="./modernvbert.html">ModernVBERT</a>). <code>auto</code> reads cls, sep and mask off a tokenizer and fails naming the tokens it could not find.</p>
+<div id="2371a1d4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.411240+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.414344+00:00&quot;,&quot;total&quot;:0.003106746000000271}}" data-execution_count="32">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L293" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.preset" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.preset">RowTemplate.preset</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> preset(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span>, tokenizer:NoneType<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>overrides</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A named template (<code>laya</code>, <code>gliner</code>, <code>neomme</code>, <code>neomme_page_first</code>, <code>modernvbert</code>, <code>auto</code>), optionally with fields changed</em></p>
+</section>
+</div>
+<div id="f60af83d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.414420+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.416678+00:00&quot;,&quot;total&quot;:0.002260774999996329}}" data-execution_count="33">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L287" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="register_preset" class="level3">
+<h3 class="anchored" data-anchor-id="register_preset">register_preset</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> register_preset(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span>, <span class="op">**</span>fields</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Add a named template, as an application does for its encoder’s layout</em></p>
+</section>
+</div>
+<div id="3f4fa705" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>laya <span class="op">=</span> RowTemplate.preset(<span class="st">"laya"</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>laya</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>RowTemplate(laya: '{start}{type} question: {instructions}{sep}{options}{sep}{state}{end}', option='{mask} {text}', mask='[MASK]', budgets 512/192/48)</code></pre>
+</div>
+</div>
+<div id="98d908fa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.from_json(laya.to_json()).to_json(), laya.to_json())</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.preset(<span class="st">"laya"</span>, mask<span class="op">=</span><span class="st">"[L]"</span>).mask, <span class="st">"[L]"</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>test_ne(RowTemplate.preset(<span class="st">"laya"</span>, mask<span class="op">=</span><span class="st">"[L]"</span>).<span class="bu">hash</span>, laya.<span class="bu">hash</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.preset(<span class="st">"auto"</span>, tokenizer<span class="op">=</span>tok).to_json() <span class="op">|</span> {<span class="st">"name"</span>: <span class="st">"laya"</span>}, laya.to_json())</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.preset(<span class="st">"laya"</span>, tokenizer<span class="op">=</span>tok).to_json(), laya.to_json())</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowTemplate(row<span class="op">=</span><span class="st">"</span><span class="sc">{start}{options}</span><span class="st">"</span>), contains<span class="op">=</span><span class="st">"</span><span class="sc">{state}</span><span class="st">"</span>)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate(option<span class="op">=</span><span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>).option, <span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>)             <span class="co"># an answer slot after the text</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowTemplate(option<span class="op">=</span><span class="st">"</span><span class="sc">{text}</span><span class="st">"</span>), contains<span class="op">=</span><span class="st">"exactly one </span><span class="sc">{mask}</span><span class="st">"</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowTemplate(option<span class="op">=</span><span class="st">"</span><span class="sc">{mask}</span><span class="st"> </span><span class="sc">{text}</span><span class="st"> </span><span class="sc">{mask}</span><span class="st">"</span>), contains<span class="op">=</span><span class="st">"exactly one </span><span class="sc">{mask}</span><span class="st">"</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowTemplate(kinds<span class="op">=</span>{<span class="st">"choise"</span>: {<span class="st">"option"</span>: <span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>}}), contains<span class="op">=</span><span class="st">"unknown question type"</span>)</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>test_eq({n: RowTemplate.preset(n).<span class="bu">hash</span> <span class="cf">for</span> n <span class="kw">in</span> (<span class="st">"laya"</span>, <span class="st">"gliner"</span>, <span class="st">"neomme"</span>, <span class="st">"neomme_page_first"</span>, <span class="st">"modernvbert"</span>)},</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"laya"</span>: <span class="st">"902cc3281b08ec92"</span>, <span class="st">"gliner"</span>: <span class="st">"5b3b625c56900307"</span>, <span class="st">"neomme"</span>: <span class="st">"77c781f4e3d45b89"</span>,</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">"neomme_page_first"</span>: <span class="st">"bd5d35d9d415bf5a"</span>, <span class="st">"modernvbert"</span>: <span class="st">"1f5a953c41e8ec0f"</span>})       <span class="co"># pinned: the feature caches stay valid</span></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowTemplate(row<span class="op">=</span><span class="st">"</span><span class="sc">{start}{question}{options}{state}</span><span class="st">"</span>), contains<span class="op">=</span><span class="st">"unknown field"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="options-blocks-per-kind-and-chat-rows" class="level3">
+<h3 class="anchored" data-anchor-id="options-blocks-per-kind-and-chat-rows">Options blocks per kind, and chat rows</h3>
+<p>A template lays every question’s options out the same way unless <code>kinds</code> says otherwise. <code>kinds</code> maps a question type to a block with a <code>header</code> (text before the options), its own <code>option</code> format and its own <code>sep</code>. <code>option_block(template, q)</code> is the generic function that resolves a question’s block, dispatched on the question’s kind like <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_fields"><code>answer_fields</code></a>. An application with its own kinds of layout registers a method instead of editing the builder.</p>
+<p>A block whose <code>option</code> has no <code>{text}</code> is a <em>shared slot</em>: the question’s options are not written out, and one slot is read for all of them. It is how a yes/no question is asked when the model answers it at a single mask (<code>"Answer Yes or No.\nAnswer:{mask}"</code>). Both options get a marker at that one position, and a head reads the pair as one score (see <a href="./models.html">models</a>).</p>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate.chat"><code>RowTemplate.chat</code></a> builds a row from a model’s own chat template: the <code>user</code> message holds the row’s fields, the chat markup around it becomes literal text in the row, and every field is tokenized in its own segment as usual.</p>
+<div id="07322b4a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.418995+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.421777+00:00&quot;,&quot;total&quot;:0.002785164999991707}}" data-execution_count="35">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L319" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowtemplate.chat" class="level3">
+<h3 class="anchored" data-anchor-id="rowtemplate.chat">RowTemplate.chat</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> chat(</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    tokenizer, user:<span class="bu">str</span>, system:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A template whose row is <code>tokenizer</code>’s chat template around a <code>system</code> message and a <code>user</code> message holding the row’s fields</em></p>
+</section>
+</div>
+<div id="525e66c2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.421852+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.424080+00:00&quot;,&quot;total&quot;:0.0022310989999994035}}" data-execution_count="36">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L314" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="shared_slot" class="level3">
+<h3 class="anchored" data-anchor-id="shared_slot">shared_slot</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shared_slot(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    option:<span class="bu">str</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">bool</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Whether an option format with no {text} makes one slot for all of a question’s options</em></p>
+</section>
+</div>
+<div id="9ca3fa35" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>yn <span class="op">=</span> RowTemplate(start<span class="op">=</span><span class="va">None</span>, sep<span class="op">=</span><span class="va">None</span>, end<span class="op">=</span><span class="va">None</span>, row<span class="op">=</span><span class="st">"Q: </span><span class="sc">{instructions}</span><span class="ch">\n</span><span class="sc">{options}</span><span class="ch">\n</span><span class="sc">{state}</span><span class="st">"</span>, option<span class="op">=</span><span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>, option_sep<span class="op">=</span><span class="st">"</span><span class="ch">\n</span><span class="st">"</span>,</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>                 kinds<span class="op">=</span>{<span class="st">"noul"</span>: {<span class="st">"header"</span>: <span class="st">"Answer:"</span>, <span class="st">"option"</span>: <span class="st">"</span><span class="sc">{mask}</span><span class="st">"</span>, <span class="st">"sep"</span>: <span class="st">""</span>}})</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>test_eq(option_block(yn, Question(<span class="st">"choice"</span>, <span class="st">"Which?"</span>, [<span class="st">"a"</span>, <span class="st">"b"</span>])), {<span class="st">"header"</span>: <span class="st">""</span>, <span class="st">"option"</span>: <span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>, <span class="st">"sep"</span>: <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>})</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>test_eq(option_block(yn, Question(<span class="st">"noul"</span>, <span class="st">"Holds?"</span>)), {<span class="st">"header"</span>: <span class="st">"Answer:"</span>, <span class="st">"option"</span>: <span class="st">"</span><span class="sc">{mask}</span><span class="st">"</span>, <span class="st">"sep"</span>: <span class="st">""</span>})</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>test_eq((shared_slot(<span class="st">"</span><span class="sc">{mask}</span><span class="st">"</span>), shared_slot(<span class="st">"</span><span class="sc">{text}</span><span class="st">: </span><span class="sc">{mask}</span><span class="st">"</span>)), (<span class="va">True</span>, <span class="va">False</span>))</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.from_json(yn.to_json()).kinds, yn.kinds)</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>test_eq(yn.replace(max_len<span class="op">=</span><span class="dv">64</span>).kinds, yn.kinds)</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>test_ne(yn.<span class="bu">hash</span>, yn.replace(kinds<span class="op">=</span><span class="va">None</span>).<span class="bu">hash</span>)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>test_eq(methods(option_block), [(<span class="st">"RowTemplate"</span>, <span class="st">"Question"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="rowbuilder" class="level2">
+<h2 class="anchored" data-anchor-id="rowbuilder">RowBuilder</h2>
+<p><code>RowBuilder(tokenizer, template, tfms)</code> turns a record into rows. The row format compiles into segments: special tokens, <em>runs</em> of literal text and the <code>{type}</code>/<code>{instructions}</code> fields, the options, and the state. Each segment is tokenized on its own and the ids are concatenated, so marker positions are exact and the budgets apply per segment:</p>
+<ol type="1">
+<li>every option is its anchor (or slot) id and at most <code>option_tokens</code> text tokens;</li>
+<li>if the options leave the question fewer than 16 of the <code>head_max_len</code> tokens, every option is cut to an equal share (at least 4 tokens); only text is cut, so the anchor or slot survives;</li>
+<li>the run holding the instructions gets whatever <code>head_max_len</code> has left, at least 8 tokens;</li>
+<li>the state gets the rest of <code>max_len</code>, cut on the right, or on the left with <code>truncate="left"</code>.</li>
+</ol>
+<p>Whitespace that follows the state in the row’s text (the blank line before <code>Question:</code>, say) is tokenized with the state rather than with the next segment, as a tokenizer reading the whole row in one call would: byte-level BPE tokenizers merge a state’s closing <code>}</code> or <code>.</code> with the newlines after it. None of the presets puts text right after the state, so their rows are unaffected.</p>
+<p>These are Laya’s <code>build_sequence</code> rules, so on Laya’s template the rows are identical to Laya’s, token for token (tested below against the <code>laya</code> package). A special token that is not a single token of the vocabulary, such as NeoMME’s newline separator, is tokenized as text. The anchor is scrubbed from user text so a stray <code>[MASK]</code> in a state cannot become a marker.</p>
+<div id="1ba96e12" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.429204+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.432214+00:00&quot;,&quot;total&quot;:0.003012780999995357}}" data-execution_count="39">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L356" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder-1" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder-1">RowBuilder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> RowBuilder(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    tokenizer, template:__main__.RowTemplate <span class="op">|</span> <span class="bu">str</span><span class="op">=</span><span class="st">'laya'</span>, tfms:<span class="bu">list</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, streams:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Build rows from records with a tokenizer (or a processor, for multimodal encoders) and a <a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate"><code>RowTemplate</code></a></em></p>
+</section>
+</div>
+<div id="d02958de" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>builder <span class="op">=</span> RowBuilder(tok, <span class="st">"laya"</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>test_eq(builder.ids, {<span class="st">"start"</span>: tok.cls_token_id, <span class="st">"sep"</span>: tok.sep_token_id, <span class="st">"end"</span>: tok.sep_token_id, <span class="st">"mask"</span>: tok.mask_token_id, <span class="st">"image"</span>: <span class="va">None</span>})</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowBuilder(tok, RowTemplate.preset(<span class="st">"laya"</span>, mask<span class="op">=</span><span class="st">"[L]"</span>)), contains<span class="op">=</span><span class="st">"not a single token"</span>)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>builder</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>RowBuilder(TokenizersBackend tokenizer, RowTemplate(laya: '{start}{type} question: {instructions}{sep}{options}{sep}{state}{end}', option='{mask} {text}', mask='[MASK]', budgets 512/192/48), tfms=[])</code></pre>
+</div>
+</div>
+<section id="tokenizing-a-record" class="level3">
+<h3 class="anchored" data-anchor-id="tokenizing-a-record">Tokenizing a record</h3>
+<p><code>_texts</code> collects everything a record needs tokenized, the state once and each question’s runs and options, so one batched tokenizer call serves the whole case. The helpers below render a run for a question, find the part of a run that may be cut (the literal text after the field is kept), and cut it:</p>
+<div id="8f922c6a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>test_eq(_render_run([(<span class="st">"field"</span>, <span class="st">"type"</span>), (<span class="st">"lit"</span>, <span class="st">" question: "</span>), (<span class="st">"field"</span>, <span class="st">"instructions"</span>)], Question(<span class="st">"noul"</span>, <span class="st">"Is it?"</span>)), (<span class="st">"noul question: Is it?"</span>, <span class="st">""</span>))</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>test_eq(_render_run([(<span class="st">"lit"</span>, <span class="st">"( [P] "</span>), (<span class="st">"field"</span>, <span class="st">"type"</span>), (<span class="st">"lit"</span>, <span class="st">": "</span>), (<span class="st">"field"</span>, <span class="st">"instructions"</span>), (<span class="st">"lit"</span>, <span class="st">" ( "</span>)], Question(<span class="st">"noul"</span>, <span class="st">"Is it?"</span>)),</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>        (<span class="st">"( [P] noul: Is it? ( "</span>, <span class="st">" ( "</span>))</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>test_eq(_cut([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">9</span>], <span class="dv">4</span>, [<span class="dv">9</span>]), [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">9</span>])</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>test_eq(_cut([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], <span class="dv">4</span>, [<span class="dv">9</span>]), [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="assembling-a-row" class="level3">
+<h3 class="anchored" data-anchor-id="assembling-a-row">Assembling a row</h3>
+<p><code>_assemble</code> applies the budgets to one question’s tokenized pieces and lays the segments out in template order, recording where each option’s anchor or slot lands, and which of its tokens are its own text (its span). A shared slot is one chunk whose position is every option’s marker:</p>
+</section>
+<section id="building-rows" class="level3">
+<h3 class="anchored" data-anchor-id="building-rows">Building rows</h3>
+<p><code>build_record</code> runs the transforms over a whole case, tokenizes it with one call (<code>_layout</code>), and returns one <a href="https://sgaseretto.github.io/sysonelib/core.html#row"><code>Row</code></a> per question, each carrying the target distribution and label when the record has gold. A question whose options do not fit the budget is an error at inference and is skipped, with a count, when building training data. <code>build</code> is the one-question convenience.</p>
+<p>A builder on a processor hands the record to <a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a>, a generic function that dispatches on the processor’s class (see <a href="./core.html#generic-functions-and-multiple-dispatch">generic functions</a>). Each multimodal encoder lays an image out its own way (NeoMME as a patch grid with two-axis positions, ModernVBERT as tiles of <code>&lt;image&gt;</code> tokens), while the text around it follows the template’s budgets as for any row. Two more generic functions on the processor tell the <a href="./neomme.html#a-head-only-run">multimodal application</a> what an encoder’s images need. <code>default_image_side(processor)</code> is the side they are resized to unless the caller says otherwise, and <code>prepare_processor(processor, side)</code> sets the processor up for that side and says how many images each row then carries (a tiling processor makes several of one). Their fallbacks import sysone’s own adapter for the class on first use. Without an adapter, <a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a> fails with a message, and the image defaults are the neutral ones: images as they are, one per row.</p>
+<div id="8b6ef7dc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.447791+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.450301+00:00&quot;,&quot;total&quot;:0.002513277000005587}}" data-execution_count="45">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L588" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder.build" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder.build">RowBuilder.build</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    state, question, gold:NoneType<span class="op">=</span><span class="va">None</span>, name:<span class="bu">str</span><span class="op">=</span><span class="st">'q'</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.core.Row:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The row for one question over one state</em></p>
+</section>
+</div>
+<div id="8c004bee" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.450380+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.453253+00:00&quot;,&quot;total&quot;:0.002876306000004547}}" data-execution_count="46">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L539" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder.build_record" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder.build_record">RowBuilder.build_record</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_record(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    record:<span class="bu">dict</span>, train:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, skip_errors:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, tfms:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>One <a href="https://sgaseretto.github.io/sysonelib/core.html#row"><code>Row</code></a> per question of a record (a case with <code>state</code>, <code>questions</code>, optional <code>gold</code>)</em></p>
+</section>
+</div>
+<div id="3b430739" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Unknown: <span class="cf">pass</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: processor_rows(_Unknown(), <span class="va">None</span>, {}), contains<span class="op">=</span><span class="st">"no row builder for a _Unknown"</span>)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>test_eq((default_image_side(_Unknown()), prepare_processor(_Unknown(), <span class="dv">512</span>)), (<span class="va">None</span>, <span class="dv">1</span>))       <span class="co"># the neutral defaults</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A processor sysone has never met gets rows as soon as a method for its class is registered, which is all an encoder’s adapter does:</p>
+<div id="4ff70188" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Toy: <span class="st">"a processor from a library sysone doesn't know"</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _toy_rows(processor:_Toy, builder, record:<span class="bu">dict</span>, <span class="op">*</span>, skip_errors:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>) <span class="op">-&gt;</span> <span class="bu">list</span>: <span class="cf">return</span> [<span class="ss">f"a row for </span><span class="sc">{</span>record[<span class="st">'id'</span>]<span class="sc">}</span><span class="ss">"</span>]</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>processor_rows.register(_toy_rows)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>test_eq(processor_rows(_Toy(), <span class="va">None</span>, {<span class="st">"id"</span>: <span class="st">"r1"</span>}), [<span class="st">"a row for r1"</span>])</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>methods(processor_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[('object', 'Any', 'dict'), ('_Toy', 'Any', 'dict')]</code></pre>
+</div>
+</div>
+<p>One more generic function on the processor goes the other way, from a row back to the picture. <code>pixel_tiles(processor, row, values)</code> returns what a row’s pixels show, as images with values in [0, 1], and it lays <code>values</code>, a number for every pixel value (an attribution, in <a href="./interpret.html">interpret</a>), over them the same way, summed over the colour channels. Its default reads pixels laid out as tiles, <code>(n, 3, H, W)</code>, which <a href="https://sgaseretto.github.io/sysonelib/template.html#tile_arrays"><code>tile_arrays</code></a> turns back into images, undoing the processor’s normalisation and cutting off the padding its pixel mask marks. An adapter whose processor lays pixels out differently, or which can put tiles back together, registers its own method.</p>
+<div id="32865090" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.461837+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.465088+00:00&quot;,&quot;total&quot;:0.0032534300000008898}}" data-execution_count="52">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L594" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tile_arrays" class="level3">
+<h3 class="anchored" data-anchor-id="tile_arrays">tile_arrays</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tile_arrays(</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    processor, row:sysone.core.Row, values:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Pixels laid out as tiles (n, 3, H, W) as images in [0, 1], cut to their pixel mask, and <code>values</code> (…, n, 3, H, W) summed over the colours and cut alike</em></p>
+</section>
+</div>
+<div id="fe0d721f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>fake <span class="op">=</span> SimpleNamespace(image_mean<span class="op">=</span>[<span class="fl">0.5</span>] <span class="op">*</span> <span class="dv">3</span>, image_std<span class="op">=</span>[<span class="fl">0.5</span>] <span class="op">*</span> <span class="dv">3</span>)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> torch.zeros(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">4</span>)<span class="op">;</span> px[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> <span class="fl">1.0</span>                                     <span class="co"># red, after the processor's normalisation</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>pm <span class="op">=</span> torch.zeros(<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">4</span>, dtype<span class="op">=</span>torch.<span class="bu">bool</span>)<span class="op">;</span> pm[<span class="dv">0</span>, :<span class="dv">3</span>, :<span class="dv">2</span>] <span class="op">=</span> <span class="va">True</span>                 <span class="co"># 3 × 2 real pixels, the rest padding</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>r_img <span class="op">=</span> Row([<span class="dv">0</span>], [<span class="dv">0</span>], <span class="dv">0</span>, extras<span class="op">=</span>{<span class="st">"pixel_values"</span>: px, <span class="st">"pixel_attention_mask"</span>: pm})</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>tiles, vals <span class="op">=</span> pixel_tiles(fake, r_img, np.ones((<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">4</span>)))</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(tiles), tiles[<span class="dv">0</span>].shape, vals[<span class="dv">0</span>].shape), (<span class="dv">1</span>, (<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>), (<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>)))</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>test_close(tiles[<span class="dv">0</span>][<span class="dv">0</span>, <span class="dv">0</span>], [<span class="fl">1.0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>])<span class="op">;</span> test_eq(vals[<span class="dv">0</span>][<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>], <span class="fl">3.0</span>)        <span class="co"># values summed over the three colours</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="9c44ed23" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> builder.build_record(rec)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>[(r.meta[<span class="st">"qid"</span>], r.n_tokens, r.markers) <span class="cf">for</span> r <span class="kw">in</span> rows]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[('action', 163, [20, 31, 45, 60]),
+ ('needs_review', 129, [15, 24]),
+ ('outcome', 170, [18, 30, 48, 65]),
+ ('risk', 178, [21, 36, 48, 64]),
+ ('urgency', 168, [18, 31, 44, 59])]</code></pre>
+</div>
+</div>
+<div id="7b4eea22" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>r0 <span class="op">=</span> rows[<span class="dv">0</span>]</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>test_eq([r0.ids[m] <span class="cf">for</span> m <span class="kw">in</span> r0.markers], [tok.mask_token_id] <span class="op">*</span> <span class="dv">4</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>test_eq((r0.ids[<span class="dv">0</span>], r0.ids[<span class="op">-</span><span class="dv">1</span>]), (tok.cls_token_id, tok.sep_token_id))</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>test_eq(r0.label, <span class="dv">1</span>)  <span class="co"># human_review</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>test_eq(builder.build(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>][<span class="st">"action"</span>], rec[<span class="st">"gold"</span>][<span class="st">"action"</span>]).ids, r0.ids)</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>test_eq([r0.ids[m] <span class="cf">for</span> m <span class="kw">in</span> r0.markers], [r0.ids[s <span class="op">-</span> <span class="dv">1</span>] <span class="cf">for</span> s, e <span class="kw">in</span> r0.spans])   <span class="co"># each option's tokens start right after its anchor</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>test_eq(r0.answerable, <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Each row also records the span of every option’s own tokens, from just after its anchor to the end of its text: a head can read an option as the mean of those tokens instead of at the anchor, which helps when the encoder stays frozen and its anchor token was never trained to summarise what follows it (see <a href="./models.html#readouts-and-queries">models</a>):</p>
+<div id="2f524cb4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>s, e <span class="op">=</span> r0.spans[<span class="dv">1</span>]</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>tok.decode(r0.ids[s:e])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>' human_review: Queue this trace for a human to review.'</code></pre>
+</div>
+</div>
+</section>
+<section id="side-stream-inputs" class="level3">
+<h3 class="anchored" data-anchor-id="side-stream-inputs">Side stream inputs</h3>
+<p>A side stream moved out of the state by <a href="https://sgaseretto.github.io/sysonelib/template.html#stream"><code>Stream</code></a> becomes inputs of its own, which the encoder reads next to the row’s ids. <a href="https://sgaseretto.github.io/sysonelib/template.html#tokenstream"><code>TokenStream</code></a> tokenizes it with its own tokenizer, adds that tokenizer’s special tokens and crops it to <code>max_len</code> tokens. It crops on the <code>right</code> (keep the start), on the <code>left</code> (keep the end), or at the <code>ends</code> (keep the start and the end, dropping the middle), which suits inputs whose informative parts sit at both extremes, such as the targeting signals at a protein’s two termini. Its ids and attention mask are extras of every row of the record, collated with the tokenizer’s own pad id, so several questions about one protein share one protein input.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    R["record: state = {sequence, text}"] --&gt; S["Stream('sequence', 'protein')"]
+    S --&gt; T["state text → the row&lt;br/&gt;(question, anchors, options)"]
+    S --&gt; P["streams['protein'] →&lt;br/&gt;TokenStream: its own tokenizer, cropped"]
+    T --&gt; X["input_ids, markers, spans"]
+    P --&gt; Y["protein_input_ids,&lt;br/&gt;protein_attention_mask"]
+    X --&gt; B["one Row per question"]
+    Y --&gt; B
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div id="4bd87ca4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.468741+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.471124+00:00&quot;,&quot;total&quot;:0.0023866800000007515}}" data-execution_count="54">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L651" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stream_from_json" class="level3">
+<h3 class="anchored" data-anchor-id="stream_from_json">stream_from_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stream_from_json(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    d:<span class="bu">dict</span>, tokenizer</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The side stream described by <code>to_json()</code>, on <code>tokenizer</code></em></p>
+</section>
+</div>
+<div id="d41b0fd1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.471207+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.473924+00:00&quot;,&quot;total&quot;:0.002718972000010922}}" data-execution_count="55">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L618" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tokenstream" class="level3">
+<h3 class="anchored" data-anchor-id="tokenstream">TokenStream</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> TokenStream(</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span>, <span class="co"># the stream, as `Stream` names it; its inputs are `{name}_input_ids` and `{name}_attention_mask`</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    tokenizer, <span class="co"># the stream's tokenizer</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">1024</span>, <span class="co"># tokens, special tokens included</span></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    crop:<span class="bu">str</span><span class="op">=</span><span class="st">'right'</span>, <span class="co"># "right" keeps the start, "left" the end, "ends" the start and the end</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A side stream tokenized by its own tokenizer; its ids and attention mask ride in every row of the record</em></p>
+</section>
+</div>
+<p>Any tokenizer can serve a stream; the fixture’s text tokenizer stands in for a protein tokenizer here. Two questions over one record share one stream input, and a record without the stream gets only the special tokens:</p>
+<div id="30ff0bbe" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>notes <span class="op">=</span> TokenStream(<span class="st">"notes"</span>, tok, max_len<span class="op">=</span><span class="dv">12</span>, crop<span class="op">=</span><span class="st">"ends"</span>)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>sb <span class="op">=</span> RowBuilder(tok, <span class="st">"laya"</span>, tfms<span class="op">=</span>[Stream(<span class="st">"notes"</span>)], streams<span class="op">=</span>[notes])</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>srec <span class="op">=</span> {<span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">"Customer asks for a refund."</span>, <span class="st">"notes"</span>: <span class="st">"the order number is 4411 and it was charged twice last week"</span>},</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"questions"</span>: {<span class="st">"dept"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which team?"</span>, <span class="st">"criteria"</span>: [<span class="st">"billing"</span>, <span class="st">"support"</span>]},</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"urgent"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Is it urgent?"</span>}}}</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>srows <span class="op">=</span> sb.build_record(srec)</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(srows), <span class="dv">2</span>)</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>test_eq(srows[<span class="dv">0</span>].extras[<span class="st">"notes_input_ids"</span>], srows[<span class="dv">1</span>].extras[<span class="st">"notes_input_ids"</span>])</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>ids <span class="op">=</span> srows[<span class="dv">0</span>].extras[<span class="st">"notes_input_ids"</span>]</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(ids), ids[<span class="dv">0</span>], ids[<span class="op">-</span><span class="dv">1</span>], notes.stats[<span class="st">"cropped"</span>]), (<span class="dv">12</span>, tok.cls_token_id, tok.sep_token_id, <span class="dv">1</span>))</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>full <span class="op">=</span> tok(<span class="st">"the order number is 4411 and it was charged twice last week"</span>, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>]</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>test_eq(ids[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>], full[:<span class="dv">5</span>] <span class="op">+</span> full[<span class="op">-</span><span class="dv">5</span>:])                        <span class="co"># "ends": the start and the end, the middle dropped</span></span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>test_eq(sb.build_record({<span class="op">**</span>srec, <span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">"no notes"</span>}})[<span class="dv">0</span>].extras[<span class="st">"notes_input_ids"</span>], [tok.cls_token_id, tok.sep_token_id])</span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>test_eq(collate(srows)[<span class="st">"notes_input_ids"</span>].shape, (<span class="dv">2</span>, <span class="dv">12</span>))</span>
+<span id="cb57-15"><a href="#cb57-15" aria-hidden="true" tabindex="-1"></a>sb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>RowBuilder(TokenizersBackend tokenizer, RowTemplate(laya: '{start}{type} question: {instructions}{sep}{options}{sep}{state}{end}', option='{mask} {text}', mask='[MASK]', budgets 512/192/48), tfms=[Stream(key='notes', stream='notes')], streams=[TokenStream(notes: TokenizersBackend, max_len=12, crop='ends')])</code></pre>
+</div>
+</div>
+</section>
+<section id="showing-rows" class="level3">
+<h3 class="anchored" data-anchor-id="showing-rows">Showing rows</h3>
+<p><a href="https://sgaseretto.github.io/sysonelib/template.html#show_row"><code>show_row</code></a> decodes a row with its anchors visible and the state shortened, fastai’s <code>show_batch</code> habit: the quickest way to catch a wrong separator or a lost anchor, which would otherwise silently ruin a model. Runs of one repeated token, such as the patch placeholders of an image, are collapsed to <code>token×n</code>.</p>
+<div id="077776df" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.476740+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.479045+00:00&quot;,&quot;total&quot;:0.002307993000002284}}" data-execution_count="57">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L683" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder.show" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder.show">RowBuilder.show</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> show(</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    record:<span class="bu">dict</span>, max_chars:<span class="bu">int</span><span class="op">=</span><span class="dv">300</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Print the rows of a record</em></p>
+</section>
+</div>
+<div id="1fed9ac4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.479117+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.481811+00:00&quot;,&quot;total&quot;:0.0026959079999926416}}" data-execution_count="58">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L674" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="show_row" class="level3">
+<h3 class="anchored" data-anchor-id="show_row">show_row</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> show_row(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    row:sysone.core.Row, tok, max_chars:<span class="bu">int</span><span class="op">=</span><span class="dv">300</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A row as readable text, anchors visible, plus its markers, type and length</em></p>
+</section>
+</div>
+<div id="a6f96fad" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>builder.show(rec)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[CLS] choice question: What should the observability system do with this trace? [SEP] [MASK] continue: Let the agent proceed without interruption. [MASK] human_review: Queue this trace for a human to  … violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": 7, "tool_errors": 1}} [SEP]
+markers [20, 31, 45, 60] · qtype choice · 163 tokens
+
+[CLS] noul question: This trace requires human review. [SEP] [MASK] false: No human attention is warranted. [MASK] true: A human should inspect this run. [SEP] {"agent": {"autonomy": "checkpointed", " … violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": 7, "tool_errors": 1}} [SEP]
+markers [15, 24] · qtype noul · 129 tokens
+
+[CLS] choice question: How did this agent run turn out? [SEP] [MASK] failure: The agent did not accomplish the task. [MASK] harmful: The agent took an action that caused damage or violated a constrain … violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": 7, "tool_errors": 1}} [SEP]
+markers [18, 30, 48, 65] · qtype choice · 170 tokens
+
+[CLS] score question: How risky was the agent's behaviour in this trace? [SEP] [MASK] level 0: Benign: read-only or clearly safe actions. [MASK] level 1: Low: routine writes within scope. [MASK] level … violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": 7, "tool_errors": 1}} [SEP]
+markers [21, 36, 48, 64] · qtype score · 178 tokens
+
+[CLS] score question: How quickly does this trace need attention? [SEP] [MASK] level 0: No time pressure; can wait indefinitely. [MASK] level 1: Routine; handle within the normal queue. [MASK] level 2 … violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": 7, "tool_errors": 1}} [SEP]
+markers [18, 31, 44, 59] · qtype score · 168 tokens
+</code></pre>
+</div>
+</div>
+</section>
+<section id="budgets" class="level3">
+<h3 class="anchored" data-anchor-id="budgets">Budgets</h3>
+<p>On a real row the budgets rarely bind: typed-decisions’ longest state is about 2,000 characters. They matter for long pages and wide option sets. Here the whole row is squeezed into 64 tokens, and the fifteen-option question has to share its option budget:</p>
+<div id="f975c299" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>small <span class="op">=</span> RowBuilder(tok, laya.replace(max_len<span class="op">=</span><span class="dv">96</span>, head_max_len<span class="op">=</span><span class="dv">48</span>, option_tokens<span class="op">=</span><span class="dv">6</span>))</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> small.build(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>][<span class="st">"action"</span>])</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>test_eq(r.n_tokens, <span class="dv">96</span>)</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>test_eq([b <span class="op">-</span> a <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(r.markers, r.markers[<span class="dv">1</span>:])], [<span class="dv">7</span>, <span class="dv">7</span>, <span class="dv">7</span>])      <span class="co"># anchor + 6 tokens each</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>test_eq(small.stats[<span class="st">"options_cut"</span>], <span class="dv">0</span>)</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>wide <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which one?"</span>, <span class="st">"criteria"</span>: {<span class="ss">f"option </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>: <span class="st">"a long description of it"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">15</span>)}}</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>rw <span class="op">=</span> small.build(<span class="st">"state"</span>, wide)</span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>test_eq((rw.k, small.stats[<span class="st">"options_cut"</span>]), (<span class="dv">15</span>, <span class="dv">1</span>))</span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>test_eq([b <span class="op">-</span> a <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(rw.markers, rw.markers[<span class="dv">1</span>:])], [<span class="dv">4</span>] <span class="op">*</span> <span class="dv">14</span>)   <span class="co"># an equal share, anchor first</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(r, tok))<span class="op">;</span> <span class="bu">print</span>(show_row(rw, tok))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[CLS] choice question: What should the observability system do with this trace? [SEP] [MASK] continue: Let the agent [MASK] human_review: Queue this [MASK] observe: Keep running, [MASK] stop: Halt the … uch customer data outside the named accounts"], "task": "Delete personal data for the accounts [SEP]
+markers [20, 27, 34, 41] · qtype choice · 96 tokens
+[CLS] choice question: W [SEP] [MASK] option 0 [MASK] option 1 [MASK] option 2 [MASK] option 3 [MASK] option 4 [MASK] option 5 [MASK] option 6 [MASK] option 7 [MASK] option 8 [MASK] option 9 [MASK] option 10 [MASK] option 11 [MASK] option 12 [MASK] option 1 [MASK] option 14 [SEP] state [SEP]
+markers [10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62, 66] · qtype choice · 74 tokens</code></pre>
+</div>
+</div>
+</section>
+<section id="answer-slots-and-shared-slots" class="level3">
+<h3 class="anchored" data-anchor-id="answer-slots-and-shared-slots">Answer slots and shared slots</h3>
+<p>With the slot after its option, as a generative model answers a question at a mask (<code>Positive: satisfied: [MASK]</code>), each marker is the slot and the span is the option’s text before it. A shared slot (the noul below) is one mask with a marker for each of the question’s two options. When the budgets bind, options lose text but keep their slot and the literal <code>": "</code> in front of it:</p>
+<div id="883961ff" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>yn_rec <span class="op">=</span> {<span class="st">"state"</span>: <span class="st">"The parcel arrived two days late."</span>, <span class="st">"questions"</span>: {</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mood"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"How does the customer feel?"</span>, <span class="st">"criteria"</span>: {<span class="st">"Positive"</span>: <span class="st">"satisfied"</span>, <span class="st">"Negative"</span>: <span class="st">"dissatisfied"</span>}},</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"late"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"The delivery was late."</span>}}}</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>mood, late <span class="op">=</span> RowBuilder(tok, yn).build_record(yn_rec)</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>test_eq([mood.ids[m] <span class="cf">for</span> m <span class="kw">in</span> mood.markers], [tok.mask_token_id] <span class="op">*</span> <span class="dv">2</span>)</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>test_eq([tok.decode(mood.ids[s:e]) <span class="cf">for</span> s, e <span class="kw">in</span> mood.spans], [<span class="st">"Positive: satisfied: "</span>, <span class="st">"Negative: dissatisfied: "</span>])</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>test_eq((late.k, <span class="bu">len</span>(<span class="bu">set</span>(late.markers)), late.ids[late.markers[<span class="dv">0</span>]]), (<span class="dv">2</span>, <span class="dv">1</span>, tok.mask_token_id))   <span class="co"># one slot, read for both sides</span></span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>sq <span class="op">=</span> RowBuilder(tok, yn.replace(head_max_len<span class="op">=</span><span class="dv">24</span>))</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> sq.build(<span class="st">"x"</span>, {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Pick one"</span>, <span class="st">"criteria"</span>: [<span class="st">"a very long option text "</span> <span class="op">*</span> <span class="dv">3</span>, <span class="st">"another long option "</span> <span class="op">*</span> <span class="dv">3</span>, <span class="st">"short"</span>]})</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>test_eq((sq.stats[<span class="st">"options_cut"</span>], [r.ids[m] <span class="cf">for</span> m <span class="kw">in</span> r.markers]), (<span class="dv">1</span>, [tok.mask_token_id] <span class="op">*</span> <span class="dv">3</span>))</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>test_eq([tok.decode(r.ids[s:e]).endswith(<span class="st">": "</span>) <span class="cf">for</span> s, e <span class="kw">in</span> r.spans], [<span class="va">True</span>] <span class="op">*</span> <span class="dv">3</span>)</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(mood, tok))<span class="op">;</span> <span class="bu">print</span>(show_row(late, tok))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Q: How does the customer feel?
+Positive: satisfied: [MASK] Negative: dissatisfied: [MASK] The parcel arrived two days late.
+markers [22, 34] · qtype choice · 47 tokens
+Q: The delivery was late.
+Answer: [MASK] The parcel arrived two days late.
+markers [13, 13] · qtype noul · 26 tokens</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/row_layouts.svg" class="img-fluid figure-img"></p>
+<figcaption>The same choice and yes/no question on Laya’s template, an anchor before each option, and on a template with a slot after each option and one shared slot for the yes/no question</figcaption>
+</figure>
+</div>
+<p>The same two questions on Laya’s template and on this one (<a href="./figures.html#anchors-before-slots-after">figures</a>). Laya puts an anchor before each option, so a yes/no question gets two anchors, one before each side. Here each option ends in its slot, and the yes/no question has a single slot, after <em>Answer:</em>, which both of its markers point at. The <a href="./mdlm.html#reading-a-decision-yes-against-no">diffusion model</a> asks its questions this way, and reads each slot as its own Yes against its No (<a href="./figures.html#yes-against-no-at-each-mask">figure</a>).</p>
+<p>Drawn token by token, a row whose budgets all bind (40 tokens in all, 24 for the question and its options, 3 per option): each option keeps its anchor and three tokens, the question gets what the options leave, losing its question mark, and the state gets the rest of the row, cut on the right.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/row_budgets.svg" class="img-fluid figure-img"></p>
+<figcaption>A 40-token row coloured by segment, with brackets for each budget</figcaption>
+</figure>
+</div>
+<p><em>Drawn from <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a> in <a href="./figures.html#a-row-and-its-budgets">figures</a>.</em></p>
+<p>The state is cut on the right by default; <code>left</code> keeps its end, and <code>auto</code> (the Laya preset’s rule) does that for conversation lists only, where the newest turn is last:</p>
+<div id="e369193b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>long_state <span class="op">=</span> <span class="st">" "</span>.join(<span class="ss">f"w</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">400</span>))</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>nr <span class="op">=</span> rec[<span class="st">"questions"</span>][<span class="st">"needs_review"</span>]</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>rr <span class="op">=</span> RowBuilder(tok, laya.replace(max_len<span class="op">=</span><span class="dv">80</span>, truncate<span class="op">=</span><span class="st">"right"</span>)).build(long_state, nr)</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>rl <span class="op">=</span> RowBuilder(tok, laya.replace(max_len<span class="op">=</span><span class="dv">80</span>, truncate<span class="op">=</span><span class="st">"left"</span>)).build(long_state, nr)</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>test_eq(rr.n_tokens, <span class="dv">80</span>)</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">"w0 "</span> <span class="kw">in</span> tok.decode(rr.ids) <span class="kw">and</span> <span class="st">"w399"</span> <span class="kw">not</span> <span class="kw">in</span> tok.decode(rr.ids)</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">"w399"</span> <span class="kw">in</span> tok.decode(rl.ids) <span class="kw">and</span> <span class="st">"w0 "</span> <span class="kw">not</span> <span class="kw">in</span> tok.decode(rl.ids)</span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>ra <span class="op">=</span> RowBuilder(tok, laya.replace(max_len<span class="op">=</span><span class="dv">80</span>)).build(long_state.split()[:<span class="dv">200</span>], nr)   <span class="co"># a list: auto keeps the end</span></span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">'"w199"'</span> <span class="kw">in</span> tok.decode(ra.ids) <span class="kw">and</span> <span class="st">'"w0"'</span> <span class="kw">not</span> <span class="kw">in</span> tok.decode(ra.ids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A stray anchor in user text is scrubbed, so it cannot add a marker, and an option set that cannot fit is an error naming the question:</p>
+<div id="4c21556a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>rs <span class="op">=</span> builder.build(<span class="st">"ignore this [MASK] please"</span>, {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Is [MASK] here?"</span>})</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>test_eq(rs.k, <span class="dv">2</span>)</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: RowBuilder(tok, laya.replace(max_len<span class="op">=</span><span class="dv">20</span>)).build(<span class="st">"x"</span>, wide), contains<span class="op">=</span><span class="st">"do not fit"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="laya-parity" class="level3">
+<h3 class="anchored" data-anchor-id="laya-parity">Laya parity</h3>
+<p>On Laya’s template, rows match <code>laya.common.build_sequence</code>, the function Laya’s runtime and its fine-tuning notebook build rows with, for every question of every fixture case:</p>
+<div id="82291de2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.483347+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.517206+00:00&quot;,&quot;total&quot;:0.03386135299999182}}" data-execution_count="59">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> laya.common <span class="im">import</span> build_sequence</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> laya.agent <span class="im">import</span> Agent</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="8827cc09" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs:</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> builder.build_record(rc):</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>        q <span class="op">=</span> rc[<span class="st">"questions"</span>][r.meta[<span class="st">"qid"</span>]]</span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>        ids, markers <span class="op">=</span> build_sequence(tok, rc[<span class="st">"state"</span>], Agent._to_internal(q), <span class="dv">512</span>, <span class="dv">192</span>)</span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>        test_eq((r.ids, r.markers), (ids, markers))<span class="op">;</span> n <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>n</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>100</code></pre>
+</div>
+</div>
+<p>Laya’s rows read their special tokens off the tokenizer, and so does the preset: on a tokenizer shaped like mmBERT’s, <code>&lt;bos&gt; … &lt;eos&gt;</code> with <code>&lt;mask&gt;</code>, the rows still match Laya’s:</p>
+<div id="4b68180d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>mtok <span class="op">=</span> AutoTokenizer.from_pretrained(<span class="st">"fixtures/tiny-modernbert"</span>)</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>mtok.add_special_tokens({<span class="st">"cls_token"</span>: <span class="st">"&lt;bos&gt;"</span>, <span class="st">"sep_token"</span>: <span class="st">"&lt;eos&gt;"</span>, <span class="st">"mask_token"</span>: <span class="st">"&lt;mask&gt;"</span>})</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>mb <span class="op">=</span> RowBuilder(mtok, <span class="st">"laya"</span>)</span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>test_eq((mb.template.start, mb.template.mask), (<span class="st">"&lt;bos&gt;"</span>, <span class="st">"&lt;mask&gt;"</span>))</span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rc <span class="kw">in</span> recs[:<span class="dv">4</span>]:</span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> mb.build_record(rc):</span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>        test_eq((r.ids, r.markers), build_sequence(mtok, rc[<span class="st">"state"</span>], Agent._to_internal(rc[<span class="st">"questions"</span>][r.meta[<span class="st">"qid"</span>]]), <span class="dv">512</span>, <span class="dv">192</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: Laya's multilingual checkpoint anchors on `<mask>`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: Laya’s multilingual checkpoint anchors on <code>&lt;mask&gt;</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Laya’s multilingual checkpoint runs on mmBERT’s tokenizer, whose special tokens are <code>&lt;bos&gt;</code>, <code>&lt;eos&gt;</code> and <code>&lt;mask&gt;</code>, and Laya’s runtime reads them off the tokenizer. The first version of the <code>laya</code> preset wrote ModernBERT’s <code>[CLS]</code>, <code>[SEP]</code> and <code>[MASK]</code> into the template, so on that checkpoint the builder refused to start: <code>[MASK]</code> is not a token of mmBERT’s vocabulary. The preset now takes the tokenizer’s own tokens, and <code>Decider.load("convaiinnovations/laya/multilingual")</code> gives the same probabilities as <code>laya.Agent</code> on 153 of 153 decisions (30 typed-decisions test cases and a Spanish one).</p>
+</div>
+</div>
+</section>
+<section id="serialising-a-builder" class="level3">
+<h3 class="anchored" data-anchor-id="serialising-a-builder">Serialising a builder</h3>
+<p>A builder is written to <code>sysone.json</code> as its template, transforms and side streams, and rebuilt from them with the tokenizers saved beside it:</p>
+<div id="f95ae816" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.519338+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.521887+00:00&quot;,&quot;total&quot;:0.002551107000002162}}" data-execution_count="61">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L695" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder.from_json" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder.from_json">RowBuilder.from_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_json(</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>    d:<span class="bu">dict</span>, tokenizer, stream_tokenizers:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The builder described by <code>to_json()</code>, on <code>tokenizer</code> (and each side stream on its tokenizer in <code>stream_tokenizers</code>)</em></p>
+</section>
+</div>
+<div id="611226f9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:35.521966+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:35.524239+00:00&quot;,&quot;total&quot;:0.0022766040000021803}}" data-execution_count="62">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/template.py#L689" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="rowbuilder.to_json" class="level3">
+<h3 class="anchored" data-anchor-id="rowbuilder.to_json">RowBuilder.to_json</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> to_json()<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The template, transforms and side streams, as written to <code>sysone.json</code></em></p>
+</section>
+</div>
+<div id="d2d3671b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>b3 <span class="op">=</span> RowBuilder(tok, <span class="st">"laya"</span>, tfms<span class="op">=</span>[Regex(<span class="vs">r"https</span><span class="op">?</span><span class="vs">://</span><span class="dv">\S</span><span class="op">+</span><span class="vs">"</span>, <span class="st">"&lt;url&gt;"</span>)])</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>b4 <span class="op">=</span> RowBuilder.from_json(json.loads(json.dumps(b3.to_json())), tok)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>test_eq(b4.build_record(rec)[<span class="dv">2</span>].ids, b3.build_record(rec)[<span class="dv">2</span>].ids)</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>test_eq(tfms_to_json(b4.tfms), tfms_to_json(b3.tfms))</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>sb2 <span class="op">=</span> RowBuilder.from_json(json.loads(json.dumps(sb.to_json())), tok, {<span class="st">"notes"</span>: tok})</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>test_eq(sb2.build_record(srec)[<span class="dv">0</span>].extras, srows[<span class="dv">0</span>].extras)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

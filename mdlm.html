@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Masked diffusion language models as decision models: a Qwen3 MDLM made bidirectional with transformers’ own classes, its own Yes and No as the head, and the layout jev-dllm reads decisions in.">
+
+<title>mdlm – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="mdlm – sysone">
+<meta property="og:description" content="Masked diffusion language models as decision models: a Qwen3 MDLM made bidirectional with transformers’ own classes, its own Yes and No as the head, and the layout jev-dllm reads decisions in.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/mdlm_masking.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="mdlm – sysone">
+<meta name="twitter:description" content="Masked diffusion language models as decision models: a Qwen3 MDLM made bidirectional with transformers’ own classes, its own Yes and No as the head, and the layout jev-dllm reads decisions in.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/mdlm_masking.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./mdlm.html">mdlm</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#a-bidirectional-qwen3" id="toc-a-bidirectional-qwen3" class="nav-link active" data-scroll-target="#a-bidirectional-qwen3">A bidirectional Qwen3</a></li>
+  <li><a href="#the-jev-layout" id="toc-the-jev-layout" class="nav-link" data-scroll-target="#the-jev-layout">The jev layout</a>
+  <ul class="collapse">
+  <li><a href="#reading-a-decision-yes-against-no" id="toc-reading-a-decision-yes-against-no" class="nav-link" data-scroll-target="#reading-a-decision-yes-against-no">Reading a decision: Yes against No</a></li>
+  </ul></li>
+  <li><a href="#a-learner" id="toc-a-learner" class="nav-link" data-scroll-target="#a-learner">A learner</a>
+  <ul class="collapse">
+  <li><a href="#on-the-real-checkpoint" id="toc-on-the-real-checkpoint" class="nav-link" data-scroll-target="#on-the-real-checkpoint">On the real checkpoint</a></li>
+  <li><a href="#trained-on-the-real-checkpoint" id="toc-trained-on-the-real-checkpoint" class="nav-link" data-scroll-target="#trained-on-the-real-checkpoint">Trained, on the real checkpoint</a></li>
+  </ul></li>
+  <li><a href="#writing-system-two" id="toc-writing-system-two" class="nav-link" data-scroll-target="#writing-system-two">Writing (System Two)</a></li>
+  <li><a href="#browser-steps-on-the-real-checkpoint" id="toc-browser-steps-on-the-real-checkpoint" class="nav-link" data-scroll-target="#browser-steps-on-the-real-checkpoint">Browser steps, on the real checkpoint</a>
+  <ul class="collapse">
+  <li><a href="#the-first-adapter-it-learned-to-click" id="toc-the-first-adapter-it-learned-to-click" class="nav-link" data-scroll-target="#the-first-adapter-it-learned-to-click">The first adapter: it learned to click</a></li>
+  <li><a href="#balancing-the-operations" id="toc-balancing-the-operations" class="nav-link" data-scroll-target="#balancing-the-operations">Balancing the operations</a></li>
+  <li><a href="#every-action-offered" id="toc-every-action-offered" class="nav-link" data-scroll-target="#every-action-offered">Every action offered</a></li>
+  <li><a href="#writing" id="toc-writing" class="nav-link" data-scroll-target="#writing">Writing</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="mdlm.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">mdlm</h1>
+</div>
+
+<div>
+  <div class="description">
+    Masked diffusion language models as decision models: a Qwen3 MDLM made bidirectional with transformers’ own classes, its own Yes and No as the head, and the layout jev-dllm reads decisions in.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>A <em>masked diffusion language model</em> (MDLM) is trained to fill in masked tokens anywhere in a text, not only the next one. It writes by starting from a row of masks and unmasking a few at a time, most confident first, each step one pass over the whole sequence. To fill a gap it reads both sides of it, so every token attends to every other: its attention is bidirectional, like an encoder’s.</p>
+<p>That makes it two things at once for sysone:</p>
+<ul>
+<li>a <strong>decision model</strong> (System One): put a mask after each option and read, in one forward pass, how strongly the model wants to write <em>Yes</em> there rather than <em>No</em>. That is how <a href="https://github.com/zhouzihao11/jev-dllm">jev-dllm</a> uses <code>dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1</code>, and the readout is a linear map of the hidden state, so it fits sysone’s head exactly (see <a href="./models.html#a-language-models-own-yes-and-no">models</a>);</li>
+<li>a <strong>writer</strong> (System Two): with the decision adapter switched off, the same weights generate short texts.</li>
+</ul>
+<p>This notebook builds the first, then the second. The checkpoint is <a href="https://github.com/ZHZisZZ/dllm">dllm</a>’s conversion of Qwen3-0.6B (“autoregressive to diffusion”, A2D), trained with the MDLM objective on instruction data; it is Apache-2.0. The tests run on <code>fixtures/tiny-a2d-qwen3</code>, a random two-layer model laid out like the real one, with a Qwen-shaped tokenizer.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mdlm_masking.svg" class="img-fluid figure-img"></p>
+<figcaption>A sentence masked at growing times t, from no mask to all masks</figcaption>
+</figure>
+</div>
+<p>Training draws, for each token, a time at which it is masked, and asks the model for the masked tokens back; writing runs the other way, from a row of masks (<a href="./figures.html#masking-at-a-growing-time-t">figures</a>). One model then does both of sysone’s jobs:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    Q["a state and typed questions,&lt;br/&gt;a mask after each option"] --&gt; M1["the model with the LoRA adapter:&lt;br/&gt;one forward pass"]
+    M1 --&gt; D["Yes against No at each mask,&lt;br/&gt;a softmax across the options:&lt;br/&gt;the decision"]
+    D -- "the answer needs text&lt;br/&gt;(a field to fill, say)" --&gt; M2["the same model, the adapter off:&lt;br/&gt;a row of masks, unmasked&lt;br/&gt;a few tokens a pass"]
+    M2 --&gt; T["the text"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="a-bidirectional-qwen3" class="level2">
+<h2 class="anchored" data-anchor-id="a-bidirectional-qwen3">A bidirectional Qwen3</h2>
+<p>The checkpoint’s config names the model type <code>a2d-qwen3</code> and points at modeling code in the Hub repo, which needs <code>trust_remote_code</code> and fails on recent transformers. It doesn’t need it: the weights are Qwen3’s, and what makes the model a diffusion model is only that every token sees every other. transformers’ <code>Qwen3Model</code> attends causally, in two places: each attention module has <code>is_causal = True</code>, which SDPA and FlashAttention follow when there is no mask, and the model builds a causal mask for padded batches. <a href="https://sgaseretto.github.io/sysonelib/mdlm.html#a2dqwen3model"><code>A2DQwen3Model</code></a> turns off the first and replaces the second with transformers’ own bidirectional mask, keeping only padding out, and runs the stock forward pass otherwise. Registered under the model type, it is what <code>AutoConfig</code> and <code>AutoModel</code> return for the checkpoint, and the repo’s code is never run.</p>
+<p>The key/value cache is off too: the Hub config enables it, and a model that reads the whole sequence at every step has nothing to reuse (no cache is the price a diffusion model pays for writing anywhere).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mdlm_attention.svg" class="img-fluid figure-img"></p>
+<figcaption>The attention of the stock causal Qwen3 and of A2DQwen3Model, on the same weights</figcaption>
+</figure>
+</div>
+<p>The same weights, the fixture’s, run as transformers’ <code>Qwen3Model</code> and as <a href="https://sgaseretto.github.io/sysonelib/mdlm.html#a2dqwen3model"><code>A2DQwen3Model</code></a> (<a href="./figures.html#attention-one-way-and-both-ways">figures</a>): in the causal model a token sees only the tokens before it, the first one only itself; in the bidirectional one every token sees the whole sentence. Padding gets no attention in either.</p>
+<div id="8daf85e1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.457783+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.462011+00:00&quot;,&quot;total&quot;:0.0042305759999976544}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/mdlm.py#L34" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="a2dqwen3model" class="level3">
+<h3 class="anchored" data-anchor-id="a2dqwen3model">A2DQwen3Model</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> A2DQwen3Model(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    config</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Qwen3 attending both ways: every token sees every other, padding aside, as a masked diffusion model needs</em></p>
+</section>
+</div>
+<div id="3cfae741" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.462082+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.465088+00:00&quot;,&quot;total&quot;:0.0030091630000015357}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/mdlm.py#L30" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="a2dqwen3config" class="level3">
+<h3 class="anchored" data-anchor-id="a2dqwen3config">A2DQwen3Config</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> A2DQwen3Config(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    transformers_version:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, architectures:<span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    output_hidden_states:<span class="bu">bool</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">False</span>, return_dict:<span class="bu">bool</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    dtype:<span class="bu">str</span> <span class="op">|</span> ForwardRef(<span class="st">'torch.dtype'</span>) <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, chunk_size_feed_forward:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>, is_encoder_decoder:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    id2label:<span class="bu">dict</span>[<span class="bu">int</span>, <span class="bu">str</span>] <span class="op">|</span> <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, label2id:<span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">int</span>] <span class="op">|</span> <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    problem_type:Literal[<span class="st">'regression'</span>, <span class="st">'single_label_classification'</span>, <span class="st">'multi_label_classification'</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="op">*</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    vocab_size:<span class="bu">int</span><span class="op">=</span><span class="dv">151936</span>, hidden_size:<span class="bu">int</span><span class="op">=</span><span class="dv">4096</span>, intermediate_size:<span class="bu">int</span><span class="op">=</span><span class="dv">22016</span>, num_hidden_layers:<span class="bu">int</span><span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    num_attention_heads:<span class="bu">int</span><span class="op">=</span><span class="dv">32</span>, num_key_value_heads:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">32</span>, head_dim:<span class="bu">int</span><span class="op">=</span><span class="dv">128</span>, hidden_act:<span class="bu">str</span><span class="op">=</span><span class="st">'silu'</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    max_position_embeddings:<span class="bu">int</span><span class="op">=</span><span class="dv">32768</span>, initializer_range:<span class="bu">float</span><span class="op">=</span><span class="fl">0.02</span>, rms_norm_eps:<span class="bu">float</span><span class="op">=</span><span class="fl">1e-06</span>, use_cache:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    tie_word_embeddings:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    rope_parameters:transformers.modeling_rope_utils.RopeParameters <span class="op">|</span> <span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, attention_bias:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    use_sliding_window:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, sliding_window:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4096</span>, max_window_layers:<span class="bu">int</span><span class="op">=</span><span class="dv">28</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    layer_types:<span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, attention_dropout:<span class="bu">float</span> <span class="op">|</span> <span class="bu">int</span><span class="op">=</span><span class="fl">0.0</span>, pad_token_id:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    bos_token_id:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, eos_token_id:<span class="bu">int</span> <span class="op">|</span> <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="va">None</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Qwen3’s configuration under the model type the diffusion checkpoints carry</em></p>
+</section>
+</div>
+<div id="609aacf0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>FX <span class="op">=</span> <span class="st">"fixtures/tiny-a2d-qwen3"</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"auto_map"</span> <span class="kw">in</span> json.loads(Path(FX, <span class="st">"config.json"</span>).read_text()), <span class="va">True</span>)       <span class="co"># remote code the fixture doesn't ship</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>enc <span class="op">=</span> AutoModel.from_pretrained(FX).<span class="bu">eval</span>()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">type</span>(enc).<span class="va">__name__</span>, {m.is_causal <span class="cf">for</span> m <span class="kw">in</span> enc.modules() <span class="cf">if</span> <span class="bu">isinstance</span>(m, Qwen3Attention)}), (<span class="st">"A2DQwen3Model"</span>, {<span class="va">False</span>}))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> AutoTokenizer.from_pretrained(FX)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> tok(<span class="st">"the parcel arrived two days late"</span>, return_tensors<span class="op">=</span><span class="st">"pt"</span>).input_ids</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> x.clone()<span class="op">;</span> y[<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> tok.convert_tokens_to_ids(tok.tokenize(<span class="st">" early"</span>))[<span class="dv">0</span>]</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad(): hx, hy <span class="op">=</span> enc(input_ids<span class="op">=</span>x).last_hidden_state, enc(input_ids<span class="op">=</span>y).last_hidden_state</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>test_ne(hx[<span class="dv">0</span>, <span class="dv">0</span>], hy[<span class="dv">0</span>, <span class="dv">0</span>])                                                          <span class="co"># a later token changes the first position</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">getattr</span>(enc(input_ids<span class="op">=</span>x), <span class="st">"past_key_values"</span>, <span class="va">None</span>), <span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Padding changes nothing but the padded positions, alone in a batch or beside a longer row, and the eager and SDPA attentions agree:</p>
+<div id="a79937fa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>short, <span class="bu">long</span> <span class="op">=</span> tok(<span class="st">"late parcel"</span>).input_ids, tok(<span class="st">"the parcel arrived two days late, and the box was torn"</span>).input_ids</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ids <span class="op">=</span> torch.full((<span class="dv">2</span>, <span class="bu">len</span>(<span class="bu">long</span>)), tok.pad_token_id)<span class="op">;</span> att <span class="op">=</span> torch.zeros_like(ids)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ids[<span class="dv">0</span>, :<span class="bu">len</span>(short)], att[<span class="dv">0</span>, :<span class="bu">len</span>(short)] <span class="op">=</span> torch.tensor(short), <span class="dv">1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ids[<span class="dv">1</span>], att[<span class="dv">1</span>] <span class="op">=</span> torch.tensor(<span class="bu">long</span>), <span class="dv">1</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    alone <span class="op">=</span> enc(input_ids<span class="op">=</span>torch.tensor([short])).last_hidden_state[<span class="dv">0</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    batch <span class="op">=</span> enc(input_ids<span class="op">=</span>ids, attention_mask<span class="op">=</span>att).last_hidden_state[<span class="dv">0</span>, :<span class="bu">len</span>(short)]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>test_close(batch, alone, eps<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>eager <span class="op">=</span> AutoModel.from_pretrained(FX, attn_implementation<span class="op">=</span><span class="st">"eager"</span>).<span class="bu">eval</span>()</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad(): test_close(eager(input_ids<span class="op">=</span>ids, attention_mask<span class="op">=</span>att).last_hidden_state[att.<span class="bu">bool</span>()], enc(input_ids<span class="op">=</span>ids, attention_mask<span class="op">=</span>att).last_hidden_state[att.<span class="bu">bool</span>()], eps<span class="op">=</span><span class="fl">1e-4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-jev-layout" class="level2">
+<h2 class="anchored" data-anchor-id="the-jev-layout">The jev layout</h2>
+<p>jev-dllm asks a question in the model’s chat format: the system message <em>You are a helpful assistant.</em>, then the state and the question, and either a list of options, each followed by a mask (<code>Positive: The customer is satisfied.: &lt;|mask|&gt;</code>) under <em>For each option, mark Yes if it answers the question, otherwise No.</em>, or, for a yes/no question, <em>Answer Yes or No.</em> and one mask. Each option’s probability comes from the model’s Yes against its No at that option’s mask, a softmax across the options; a yes/no question reads its one mask (a <a href="./template.html#options-blocks-per-kind-and-chat-rows">shared slot</a>).</p>
+<p>The <code>jev</code> template is that layout as a sysone template: the chat markup is literal text in the row, the options blocks differ by kind, and the budgets are wide (jev truncates nothing up to 4,096 tokens). <a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate.chat"><code>RowTemplate.chat</code></a> rebuilds the row from a tokenizer’s own chat template, which is how the preset was checked against the model’s.</p>
+<div id="26a795a6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>test_eq(RowTemplate.chat(tok, JEV_USER, JEV_SYSTEM).row, JEV_ROW)               <span class="co"># the preset is the model's chat template</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> EncoderSpec.from_pretrained(FX)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>test_eq((spec.family, spec.template.name, spec.lora_targets[<span class="op">-</span><span class="dv">1</span>]), (<span class="st">"a2d-qwen3"</span>, <span class="st">"jev"</span>, <span class="st">"down_proj"</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>spec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>EncoderSpec(fixtures/tiny-a2d-qwen3: a2d-qwen3, width 64, context 4096, text, template jev)</code></pre>
+</div>
+</div>
+<p>jev-dllm builds its rows by rendering the chat template once and tokenizing the text between masks; sysone tokenizes the row’s segments one by one. On the fixture’s records, both give the same tokens and the same mask positions:</p>
+<div id="167ced20" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jev_input(tok, state, q):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"jev-dllm's `decision_input` (research/scripts/bench_diff_yesno.py, Apache-2.0): token ids and mask positions"</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> tok.mask_token</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    user <span class="op">=</span> <span class="st">"State:</span><span class="ch">\n</span><span class="sc">%s</span><span class="ch">\n\n</span><span class="st">Question:</span><span class="ch">\n</span><span class="sc">%s</span><span class="ch">\n\n</span><span class="st">"</span> <span class="op">%</span> (render_state(state), q.instructions)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> q.<span class="bu">type</span> <span class="op">==</span> <span class="st">"noul"</span>: user, count <span class="op">=</span> user <span class="op">+</span> <span class="st">"Answer Yes or No.</span><span class="ch">\n</span><span class="st">Answer:"</span> <span class="op">+</span> mask, <span class="dv">1</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        user <span class="op">+=</span> <span class="st">"For each option, mark Yes if it answers the question, otherwise No.</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(o <span class="op">+</span> <span class="st">": "</span> <span class="op">+</span> mask <span class="cf">for</span> o <span class="kw">in</span> q.options)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        count <span class="op">=</span> q.k</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    prompt <span class="op">=</span> tok.apply_chat_template([{<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: JEV_SYSTEM}, {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user}],</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                                     tokenize<span class="op">=</span><span class="va">False</span>, add_generation_prompt<span class="op">=</span><span class="va">False</span>, enable_thinking<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    ids, pos <span class="op">=</span> [], []</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, part <span class="kw">in</span> <span class="bu">enumerate</span>(prompt.split(mask)):</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        ids <span class="op">+=</span> tok.encode(part, add_special_tokens<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">&lt;</span> count: pos.append(<span class="bu">len</span>(ids))<span class="op">;</span> ids.append(tok.mask_token_id)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ids, pos</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> spec.builder()</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>same <span class="op">=</span> [(r.ids, <span class="bu">sorted</span>(<span class="bu">set</span>(r.markers))) <span class="op">==</span> jev_input(tok, rec[<span class="st">"state"</span>], as_questions(rec[<span class="st">"questions"</span>])[r.meta[<span class="st">"qid"</span>]])</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> rec <span class="kw">in</span> recs <span class="cf">for</span> r <span class="kw">in</span> b.build_record(rec)]</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">len</span>(same), <span class="bu">sum</span>(same)), (<span class="dv">100</span>, <span class="dv">100</span>))</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(b.build_record(recs[<span class="dv">0</span>])[<span class="dv">3</span>], tok, <span class="dv">600</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;|im_start|&gt;system
+You are a helpful assistant. &lt;|im_end|&gt; &lt;|im_start|&gt;user
+State:
+{"agent": {"autonomy": "checkpointed", "model": "internal-agent-v4"}, "constraints": ["Do not touch customer data outside the named accounts"], "task": "Delete personal data for the accounts in the erasure queue.", "trace_summary": {"constraint_violations": 0, "duration_s": 128.5, "irreversible_actions": 0, "steps": … utine writes within scope.: &lt;|mask|&gt; level 2: Moderate: irreversible or out-of-scope actions.: &lt;|mask|&gt; level 3: High: destructive, security-relevant, or policy-violating actions.: &lt;|mask|&gt; &lt;|im_end|&gt;
+markers [161, 176, 193, 213] · qtype score · 216 tokens</code></pre>
+</div>
+</div>
+<section id="reading-a-decision-yes-against-no" class="level3">
+<h3 class="anchored" data-anchor-id="reading-a-decision-yes-against-no">Reading a decision: Yes against No</h3>
+<p>A model that fills in blanks decides by being asked to fill one. Every option ends with a mask, and the instruction says what belongs there: <em>mark Yes if it answers the question, otherwise No</em>. At a mask the model predicts a distribution over its whole vocabulary, about 150,000 tokens. The decision reads two of them, the logits of <em>Yes</em> and <em>No</em>, and nothing is generated. Their difference,</p>
+<p><span class="math display">\[s = z_{\text{Yes}} - z_{\text{No}},\]</span></p>
+<p>is how much more the model would write Yes than No at that option: the log-odds of Yes against No, every other token set aside. A choice or a score compares its options by these numbers, and the softmax across the options turns them into probabilities, so the option the model most wants to call Yes wins. A yes/no question has one mask, after <em>Answer:</em>, and its probability of being true is σ(s), the model’s Yes against its No there.</p>
+<p>Every mask is read in one forward pass. The model reads the whole row at once, in both directions, so each mask’s hidden state h has seen the state, the question and every option, the ones after it included. The output layer turns h into logits by a product with each token’s row of the embedding matrix E (this model ties its output layer to its input embeddings), so</p>
+<p><span class="math display">\[s = h \cdot E_{\text{Yes}} - h \cdot E_{\text{No}} = h \cdot (E_{\text{Yes}} - E_{\text{No}}):\]</span></p>
+<p>a fixed direction d in the hidden space, dotted with the hidden state at the mask. That is a linear head, and it is why the readout fits sysone’s head exactly (<a href="./models.html#a-language-models-own-yes-and-no">models</a>). The <code>yesno</code> scorer starts as d, so that before any training it <em>is</em> jev-dllm’s reading, and it learns a small correction and a scale; LoRA moves the hidden states, so that d comes to point at the right options. On the fixture’s random weights (<a href="./figures.html#yes-against-no-at-each-mask">figures</a>):</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mdlm_yesno.svg" class="img-fluid figure-img"></p>
+<figcaption>A jev row’s masks, the hidden state at each, its product with E[Yes] − E[No], and the softmax across the options; a yes/no question’s one mask and σ(s)</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="a-learner" class="level2">
+<h2 class="anchored" data-anchor-id="a-learner">A learner</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a> is sysone’s learner with this model’s defaults: the <code>yesno</code> head, which starts as the model’s own Yes/No, LoRA on every linear layer of every block (<code>r=16</code>), and <a href="https://sgaseretto.github.io/sysonelib/losses.html#softce"><code>SoftCE</code></a> with jev-dllm’s RPS weight. The encoder’s learning rate is set on its own, since LoRA wants a higher one than the head’s default ratio gives. Every other argument is the base learner’s (its signature lists them, through <code>delegates</code>).</p>
+<p><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot</code></a> is the model untrained: the decider jev-dllm reports as its base model.</p>
+<div id="de2642f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.469661+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.472092+00:00&quot;,&quot;total&quot;:0.0024333479999967267}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/evaluate.py#L71" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="zero_shot" class="level3">
+<h3 class="anchored" data-anchor-id="zero_shot">zero_shot</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_shot(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    encoder:<span class="bu">str</span><span class="op">=</span><span class="st">'dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1'</span>, dtype:torch.dtype<span class="op">=</span>torch.float32, <span class="op">**</span>kw</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.inference.Decider:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The untrained model as a decider: its own Yes against its No at each answer slot</em></p>
+</section>
+</div>
+<div id="0a3d6da2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.472168+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.475201+00:00&quot;,&quot;total&quot;:0.0030358030000030567}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/gliner.py#L212" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="decision_learner" class="level3">
+<h3 class="anchored" data-anchor-id="decision_learner">decision_learner</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decision_learner(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    data:sysone.data.TypedDecisions, encoder:<span class="bu">str</span><span class="op">=</span><span class="st">'dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1'</span>, train:<span class="bu">str</span><span class="op">=</span><span class="st">'lora'</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    head:<span class="bu">str</span><span class="op">=</span><span class="st">'yesno'</span>, loss:NoneType<span class="op">=</span><span class="va">None</span>, lr:<span class="bu">tuple</span><span class="op">=</span>(<span class="fl">0.0002</span>, <span class="fl">0.001</span>), lora:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, cache:<span class="bu">str</span><span class="op">=</span><span class="st">'auto'</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    cache_dtype:<span class="bu">str</span><span class="op">=</span><span class="st">'float32'</span>, <span class="op">*</span>, template:NoneType<span class="op">=</span><span class="va">None</span>, head_layers:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, init_from:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    preset:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, dtype:NoneType<span class="op">=</span><span class="va">None</span>, standardize:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, readout:<span class="bu">str</span><span class="op">=</span><span class="st">'anchor'</span>, query:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    act:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, pair_dim:<span class="bu">int</span><span class="op">=</span><span class="dv">256</span>, yesno:<span class="bu">tuple</span><span class="op">=</span>(<span class="st">'Yes'</span>, <span class="st">'No'</span>), <span class="op">**</span>kw</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>sysone.learner.Learner:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A masked diffusion model’s <a href="https://sgaseretto.github.io/sysonelib/learner.html#learner"><code>Learner</code></a>: its own Yes/No at each option’s slot, LoRA on every linear layer, soft cross-entropy with an RPS term</em></p>
+</section>
+</div>
+<div id="c91ae07c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> zero_shot(FX)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> recs[<span class="dv">0</span>]</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ans <span class="op">=</span> zs.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">set</span>(ans), <span class="bu">set</span>(rec[<span class="st">"questions"</span>]))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> as_questions(rec[<span class="st">"questions"</span>])</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>row <span class="op">=</span> zs.builder.build_record(rec)[<span class="dv">3</span>]</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>E <span class="op">=</span> enc.get_input_embeddings().weight<span class="op">;</span> Y, N <span class="op">=</span> (tok(w, add_special_tokens<span class="op">=</span><span class="va">False</span>).input_ids[<span class="dv">0</span>] <span class="cf">for</span> w <span class="kw">in</span> (<span class="st">"Yes"</span>, <span class="st">"No"</span>))</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad(): h <span class="op">=</span> enc(input_ids<span class="op">=</span>torch.tensor([row.ids])).last_hidden_state[<span class="dv">0</span>]</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> [(h[m] <span class="op">@</span> (E[Y] <span class="op">-</span> E[N])).item() <span class="cf">for</span> m <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(row.markers))]</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>want <span class="op">=</span> torch.tensor(s).softmax(<span class="op">-</span><span class="dv">1</span>) <span class="cf">if</span> q[row.meta[<span class="st">"qid"</span>]].<span class="bu">type</span> <span class="op">!=</span> <span class="st">"noul"</span> <span class="cf">else</span> torch.tensor([<span class="fl">0.0</span>, s[<span class="dv">0</span>]]).softmax(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>test_close(torch.tensor(<span class="bu">list</span>(ans[row.meta[<span class="st">"qid"</span>]].get(<span class="st">"probabilities"</span>, {}).values()) <span class="kw">or</span> [<span class="dv">1</span> <span class="op">-</span> ans[row.meta[<span class="st">"qid"</span>]][<span class="st">"noul"</span>], ans[row.meta[<span class="st">"qid"</span>]][<span class="st">"noul"</span>]]),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>           want, eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>ans</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'action': {'type': 'choice',
+  'choice': 'continue',
+  'probabilities': {'continue': 0.2531,
+   'human_review': 0.2486,
+   'observe': 0.2513,
+   'stop': 0.247},
+  'confidence': 0.0,
+  'answer_confidence': 0.2531},
+ 'needs_review': {'type': 'noul',
+  'noul': 0.4888,
+  'confidence': 0.5112,
+  'answer_confidence': 0.5112},
+ 'outcome': {'type': 'choice',
+  'choice': 'partial',
+  'probabilities': {'failure': 0.2514,
+   'harmful': 0.2476,
+   'partial': 0.2527,
+   'success': 0.2483},
+  'confidence': 0.0,
+  'answer_confidence': 0.2527},
+ 'risk': {'type': 'score',
+  'score': 1.49,
+  'legend': {'0': 'Benign: read-only or clearly safe actions.',
+   '1': 'Low: routine writes within scope.',
+   '2': 'Moderate: irreversible or out-of-scope actions.',
+   '3': 'High: destructive, security-relevant, or policy-violating actions.'},
+  'probabilities': {'0': 0.2525, '1': 0.2511, '2': 0.2504, '3': 0.246},
+  'confidence': 0.0,
+  'answer_confidence': 0.2525},
+ 'urgency': {'type': 'score',
+  'score': 1.4928,
+  'legend': {'0': 'No time pressure; can wait indefinitely.',
+   '1': 'Routine; handle within the normal queue.',
+   '2': 'Elevated; should be handled within the same week.',
+   '3': 'Critical; requires action within the same day.'},
+  'probabilities': {'0': 0.2503, '1': 0.2515, '2': 0.2533, '3': 0.2449},
+  'confidence': 0.0001,
+  'answer_confidence': 0.2533}}</code></pre>
+</div>
+</div>
+<section id="on-the-real-checkpoint" class="level3">
+<h3 class="anchored" data-anchor-id="on-the-real-checkpoint">On the real checkpoint</h3>
+<p>On a Kaggle T4 (transformers 5.16, torch 2.11), on typed-decisions’ 2,000 test decisions, the zero-shot decider scores <strong>0.409</strong>, where jev-dllm reports 0.4135 for the same base model:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>accuracy</th>
+<th>choice</th>
+<th>score</th>
+<th>noul</th>
+<th>ECE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot()</code></a>, fp32</td>
+<td>0.409</td>
+<td>0.403</td>
+<td>0.346</td>
+<td>0.498</td>
+<td>0.266</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot()</code></a>, fp16 autocast</td>
+<td>0.409</td>
+<td>0.403</td>
+<td>0.346</td>
+<td>0.498</td>
+<td>0.266</td>
+</tr>
+<tr class="odd">
+<td>jev-dllm’s base model (its report)</td>
+<td>0.4135</td>
+<td></td>
+<td></td>
+<td></td>
+<td>0.262</td>
+</tr>
+</tbody>
+</table>
+<p>All 2,000 rows are token for token the rows jev-dllm’s own builder makes on the real tokenizer, and <a href="https://sgaseretto.github.io/sysonelib/template.html#rowtemplate.chat"><code>RowTemplate.chat</code></a> on it gives the <code>jev</code> preset exactly. The checkpoint’s stored output layer equals its input embeddings (the largest difference is 0.0), so reading Yes and No off the embeddings is reading the model’s own output layer. fp16 is safe on a T4: on 1,000 decisions it picked the same answer as fp32 999 times, the probabilities at most 0.003 apart, at a third of the time (83 s for the 2,000 decisions, about 44 ms each, rows of 322 tokens on average). For comparison, sysone measured Laya’s typed-decisions checkpoint at 0.766 on the same decisions, but Laya trained on typed-decisions’ own training split; the model here has never seen it. The cell below reruns the check (it needs a Kaggle login):</p>
+<div id="4e70ab30" class="cell" data-kaggle="true">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>check <span class="op">=</span> Path(<span class="st">"zero_shot_check.py"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>check.write_text(<span class="st">"""</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">import json</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">from pathlib import Path</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="st">from datasets import load_dataset</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.core import load_record</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.models import read_tensors</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.evaluate import evaluate</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.cloud import job_output</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.mdlm import ENCODER, zero_shot</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="st">t = read_tensors(ENCODER, select=lambda k: k in ("lm_head.weight", "model.embed_tokens.weight"))</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="st">out = {"lm_head_vs_embed": float((t["lm_head.weight"].float() - t["model.embed_tokens.weight"].float()).abs().max())}</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="st">recs = [load_record(r) for r in load_dataset("LocalLLaMA/typed-decisions", "all", split="test")]</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="st">m = evaluate(zero_shot(ENCODER, device="cuda"), recs)            # fp16 autocast on CUDA</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="st">out |= {k: m[k] for k in ("accuracy", "accuracy_choice", "accuracy_score", "accuracy_noul", "ece", "latency_p50_ms")}</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="st">Path(job_output()).mkdir(parents=True, exist_ok=True); (Path(job_output()) / "zero_shot.json").write_text(json.dumps(out, indent=2))</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>job <span class="op">=</span> remote(<span class="bu">str</span>(check), on<span class="op">=</span><span class="st">"kaggle"</span>, hw<span class="op">=</span><span class="st">"t4"</span>, max_hours<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>job.wait(every<span class="op">=</span><span class="dv">60</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>json.loads((job.fetch() <span class="op">/</span> <span class="st">"export"</span> <span class="op">/</span> <span class="st">"zero_shot.json"</span>).read_text())     <span class="co"># no model exported: fetch returns the outputs folder</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A LoRA learner on the fixture: its adapters sit on all seven linear layers of each block, the head trains its correction and scale, and one step changes the encoder’s answer:</p>
+<div id="b7e94da7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_records(recs, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(data, FX, preset<span class="op">=</span><span class="st">"cpu"</span>, per_device_train_batch_size<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>lora_mods <span class="op">=</span> {n.split(<span class="st">".lora_A"</span>)[<span class="dv">0</span>].split(<span class="st">"."</span>)[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> n, p <span class="kw">in</span> learn.model.encoder.named_parameters() <span class="cf">if</span> <span class="st">"lora_A"</span> <span class="kw">in</span> n}</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>test_eq(lora_mods, {<span class="st">"q_proj"</span>, <span class="st">"k_proj"</span>, <span class="st">"v_proj"</span>, <span class="st">"o_proj"</span>, <span class="st">"gate_proj"</span>, <span class="st">"up_proj"</span>, <span class="st">"down_proj"</span>})</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">repr</span>(learn.loss), <span class="st">"SoftCE(rps=0.25)"</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> learn.get_preds(<span class="st">"valid"</span>)[<span class="st">"logits"</span>].copy()</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>learn.fit(<span class="dv">1</span>, lr<span class="op">=</span>(<span class="fl">5e-3</span>, <span class="fl">5e-3</span>), max_steps<span class="op">=</span><span class="dv">2</span>, <span class="bu">eval</span><span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>test_ne(learn.get_preds(<span class="st">"valid"</span>)[<span class="st">"logits"</span>], before)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'train_runtime': '0.0664', 'train_samples_per_second': '120.6', 'train_steps_per_second': '30.14', 'train_loss': '1.281', 'epoch': '0.1'}</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+  0%|          | 0/2 [00:00&lt;?, ?it/s]
+100%|##########| 2/2 [00:00&lt;00:00, 105.03it/s]
+
+  0%|          | 0/2 [00:00&lt;?, ?it/s]
+                                     
+
+100%|##########| 2/2 [00:00&lt;00:00, 30.23it/s]
+100%|##########| 2/2 [00:00&lt;00:00, 30.05it/s]
+
+  0%|          | 0/2 [00:00&lt;?, ?it/s]
+100%|##########| 2/2 [00:00&lt;00:00, 221.49it/s]</code></pre>
+</div>
+</div>
+<p>An export keeps the adapter (this learner sets <code>merge_adapters=False</code>, so <code>merge</code> defaults to False). With the checkpoint on the Hub the adapter is all it holds, tens of megabytes beside the base model’s 2.4 GB: <code>sysone.json</code> names the checkpoint and the commit the adapter trained on. The fixture here is a local folder, which an export bundles unless told not to (<code>bundle=False</code>). The export loads back through <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.load"><code>Decider.load</code></a>, which finds this module by the model type:</p>
+<div id="6de6ba3e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> tempfile.TemporaryDirectory() <span class="im">as</span> d:</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    learn.export(d, bundle<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    test_eq((Path(d, <span class="st">"encoder"</span>).exists(), Path(d, <span class="st">"adapter"</span>, <span class="st">"adapter_model.safetensors"</span>).exists()), (<span class="va">False</span>, <span class="va">True</span>))</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    meta <span class="op">=</span> json.loads(Path(d, <span class="st">"sysone.json"</span>).read_text())</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    test_eq((meta[<span class="st">"encoder"</span>][<span class="st">"family"</span>], meta[<span class="st">"template"</span>][<span class="st">"kinds"</span>][<span class="st">"noul"</span>][<span class="st">"option"</span>]), (<span class="st">"a2d-qwen3"</span>, <span class="st">"</span><span class="sc">{mask}</span><span class="st">"</span>))</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    back <span class="op">=</span> Decider.load(d)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    a1, a2 <span class="op">=</span> learn.decider().predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>]), back.predict(rec[<span class="st">"state"</span>], rec[<span class="st">"questions"</span>])</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    test_eq({k: v.get(<span class="st">"choice"</span>, v.get(<span class="st">"noul"</span>)) <span class="cf">for</span> k, v <span class="kw">in</span> a1.items()}, {k: v.get(<span class="st">"choice"</span>, v.get(<span class="st">"noul"</span>)) <span class="cf">for</span> k, v <span class="kw">in</span> a2.items()})</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    test_eq(<span class="bu">hasattr</span>(back.model.encoder, <span class="st">"peft_config"</span>), <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="trained-on-the-real-checkpoint" class="level3">
+<h3 class="anchored" data-anchor-id="trained-on-the-real-checkpoint">Trained, on the real checkpoint</h3>
+<p>The same learner on the real checkpoint, on a Kaggle T4: LoRA on typed-decisions’ training split (1,080 cases, with 120 more held out to calibrate on) for 300 steps of 32 rows, about three and a half epochs, in 87 minutes (fp16 with gradient checkpointing, 7.7 GB of GPU memory at most). 10.1M of the model’s 606M parameters train, all but 4,097 of them the adapter’s. On typed-decisions’ 2,000 test decisions:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>accuracy</th>
+<th>choice</th>
+<th>score</th>
+<th>noul</th>
+<th>ECE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot()</code></a></td>
+<td>0.409</td>
+<td>0.403</td>
+<td>0.346</td>
+<td>0.498</td>
+<td>0.266</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a>, LoRA, 300 steps</td>
+<td><strong>0.768</strong></td>
+<td>0.752</td>
+<td>0.724</td>
+<td>0.842</td>
+<td>0.150</td>
+</tr>
+<tr class="odd">
+<td>jev-dllm’s full fine-tune (its report)</td>
+<td>0.5225</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Laya’s typed-decisions checkpoint (sysone’s measurement)</td>
+<td>0.766</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>A 40 MB adapter takes the model from 0.41 to 0.77: past jev-dllm’s full fine-tune of the same model, and level with Laya’s checkpoint, an encoder trained for these decisions. Calibration hardly moved the temperatures (0.95 for choices, 1.02 for scores and nouls), so the model’s own Yes against its No comes out close to calibrated. The export, reloaded, gives the same answer on 200 of 200 decisions, and with the adapter switched off the encoder’s hidden states equal the base model’s exactly (the largest difference is 0.0): the model that writes is the checkpoint as published. The cell below reruns it (a Kaggle login, about an hour and a half of T4):</p>
+<div id="7568ee4f" class="cell" data-kaggle="true">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>train_check <span class="op">=</span> Path(<span class="st">"lora_check.py"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>train_check.write_text(<span class="st">"""</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="st">import json</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="st">from pathlib import Path</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="st">from datasets import load_dataset</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.core import load_record</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.data import TypedDecisions</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.evaluate import evaluate</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.cloud import job_output</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.mdlm import ENCODER, decision_learner</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="st">cases = lambda split: [load_record(r) for r in load_dataset("LocalLLaMA/typed-decisions", "all", split=split)]</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="st">train, test = cases("train"), cases("test")</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="st">learn = decision_learner(TypedDecisions.from_records(train, valid=test[:80], calib=0.1), ENCODER)</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="st">learn.fit_one_cycle(1, max_steps=300)</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="st">learn.calibrate()</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="st">m = evaluate(learn.decider(), test)</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="st">dest = learn.export(job_output(), name="diffcider-typed-decisions")      # the adapter alone, and the checkpoint's id and commit</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="st">(dest / "lora.json").write_text(json.dumps({k: m[k] for k in ("accuracy", "accuracy_choice", "accuracy_score", "accuracy_noul", "ece")}, indent=2))</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>job <span class="op">=</span> remote(<span class="bu">str</span>(train_check), on<span class="op">=</span><span class="st">"kaggle"</span>, hw<span class="op">=</span><span class="st">"t4"</span>, max_hours<span class="op">=</span><span class="fl">2.5</span>)</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>job.wait(every<span class="op">=</span><span class="dv">300</span>)</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>json.loads((job.fetch() <span class="op">/</span> <span class="st">"lora.json"</span>).read_text())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="writing-system-two" class="level2">
+<h2 class="anchored" data-anchor-id="writing-system-two">Writing (System Two)</h2>
+<p>The same model writes. Generation starts from the prompt and a row of masks; at every step the model predicts every masked token at once, and the most confident predictions are kept (<em>low-confidence remasking</em>: what the model is least sure of stays masked and is predicted again next step, with more of the text around it known). The masks are filled in blocks of <code>block_size</code>, left to right, each block over its share of <code>steps</code>. With <code>steps</code> equal to the number of tokens, one token is kept per step; fewer steps keep several at once, faster and rougher. Every step is a forward pass over the whole sequence, prompt included: a diffusion model reads both sides of each gap, so there is no key/value cache to reuse, and writing costs one full pass per step where an autoregressive model pays a growing cache.</p>
+<p><a href="https://sgaseretto.github.io/sysonelib/mdlm.html#mdlm_sample"><code>mdlm_sample</code></a> is that sampler, ported from the model card’s (dllm, Apache-2.0), as the <a href="https://sgaseretto.github.io/sysonelib/mdlm.html#a2dqwen3config"><code>A2DQwen3Config</code></a> method of sysone’s <a href="./inference.html#writing-text">[<code>sample</code>](https://sgaseretto.github.io/sysonelib/inference.html#sample)</a>. It needs only the encoder: the output layer is the tied input embeddings, applied only at the masked positions. <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.generate"><code>Decider.generate</code></a> and <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider.fill"><code>Decider.fill</code></a> then work on any decider over this model, with the decisions’ adapter switched off unless asked.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mdlm_unmasking.svg" class="img-fluid figure-img"></p>
+<figcaption>The order in which mdlm_sample unmasks 12 tokens in 6 steps, in two blocks of 6</figcaption>
+</figure>
+</div>
+<p><a href="https://sgaseretto.github.io/sysonelib/mdlm.html#mdlm_sample"><code>mdlm_sample</code></a> on the fixture, 12 masks in 6 steps and blocks of 6 (<a href="./figures.html#unmasking-block-by-block">figures</a>): each step keeps the two most confident predictions of the current block, in whatever order the model is surest of them, and the second block starts once the first is full.</p>
+<div id="3b62f3f5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.479520+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.483123+00:00&quot;,&quot;total&quot;:0.0036062589999943384}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/mdlm.py#L90" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="mdlm_sample" class="level3">
+<h3 class="anchored" data-anchor-id="mdlm_sample">mdlm_sample</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mdlm_sample(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    config:__main__.A2DQwen3Config, model, ids, tokenizer:NoneType<span class="op">=</span><span class="va">None</span>, max_new_tokens:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>, steps:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    block_size:<span class="bu">int</span><span class="op">=</span><span class="dv">32</span>, temperature:<span class="bu">float</span><span class="op">=</span><span class="fl">0.0</span>, remasking:<span class="bu">str</span><span class="op">=</span><span class="st">'low_confidence'</span>, mask_id:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Fill every mask of <code>ids</code> and <code>max_new_tokens</code> more: block by block from the left, each block over its share of <code>steps</code>, most confident first</em></p>
+</section>
+</div>
+<div id="230208a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.483208+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.485642+00:00&quot;,&quot;total&quot;:0.0024371850000051154}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/mdlm.py#L84" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="lm_logits" class="level3">
+<h3 class="anchored" data-anchor-id="lm_logits">lm_logits</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lm_logits(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    model, ids, at, attention_mask:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The model’s logits for the tokens at positions <code>at</code> (a boolean mask over <code>ids</code>), from its tied input embeddings</em></p>
+</section>
+</div>
+<div id="77abdb9c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> tok(<span class="st">"the parcel arrived"</span>, return_tensors<span class="op">=</span><span class="st">"pt"</span>).input_ids</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> sample(enc.config, enc, p, tokenizer<span class="op">=</span>tok, max_new_tokens<span class="op">=</span><span class="dv">6</span>, steps<span class="op">=</span><span class="dv">3</span>, block_size<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>test_eq(((out <span class="op">==</span> tok.mask_token_id).<span class="bu">sum</span>().item(), out.shape[<span class="dv">1</span>], out[<span class="dv">0</span>, :p.shape[<span class="dv">1</span>]].tolist()), (<span class="dv">0</span>, p.shape[<span class="dv">1</span>] <span class="op">+</span> <span class="dv">6</span>, p[<span class="dv">0</span>].tolist()))</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> zero_shot(FX)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>said <span class="op">=</span> zs.generate(<span class="st">"Which city is the capital of France?"</span>, max_new_tokens<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>test_eq(zs.generate(<span class="st">"Which city is the capital of France?"</span>, max_new_tokens<span class="op">=</span><span class="dv">8</span>), said)          <span class="co"># greedy writing is deterministic</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(zs.fill(<span class="st">"Name a fruit."</span>, <span class="st">'{"fruit": "</span><span class="sc">{}</span><span class="st">"}'</span>, n<span class="op">=</span><span class="dv">4</span>)), <span class="dv">1</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>test_eq(methods(sample)[<span class="op">-</span><span class="dv">1</span>][<span class="dv">0</span>], <span class="st">"A2DQwen3Config"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>said</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'� update moreassory update update update'</code></pre>
+</div>
+</div>
+<p>The learner above decides with its adapter; switched off, its encoder is the base model again, and writes exactly what the untrained model writes:</p>
+<div id="08fd31f7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>dl <span class="op">=</span> learn.decider()</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> <span class="st">"Which city is the capital of France?"</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>test_eq(dl.generate(q, max_new_tokens<span class="op">=</span><span class="dv">8</span>), zs.generate(q, max_new_tokens<span class="op">=</span><span class="dv">8</span>))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>ids <span class="op">=</span> torch.tensor([dl._prompt_ids(q)])<span class="op">;</span> at <span class="op">=</span> torch.zeros_like(ids, dtype<span class="op">=</span>torch.<span class="bu">bool</span>)<span class="op">;</span> at[<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    on <span class="op">=</span> lm_logits(dl.model.encoder, ids, at)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> adapters_off(dl.model): off <span class="op">=</span> lm_logits(dl.model.encoder, ids, at)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>test_ne(on, off)                                                                    <span class="co"># the adapter changes the model it runs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="browser-steps-on-the-real-checkpoint" class="level2">
+<h2 class="anchored" data-anchor-id="browser-steps-on-the-real-checkpoint">Browser steps, on the real checkpoint</h2>
+<p>Both systems on <a href="https://huggingface.co/datasets/osunlp/Multimodal-Mind2Web">Multimodal-Mind2Web</a>’s browser steps, read as text without the screenshots (<a href="./screens.html">[<code>from_mm_mind2web</code>](https://sgaseretto.github.io/sysonelib/screens.html#from_mm_mind2web)</a>), on a Kaggle T4. A step asks two questions: which operation comes next, among the actions its candidate elements allow (CLICK, TYPE_TEXT, SELECT) and five controls (WAIT, SCROLL_DOWN, SCROLL_UP, DONE, BLOCKED), and which of up to 45 elements it acts on. The test is the first 300 steps of the <code>test_website</code> split, from 9 websites none of the training steps came from:</p>
+<section id="the-first-adapter-it-learned-to-click" class="level3">
+<h3 class="anchored" data-anchor-id="the-first-adapter-it-learned-to-click">The first adapter: it learned to click</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>operation</th>
+<th>element</th>
+<th>step</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>always CLICK</td>
+<td>0.783</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/evaluate.html#zero_shot"><code>zero_shot()</code></a></td>
+<td>0.023</td>
+<td>0.247</td>
+<td>0.000</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#decision_learner"><code>decision_learner</code></a>, LoRA, 150 steps</td>
+<td>0.783</td>
+<td>0.643</td>
+<td>0.457</td>
+</tr>
+</tbody>
+</table>
+<p><em>Step</em> is the <a href="./tutorials/mdlm_browser.html">browser tutorial</a>’s measure of an agent’s whole step: the operation, the element and, on a typing step, the text written all right. Untrained, the model almost never picks the operation the person performed: it answers DONE on 288 of the 300 steps, and no recorded step is a control. Its element is right a quarter of the time, among up to 45. LoRA trained on 1,500 steps of the <a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a> split, from 54 websites, with validation and calibration steps held out by website: 150 steps of 16 rows, about one epoch, in 106 minutes (fp16 with gradient checkpointing, 10 GB of GPU memory at most). The element goes to 0.64, with an expected calibration error of 0.06; laya-ultrafast reports 0.63 and 0.66 for its two fine-tuned encoders on held-out Mind2Web pages with about 45 candidates, though not on these steps and with more data.</p>
+<p>The operation does not beat a rule: the adapter answers CLICK on every step, and its 0.783 is the share of clicks among them. 85% of the training steps are clicks, and trained on them as they come, the adapter learned that the answer is nearly always CLICK. Its probabilities still tell the operations apart: divided by each operation’s share of the training steps (the tutorial’s <em>Dividing out the shares</em>), they pick 41 of the 43 typing steps and all 22 select steps.</p>
+</section>
+<section id="balancing-the-operations" class="level3">
+<h3 class="anchored" data-anchor-id="balancing-the-operations">Balancing the operations</h3>
+<p><a href="https://github.com/cklxx/laya/blob/main/docs/finetune_browser_agent.md">cklxx’s notes on fine-tuning laya-browser</a> oversample the rare operations, and sysone’s <a href="./data.html"><code>RowSampler("oversample")</code></a> does it per question: the operation’s TYPE_TEXT and SELECT rows repeat, cycling, until each operation has as many rows as CLICK (1,070 each, from 1,500 steps). A second run also used one of sysone’s <a href="./tutorials/reshaping_datasets.html">reshapings</a>: <a href="./data.html"><code>Nouls(qid="operation", negatives=2)</code></a> asks each step’s operation as three statements too, <em>the answer is TYPE_TEXT</em> and two others drawn at random, true for the step’s own operation, drawn anew each epoch. Both runs kept the recipe otherwise: the same 1,500 steps and 150 steps of 16 rows, in 91 and 135 minutes.</p>
+<p>Both gave the same operation answers on the 300 test steps as the first adapter does with its shares divided out: CLICK on 176, TYPE_TEXT on 93, SELECT on 31, right 79.7% of the time. That is the rule <em>the rarest action offered</em>. A step offers the actions its candidate elements allow, and its own element is always among them, so every typing step offers TYPE_TEXT and every select step SELECT, while 176 of the 300 steps offer CLICK alone (the <a href="./screens.html#one-step-one-record">screens</a> notebook has the finding). Balanced, the adapters learned the rule; the statements lifted the element to 0.663, the best of all the runs.</p>
+</section>
+<section id="every-action-offered" class="level3">
+<h3 class="anchored" data-anchor-id="every-action-offered">Every action offered</h3>
+<p><code>operations="all"</code> offers all three actions on every step, so the offered ones say nothing about the answer. Two more runs trained on the same steps built that way, oversampled, one with the statements (E3) and one without (E4). Every adapter was then scored on the same 300 steps both ways, each step offering the actions its elements allow, or offering every action; a <a href="./cloud.html"><code>kaggle-output:</code></a> source mounted the training jobs’ exports in one evaluation job:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>trained on</th>
+<th>operation</th>
+<th>operation, every action offered</th>
+<th>element</th>
+<th>step</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>always CLICK</td>
+<td></td>
+<td>0.783</td>
+<td>0.783</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>the rarest action offered</td>
+<td></td>
+<td>0.797</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>first adapter</td>
+<td>the steps as they come</td>
+<td>0.783</td>
+<td>0.783</td>
+<td>0.643</td>
+<td>0.457</td>
+</tr>
+<tr class="even">
+<td>E1</td>
+<td>operations oversampled</td>
+<td>0.797</td>
+<td>0.073</td>
+<td>0.647</td>
+<td>0.447</td>
+</tr>
+<tr class="odd">
+<td>E2</td>
+<td>oversampled, and asked as statements</td>
+<td>0.797</td>
+<td>0.073</td>
+<td><strong>0.663</strong></td>
+<td>0.450</td>
+</tr>
+<tr class="even">
+<td>E3</td>
+<td>every action offered, oversampled, statements</td>
+<td>0.823</td>
+<td>0.243</td>
+<td>0.640</td>
+<td>0.463</td>
+</tr>
+<tr class="odd">
+<td>E4</td>
+<td>every action offered, oversampled</td>
+<td><strong>0.853</strong></td>
+<td>0.573</td>
+<td>0.647</td>
+<td><strong>0.470</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Offered every action, E1 and E2 answer SELECT on every step, the rarest action their rule knows. E4 is the one adapter whose operation beats the rule where a step offers the actions its elements allow: having never seen the offered actions give an answer away, it learned the operation from the goal, the page and the steps before, and picks the right one 85% of the time, the element 65% and the whole step 47%. Offered every action, it leans toward the rare ones (57%), having trained on the operations in equal shares. The correction for a model trained on balanced classes, multiplying each operation’s probability by its share of the training steps (CLICK 85%, TYPE_TEXT 10%, SELECT 5.5%), overcorrects here: every balanced adapter then answers CLICK on every step. The statements, the element’s best help when the offered actions told the operation, push E3 further toward the rare operations.</p>
+<p>E4 is published as <a href="https://huggingface.co/sgaseretto/diffcider-browser"><code>sgaseretto/diffcider-browser</code></a>; the first adapter stays in that repo’s history, and the browser tutorial runs it at that revision. The cell below trains E4 again (a Kaggle login, an hour and a half of T4):</p>
+<div id="4272291c" class="cell" data-kaggle="true">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>browser <span class="op">=</span> Path(<span class="st">"browser_adapter.py"</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>browser.write_text(<span class="st">"""</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.data import TypedDecisions, RowSampler</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.datasets import from_mm_mind2web</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.cloud import job_output</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="st">from sysone.mdlm import ENCODER, decision_learner</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="st">train = from_mm_mind2web("train", n=1500, screenshots=False, operations="all")      # every action offered on every step</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="st">data = TypedDecisions.from_records(train, valid=0.05, calib=0.1, groups="website", sampler=RowSampler("oversample"))</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="st">learn = decision_learner(data, ENCODER, per_device_train_batch_size=4, gradient_accumulation_steps=4)</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="st">learn.fit_one_cycle(1, max_steps=150, eval=False)</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="st">learn.calibrate()</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="st">learn.export(job_output(), name="diffcider-browser")</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>job <span class="op">=</span> remote(<span class="bu">str</span>(browser), on<span class="op">=</span><span class="st">"kaggle"</span>, hw<span class="op">=</span><span class="st">"t4"</span>, max_hours<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>job.wait(every<span class="op">=</span><span class="dv">300</span>)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>job.fetch()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="writing" class="level3">
+<h3 class="anchored" data-anchor-id="writing">Writing</h3>
+<p>With the adapter off, the model writes the text of a typing step from the goal, the page and the field. On 120 typing steps whose value the goal’s wording contains, it wrote exactly the person’s text (ignoring case, spacing and quotes) 52.5% of the time with 16 unmasking steps (733 ms), 49% with 8 (372 ms) and 42.5% with 4 (190 ms). The exports hold the adapter alone, 49.5 MB with the head and the tokenizer, name the checkpoint at its commit, and load back to the same answers on 80 of 80 decisions; with its adapter off, a trained decider writes what the untrained model writes, on 20 of 20 prompts. The typed-decisions adapter above is published as <a href="https://huggingface.co/sgaseretto/diffcider-typed-decisions"><code>sgaseretto/diffcider-typed-decisions</code></a>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: a slot's masks are all filled, so the text ran past the value">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: a slot’s masks are all filled, so the text ran past the value
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Writing into a JSON string, <code>fill(prompt, '{"text": "{}"}')</code>, matched the person’s text on none of the 120 steps. The model wrote the value and kept going: a slot is 16 masks, a diffusion model fills every one, and it filled them with more JSON, <code>Gorillaz", "album": "first studio album", "genre":</code> where the person typed <em>gorillaz</em>. <code>fill</code> now ends a quoted slot at its closing quote, and any other slot where the template’s next text begins (<a href="./inference.html#writing-text">inference</a>); of the twelve examples the run kept, seven then come out exactly right. The <a href="./tutorials/mdlm_browser.html">browser tutorial</a> measures the mended <code>fill</code> beside <code>generate</code>.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

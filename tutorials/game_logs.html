@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Someone logged games of tic-tac-toe: for every move, the board before it and the square played. Turn each logged move into about 27 questions (what was played, what the rules allow, what a perfect player would do, how the game ends), add the board’s seven symmetric twins, and split the result so that no twin crosses from training to validation. No model is trained here; the training runs are left as exercises at the end.">
+
+<title>Decisions from game logs – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+<meta property="og:title" content="Decisions from game logs – sysone">
+<meta property="og:description" content="Someone logged games of tic-tac-toe: for every move, the board before it and the square played. Turn each logged move into about 27 questions (what was played, what the rules allow, what a perfect player would do, how the game ends), add the board’s seven symmetric twins, and split the result so that no twin crosses from training to validation. No model is trained here; the training runs are left as exercises at the end.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/game_questions.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="Decisions from game logs – sysone">
+<meta name="twitter:description" content="Someone logged games of tic-tac-toe: for every move, the board before it and the square played. Turn each logged move into about 27 questions (what was played, what the rules allow, what a perfect player would do, how the game ends), add the board’s seven symmetric twins, and split the result so that no twin crosses from training to validation. No model is trained here; the training runs are left as exercises at the end.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/game_questions.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/game_logs.html">Decisions from game logs</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/game_logs.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-whole-game" id="toc-the-whole-game" class="nav-link active" data-scroll-target="#the-whole-game">The whole game</a></li>
+  <li><a href="#a-perfect-player" id="toc-a-perfect-player" class="nav-link" data-scroll-target="#a-perfect-player">A perfect player</a></li>
+  <li><a href="#the-logs" id="toc-the-logs" class="nav-link" data-scroll-target="#the-logs">The logs</a></li>
+  <li><a href="#what-the-log-says" id="toc-what-the-log-says" class="nav-link" data-scroll-target="#what-the-log-says">What the log says</a></li>
+  <li><a href="#what-the-rules-say" id="toc-what-the-rules-say" class="nav-link" data-scroll-target="#what-the-rules-say">What the rules say</a></li>
+  <li><a href="#what-a-perfect-player-says" id="toc-what-a-perfect-player-says" class="nav-link" data-scroll-target="#what-a-perfect-player-says">What a perfect player says</a></li>
+  <li><a href="#none-of-these" id="toc-none-of-these" class="nav-link" data-scroll-target="#none-of-these">None of these</a></li>
+  <li><a href="#boards-seen-more-than-once" id="toc-boards-seen-more-than-once" class="nav-link" data-scroll-target="#boards-seen-more-than-once">Boards seen more than once</a></li>
+  <li><a href="#eight-boards-for-one" id="toc-eight-boards-for-one" class="nav-link" data-scroll-target="#eight-boards-for-one">Eight boards for one</a></li>
+  <li><a href="#every-logged-move-every-question" id="toc-every-logged-move-every-question" class="nav-link" data-scroll-target="#every-logged-move-every-question">Every logged move, every question</a></li>
+  <li><a href="#a-split-that-keeps-twins-apart" id="toc-a-split-that-keeps-twins-apart" class="nav-link" data-scroll-target="#a-split-that-keeps-twins-apart">A split that keeps twins apart</a></li>
+  <li><a href="#more-negatives-every-epoch" id="toc-more-negatives-every-epoch" class="nav-link" data-scroll-target="#more-negatives-every-epoch">More negatives every epoch</a></li>
+  <li><a href="#exercises-train-and-compare" id="toc-exercises-train-and-compare" class="nav-link" data-scroll-target="#exercises-train-and-compare">Exercises: train and compare</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="game_logs.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/game_logs.html">Decisions from game logs</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Decisions from game logs</h1>
+</div>
+
+<div>
+  <div class="description">
+    Someone logged games of tic-tac-toe: for every move, the board before it and the square played. Turn each logged move into about 27 questions (what was played, what the rules allow, what a perfect player would do, how the game ends), add the board’s seven symmetric twins, and split the result so that no twin crosses from training to validation. No model is trained here; the training runs are left as exercises at the end.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>Fine-tuning a decision model with sysone takes a few lines. The work that remains is the dataset: questions about states, with their answers. A log of a system that acts (a game, a form being filled in, a support workflow, a robot’s steps) holds pairs of a state and the action taken in it, and each pair can answer more than one question. The <a href="../tutorials/reshaping_datasets.html">previous tutorial</a> reshaped labelled text; this one starts from a log, where the structure of the state lets us write many questions, and their answers, by program.</p>
+<p>Tic-tac-toe keeps the game out of the way. Everyone knows its rules, and the whole game has 5,478 positions, few enough to check every claim against the truth: legality comes from the rules, and the best moves from a solver that searches the whole game in a second. The same steps apply to any game or process with rules a program can check. Everything here runs in a few seconds on a laptop and downloads nothing.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/game_questions.svg" class="img-fluid figure-img"></p>
+<figcaption>One logged move and its 28 questions: what the log says, what the rules say, what a perfect player says</figcaption>
+</figure>
+</div>
+<p>This is where the tutorial is going, for one logged move (<a href="../figures.html#one-logged-move-many-questions">figures</a>). O is to play on the board at the left, and the log says O played square 9. Each small board is one question about that move, or a family of statements, one per square, and its colours are the answers: green for true, or for a choice’s gold option, orange for false; hatched squares are not part of the question. The log can only say which square was played. The rules say which squares can be played and whether a line is about to be completed, and a perfect player says which squares are best and how the game ends. The sections below write these questions one family at a time, then add each board’s symmetric twins and split the records.</p>
+<div id="451f6c98" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> Counter, deque</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> lru_cache</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.core <span class="im">import</span> Question</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.template <span class="im">import</span> apply_tfms</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> TypedDecisions, add_nouls, add_none_of_these, question_stats, Nouls, expand_records</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="the-whole-game" class="level2">
+<h2 class="anchored" data-anchor-id="the-whole-game">The whole game</h2>
+<p>A board is a string of nine characters, <code>X</code>, <code>O</code> or <code>.</code> for an empty square, read row by row. X moves first, so the player to move is the one with fewer marks. A model reads the board as text, the empty squares numbered 1 to 9, the way people point at squares:</p>
+<div id="c991a637" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>LINES <span class="op">=</span> [(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>), (<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>), (<span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>), (<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>), (<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">7</span>), (<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">8</span>), (<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">8</span>), (<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>)]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> winner(b):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"X or O when that player has three in a line, else None"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, j, k <span class="kw">in</span> LINES:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> b[i] <span class="op">!=</span> <span class="st">"."</span> <span class="kw">and</span> b[i] <span class="op">==</span> b[j] <span class="op">==</span> b[k]: <span class="cf">return</span> b[i]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mover(b): <span class="cf">return</span> <span class="st">"X"</span> <span class="cf">if</span> b.count(<span class="st">"X"</span>) <span class="op">==</span> b.count(<span class="st">"O"</span>) <span class="cf">else</span> <span class="st">"O"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> other(p): <span class="cf">return</span> <span class="st">"O"</span> <span class="cf">if</span> p <span class="op">==</span> <span class="st">"X"</span> <span class="cf">else</span> <span class="st">"X"</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> legal(b): <span class="cf">return</span> [] <span class="cf">if</span> winner(b) <span class="kw">or</span> <span class="st">"."</span> <span class="kw">not</span> <span class="kw">in</span> b <span class="cf">else</span> [i <span class="cf">for</span> i, c <span class="kw">in</span> <span class="bu">enumerate</span>(b) <span class="cf">if</span> c <span class="op">==</span> <span class="st">"."</span>]</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> play(b, i): <span class="cf">return</span> b[:i] <span class="op">+</span> mover(b) <span class="op">+</span> b[i <span class="op">+</span> <span class="dv">1</span>:]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> board_text(b) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The board as text, its empty squares numbered 1 to 9"</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    cells <span class="op">=</span> [c <span class="cf">if</span> c <span class="op">!=</span> <span class="st">"."</span> <span class="cf">else</span> <span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> i, c <span class="kw">in</span> <span class="bu">enumerate</span>(b)]</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">---+---+---</span><span class="ch">\n</span><span class="st">"</span>.join(<span class="st">" "</span> <span class="op">+</span> <span class="st">" | "</span>.join(cells[r:r <span class="op">+</span> <span class="dv">3</span>]) <span class="cf">for</span> r <span class="kw">in</span> (<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>))</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> state(b) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>mover(b)<span class="sc">}</span><span class="ss"> to play.</span><span class="ch">\n</span><span class="sc">{</span>board_text(b)<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(state(<span class="st">"....O.XX."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>O to play.
+ 1 | 2 | 3
+---+---+---
+ 4 | O | 6
+---+---+---
+ X | X | 9</code></pre>
+</div>
+</div>
+<p>A breadth-first walk from the empty board finds every position a game can reach:</p>
+<div id="04bd78de" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>positions, todo <span class="op">=</span> {<span class="st">"."</span> <span class="op">*</span> <span class="dv">9</span>}, deque([<span class="st">"."</span> <span class="op">*</span> <span class="dv">9</span>])</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> todo:</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> todo.popleft()</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> legal(b):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> play(b, i) <span class="kw">not</span> <span class="kw">in</span> positions: positions.add(play(b, i))<span class="op">;</span> todo.append(play(b, i))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>to_play <span class="op">=</span> [b <span class="cf">for</span> b <span class="kw">in</span> positions <span class="cf">if</span> legal(b)]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(positions)<span class="sc">:,}</span><span class="ss"> positions, </span><span class="sc">{</span><span class="bu">len</span>(to_play)<span class="sc">:,}</span><span class="ss"> with a move to make"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>5,478 positions, 4,520 with a move to make</code></pre>
+</div>
+</div>
+</section>
+<section id="a-perfect-player" class="level2">
+<h2 class="anchored" data-anchor-id="a-perfect-player">A perfect player</h2>
+<p>Minimax gives every position its value for the player to move, with perfect play by both sides from there: 1 for a win, 0 for a draw, −1 for a loss. A move is best when it keeps that value. Cached, the search covers the whole game once.</p>
+<div id="01001603" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@lru_cache</span>(maxsize<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> value(b) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"What the position is worth to the player to move, with perfect play: 1 a win, 0 a draw, -1 a loss"</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> winner(b): <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span>                       <span class="co"># the line was made by the other player's move</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>((<span class="op">-</span>value(play(b, i)) <span class="cf">for</span> i <span class="kw">in</span> legal(b)), default<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> best_moves(b) <span class="op">-&gt;</span> <span class="bu">list</span>:</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The moves that keep the position's value"</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [i <span class="cf">for</span> i <span class="kw">in</span> legal(b) <span class="cf">if</span> <span class="op">-</span>value(play(b, i)) <span class="op">==</span> value(b)]</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>n_best <span class="op">=</span> Counter(<span class="bu">min</span>(<span class="bu">len</span>(best_moves(b)), <span class="dv">2</span>) <span class="cf">for</span> b <span class="kw">in</span> to_play)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"the empty board is worth </span><span class="sc">{</span>value(<span class="st">'.'</span> <span class="op">*</span> <span class="dv">9</span>)<span class="sc">}</span><span class="ss"> (a draw), and all </span><span class="sc">{</span><span class="bu">len</span>(best_moves(<span class="st">'.'</span> <span class="op">*</span> <span class="dv">9</span>))<span class="sc">}</span><span class="ss"> first moves keep it"</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_best[<span class="dv">1</span>]<span class="sc">:,}</span><span class="ss"> positions have one best move, </span><span class="sc">{</span>n_best[<span class="dv">2</span>]<span class="sc">:,}</span><span class="ss"> have several"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>the empty board is worth 0 (a draw), and all 9 first moves keep it
+2,406 positions have one best move, 2,114 have several</code></pre>
+</div>
+</div>
+<p>Nearly half the positions to play, 2,114 of 4,520, have more than one best move, and on the empty board all nine squares are: every first move draws. A log shows one move per position, so where several are equally good it can’t say which is <em>the</em> right one. Keep that in mind for the questions below.</p>
+</section>
+<section id="the-logs" class="level2">
+<h2 class="anchored" data-anchor-id="the-logs">The logs</h2>
+<p>We don’t have real logs, so we make some: games between two players who play a best move, except that 30% of the time they play any legal move at random. Like people, they mostly play well, sometimes blunder, and often pick one of several equally good moves. A log row is a move: the game, the turn, the board before the move, who played and the square, numbered as on the board.</p>
+<div id="3fd66c20" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_games(n:<span class="bu">int</span>, eps:<span class="bu">float</span><span class="op">=</span><span class="fl">0.3</span>, seed:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"n games between two players who play a best move, or with probability eps any legal move; a row per move"</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    rng, rows <span class="op">=</span> random.Random(seed), []</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> <span class="st">"."</span> <span class="op">*</span> <span class="dv">9</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> legal(b):</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>            i <span class="op">=</span> rng.choice(legal(b)) <span class="cf">if</span> rng.random() <span class="op">&lt;</span> eps <span class="cf">else</span> rng.choice(best_moves(b))</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            rows.append({<span class="st">"game"</span>: g, <span class="st">"turn"</span>: <span class="dv">10</span> <span class="op">-</span> b.count(<span class="st">"."</span>), <span class="st">"board"</span>: b, <span class="st">"player"</span>: mover(b), <span class="st">"square"</span>: i <span class="op">+</span> <span class="dv">1</span>})</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            b <span class="op">=</span> play(b, i)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>log <span class="op">=</span> log_games(<span class="dv">150</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>log[<span class="st">"best"</span>] <span class="op">=</span> [s <span class="op">-</span> <span class="dv">1</span> <span class="kw">in</span> best_moves(b) <span class="cf">for</span> b, s <span class="kw">in</span> <span class="bu">zip</span>(log.board, log.square)]</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(log)<span class="sc">:,}</span><span class="ss"> moves in 150 games, on </span><span class="sc">{</span>log<span class="sc">.</span>board<span class="sc">.</span>nunique()<span class="sc">:,}</span><span class="ss"> different boards; </span><span class="sc">{</span>log<span class="sc">.</span>best<span class="sc">.</span>mean()<span class="sc">:.0%}</span><span class="ss"> of them best moves"</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>log.head(<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1,160 moves in 150 games, on 579 different boards; 88% of them best moves</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">game</th>
+<th data-quarto-table-cell-role="th">turn</th>
+<th data-quarto-table-cell-role="th">board</th>
+<th data-quarto-table-cell-role="th">player</th>
+<th data-quarto-table-cell-role="th">square</th>
+<th data-quarto-table-cell-role="th">best</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0</td>
+<td>1</td>
+<td>.........</td>
+<td>X</td>
+<td>7</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>0</td>
+<td>2</td>
+<td>......X..</td>
+<td>O</td>
+<td>9</td>
+<td>False</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>0</td>
+<td>3</td>
+<td>......X.O</td>
+<td>X</td>
+<td>3</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>0</td>
+<td>4</td>
+<td>..X...X.O</td>
+<td>O</td>
+<td>4</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>0</td>
+<td>5</td>
+<td>..XO..X.O</td>
+<td>X</td>
+<td>1</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>0</td>
+<td>6</td>
+<td>X.XO..X.O</td>
+<td>O</td>
+<td>6</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="what-the-log-says" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-log-says">What the log says</h2>
+<p>A logged move answers one question exactly: which square did the player choose? It can be asked among all nine squares, so the model must also tell the free squares from the taken ones, or among the free squares only. Both are choices, and each square’s option carries its name. <a href="https://sgaseretto.github.io/sysonelib/data.html#add_nouls"><code>add_nouls</code></a> then asks the second one again as statements, one per free square, of which the played one is true.</p>
+<div id="568bda11" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>SQUARES <span class="op">=</span> {<span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>): s <span class="cf">for</span> i, s <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"top left"</span>, <span class="st">"top middle"</span>, <span class="st">"top right"</span>, <span class="st">"middle left"</span>, <span class="st">"centre"</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                                                 <span class="st">"middle right"</span>, <span class="st">"bottom left"</span>, <span class="st">"bottom middle"</span>, <span class="st">"bottom right"</span>])}</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> logged_move(b, square, <span class="bu">id</span><span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A record of one logged move: the square played, among all nine and among the free ones, and a statement per free square"</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    p, free <span class="op">=</span> mover(b), [<span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> i <span class="kw">in</span> legal(b)]</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    ask <span class="op">=</span> <span class="ss">f"Which square did </span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> play?"</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> {<span class="st">"id"</span>: <span class="bu">id</span>, <span class="st">"board"</span>: b, <span class="st">"state"</span>: state(b),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">"questions"</span>: {<span class="st">"move"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: ask, <span class="st">"criteria"</span>: SQUARES},</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"legal_move"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: ask, <span class="st">"criteria"</span>: {s: SQUARES[s] <span class="cf">for</span> s <span class="kw">in</span> free}}},</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>         <span class="st">"gold"</span>: {<span class="st">"move"</span>: {<span class="st">"label"</span>: <span class="bu">str</span>(square)}, <span class="st">"legal_move"</span>: {<span class="st">"label"</span>: <span class="bu">str</span>(square)}}}</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> add_nouls(r, <span class="st">"legal_move"</span>, statement<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> played square </span><span class="ch">{{</span><span class="ss">label</span><span class="ch">}}</span><span class="ss">."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A helper prints a record the way a person would read it: the state, then each question with its options and its gold.</p>
+<div id="61e0b9fa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gold_text(g) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> g <span class="kw">is</span> <span class="va">None</span>: <span class="cf">return</span> <span class="st">"-"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> g.get(<span class="st">"answerable"</span>) <span class="kw">is</span> <span class="va">False</span>: <span class="cf">return</span> <span class="st">"none of these"</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">"probabilities"</span> <span class="kw">in</span> g: <span class="cf">return</span> <span class="st">", "</span>.join(<span class="ss">f"</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>v<span class="sc">:.2f}</span><span class="ss">"</span> <span class="cf">for</span> k, v <span class="kw">in</span> g[<span class="st">"probabilities"</span>].items() <span class="cf">if</span> v)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"true with p = </span><span class="sc">{</span>g[<span class="st">'noul'</span>]<span class="sc">:.2f}</span><span class="ss">"</span> <span class="cf">if</span> <span class="st">"noul"</span> <span class="kw">in</span> g <span class="cf">else</span> <span class="bu">str</span>(g[<span class="st">"label"</span>])</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> show(r, only<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The state, then each question (or those whose id starts with one of `only`), its options and its gold"</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(r[<span class="st">"state"</span>], end<span class="op">=</span><span class="st">"</span><span class="ch">\n\n</span><span class="st">"</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> qid, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items():</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> only <span class="kw">and</span> <span class="kw">not</span> qid.startswith(<span class="bu">tuple</span>(only)): <span class="cf">continue</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        opts <span class="op">=</span> <span class="ss">f" </span><span class="sc">{</span><span class="bu">list</span>(q[<span class="st">'criteria'</span>])<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> q.get(<span class="st">"criteria"</span>) <span class="cf">else</span> <span class="st">""</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        g <span class="op">=</span> gold_text(r[<span class="st">"gold"</span>].get(qid))</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> q[<span class="st">"type"</span>] <span class="op">==</span> <span class="st">"score"</span> <span class="kw">and</span> g.isdigit(): g <span class="op">+=</span> <span class="ss">f" (</span><span class="sc">{</span>q[<span class="st">'criteria'</span>][<span class="bu">int</span>(g)]<span class="sc">}</span><span class="ss">)"</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>qid<span class="sc">:&lt;17}{</span>q[<span class="st">'type'</span>]<span class="sc">:&lt;7}{</span>q[<span class="st">'instructions'</span>]<span class="sc">}{</span>opts<span class="sc">}</span><span class="ss">  →  </span><span class="sc">{</span>g<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>show(logged_move(<span class="st">"....O.XX."</span>, <span class="dv">9</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>O to play.
+ 1 | 2 | 3
+---+---+---
+ 4 | O | 6
+---+---+---
+ X | X | 9
+
+move             choice Which square did O play? ['1', '2', '3', '4', '5', '6', '7', '8', '9']  →  9
+legal_move       choice Which square did O play? ['1', '2', '3', '4', '6', '9']  →  9
+legal_move:noul0 noul   O played square 2.  →  false
+legal_move:noul1 noul   O played square 9.  →  true
+legal_move:noul2 noul   O played square 4.  →  false
+legal_move:noul3 noul   O played square 6.  →  false
+legal_move:noul4 noul   O played square 1.  →  false
+legal_move:noul5 noul   O played square 3.  →  false</code></pre>
+</div>
+</div>
+<p>Six free squares give six statements, one true and five false. The log doesn’t know the best move; it knows what O did. Here O blocked X’s row, the only move that keeps the draw, but the log would record a blunder just as faithfully, and these questions would then teach the blunder. So the statements say what was <em>played</em>, and the next two sections ask the rules and the solver for the rest.</p>
+</section>
+<section id="what-the-rules-say" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-rules-say">What the rules say</h2>
+<p>Some questions don’t need the log at all. The rules answer them for any board, exactly: which squares the player to move can take, whether one move completes a line, whether the opponent threatens to complete one next. These are nouls, and since they hold for every board, they could be asked of boards no one ever played.</p>
+<div id="b31cc611" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rule_questions(b) <span class="op">-&gt;</span> <span class="bu">tuple</span>:</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Questions the rules answer exactly, whatever was played: legality, a win on this move, the opponent's threat"</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    p, free <span class="op">=</span> mover(b), legal(b)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    qs, gold <span class="op">=</span> {}, {}</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">9</span>):</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        qs[<span class="ss">f"legal:</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="ss">f"</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> can play square </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">."</span>}</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        gold[<span class="ss">f"legal:</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"label"</span>: <span class="bu">str</span>(i <span class="kw">in</span> free).lower()}</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    qs[<span class="st">"win_now"</span>] <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="ss">f"</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> can complete a line with this move."</span>}</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    gold[<span class="st">"win_now"</span>] <span class="op">=</span> {<span class="st">"label"</span>: <span class="bu">str</span>(<span class="bu">any</span>(winner(play(b, i)) <span class="op">==</span> p <span class="cf">for</span> i <span class="kw">in</span> free)).lower()}</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    qs[<span class="st">"threat"</span>] <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="ss">f"</span><span class="sc">{</span>other(p)<span class="sc">}</span><span class="ss"> could complete a line next move if </span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> does not block it."</span>}</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    gold[<span class="st">"threat"</span>] <span class="op">=</span> {<span class="st">"label"</span>: <span class="bu">str</span>(<span class="bu">any</span>(winner(b[:i] <span class="op">+</span> other(p) <span class="op">+</span> b[i <span class="op">+</span> <span class="dv">1</span>:]) <span class="op">==</span> other(p) <span class="cf">for</span> i <span class="kw">in</span> free)).lower()}</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> qs, gold</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="what-a-perfect-player-says" class="level2">
+<h2 class="anchored" data-anchor-id="what-a-perfect-player-says">What a perfect player says</h2>
+<p>The solver knows more than the log: which moves are best, and how the game ends from here. The best move is a choice whose gold is soft, shared equally among the best squares, since the solver has no favourite among them. How the game ends is a score with three ordered levels.</p>
+<p>The wording of a statement decides its gold. <a href="https://sgaseretto.github.io/sysonelib/data.html#add_nouls"><code>add_nouls</code></a> asked of the best-move choice would say “the answer to <em>Which square is best for O?</em> is square 5”, true with probability ½ when two squares are equally best: a perfect player picks either. “Square 5 is one of the best moves” is another statement, plainly true for both. We want the second, so we write those nouls from the solver directly.</p>
+<div id="368868ff" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solver_questions(b) <span class="op">-&gt;</span> <span class="bu">tuple</span>:</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Questions only a perfect player answers: the best squares, whether each free square is one of them, how the game ends"</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    p, free, best <span class="op">=</span> mover(b), legal(b), best_moves(b)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    qs <span class="op">=</span> {<span class="st">"best_move"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="ss">f"Which square is best for </span><span class="sc">{</span>p<span class="sc">}</span><span class="ss">?"</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"criteria"</span>: {<span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>): SQUARES[<span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>)] <span class="cf">for</span> i <span class="kw">in</span> free}},</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"outcome"</span>: {<span class="st">"type"</span>: <span class="st">"score"</span>, <span class="st">"instructions"</span>: <span class="ss">f"With perfect play from here, how does the game end for </span><span class="sc">{</span>p<span class="sc">}</span><span class="ss">?"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"criteria"</span>: [<span class="ss">f"</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> loses"</span>, <span class="st">"a draw"</span>, <span class="ss">f"</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss"> wins"</span>]}}</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    gold <span class="op">=</span> {<span class="st">"best_move"</span>: {<span class="st">"probabilities"</span>: {<span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>): <span class="dv">1</span> <span class="op">/</span> <span class="bu">len</span>(best) <span class="cf">for</span> i <span class="kw">in</span> best}}, <span class="st">"outcome"</span>: {<span class="st">"label"</span>: <span class="bu">str</span>(value(b) <span class="op">+</span> <span class="dv">1</span>)}}</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> free:</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        qs[<span class="ss">f"good:</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="ss">f"Square </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> is one of the best moves for </span><span class="sc">{</span>p<span class="sc">}</span><span class="ss">."</span>}</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>        gold[<span class="ss">f"good:</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"label"</span>: <span class="bu">str</span>(i <span class="kw">in</span> best).lower()}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> qs, gold</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merge(r, <span class="op">*</span>parts) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The record with more questions and their golds"</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> qs, gold <span class="kw">in</span> parts: r <span class="op">=</span> {<span class="op">**</span>r, <span class="st">"questions"</span>: {<span class="op">**</span>r[<span class="st">"questions"</span>], <span class="op">**</span>qs}, <span class="st">"gold"</span>: {<span class="op">**</span>r[<span class="st">"gold"</span>], <span class="op">**</span>gold}}</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> r</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>show(merge(logged_move(<span class="st">"....O.XX."</span>, <span class="dv">9</span>), rule_questions(<span class="st">"....O.XX."</span>), solver_questions(<span class="st">"....O.XX."</span>)), only<span class="op">=</span>[<span class="st">"legal:"</span>, <span class="st">"win"</span>, <span class="st">"threat"</span>, <span class="st">"best"</span>, <span class="st">"outcome"</span>, <span class="st">"good"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>O to play.
+ 1 | 2 | 3
+---+---+---
+ 4 | O | 6
+---+---+---
+ X | X | 9
+
+legal:1          noul   O can play square 1.  →  true
+legal:2          noul   O can play square 2.  →  true
+legal:3          noul   O can play square 3.  →  true
+legal:4          noul   O can play square 4.  →  true
+legal:5          noul   O can play square 5.  →  false
+legal:6          noul   O can play square 6.  →  true
+legal:7          noul   O can play square 7.  →  false
+legal:8          noul   O can play square 8.  →  false
+legal:9          noul   O can play square 9.  →  true
+win_now          noul   O can complete a line with this move.  →  false
+threat           noul   X could complete a line next move if O does not block it.  →  true
+best_move        choice Which square is best for O? ['1', '2', '3', '4', '6', '9']  →  9: 1.00
+outcome          score  With perfect play from here, how does the game end for O? ['O loses', 'a draw', 'O wins']  →  1 (a draw)
+good:1           noul   Square 1 is one of the best moves for O.  →  false
+good:2           noul   Square 2 is one of the best moves for O.  →  false
+good:3           noul   Square 3 is one of the best moves for O.  →  false
+good:4           noul   Square 4 is one of the best moves for O.  →  false
+good:6           noul   Square 6 is one of the best moves for O.  →  false
+good:9           noul   Square 9 is one of the best moves for O.  →  true</code></pre>
+</div>
+</div>
+<p>The rules say O can take six squares, can’t complete a line, and must deal with X’s threat. The solver says the game is a draw with perfect play, that square 9 is the only best move, and the statements say it square by square. None of these answers came from the log: any board, logged or not, can be asked them.</p>
+</section>
+<section id="none-of-these" class="level2">
+<h2 class="anchored" data-anchor-id="none-of-these">None of these</h2>
+<p>A choice whose options leave out every right answer has no right option, and a model should say so rather than pick one. <a href="https://sgaseretto.github.io/sysonelib/data.html#add_none_of_these"><code>add_none_of_these</code></a> adds such a copy of the best-move question: the same instruction, the free squares that are not best. Its gold is <code>answerable: False</code>, which trains the act head to hand the case over instead of acting. Boards where every free square is best get no copy.</p>
+<div id="8539f7e7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>show(add_none_of_these(merge(logged_move(<span class="st">"....O.XX."</span>, <span class="dv">9</span>), solver_questions(<span class="st">"....O.XX."</span>)), <span class="st">"best_move"</span>), only<span class="op">=</span>[<span class="st">"best_move"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>O to play.
+ 1 | 2 | 3
+---+---+---
+ 4 | O | 6
+---+---+---
+ X | X | 9
+
+best_move        choice Which square is best for O? ['1', '2', '3', '4', '6', '9']  →  9: 1.00
+best_move:none   choice Which square is best for O? ['1', '2', '3', '4', '6']  →  none of these</code></pre>
+</div>
+</div>
+</section>
+<section id="boards-seen-more-than-once" class="level2">
+<h2 class="anchored" data-anchor-id="boards-seen-more-than-once">Boards seen more than once</h2>
+<p>The 1,160 logged moves fall on only 579 different boards: every game starts on the empty board, and the first moves repeat often. A board logged several times is one state with several answers. As separate records, each says that its square was <em>the</em> one played, and the others contradict it. Pooled into one record, the counts become a soft gold: the share of the logged moves that went to each square, which is what the log can honestly say about that board. <a href="https://sgaseretto.github.io/sysonelib/data.html#add_nouls"><code>add_nouls</code></a> carries the shares over to the statements.</p>
+<div id="1c249aae" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pooled_move(b, squares: Counter, <span class="bu">id</span><span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"One record for a board logged several times: the squares played, as shares of its logged moves"</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> logged_move(b, squares.most_common(<span class="dv">1</span>)[<span class="dv">0</span>][<span class="dv">0</span>], <span class="bu">id</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    share <span class="op">=</span> {<span class="bu">str</span>(s): c <span class="op">/</span> <span class="bu">sum</span>(squares.values()) <span class="cf">for</span> s, c <span class="kw">in</span> squares.items()}</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    r[<span class="st">"gold"</span>] <span class="op">=</span> {<span class="st">"move"</span>: {<span class="st">"probabilities"</span>: share}, <span class="st">"legal_move"</span>: {<span class="st">"probabilities"</span>: share}}</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    r[<span class="st">"questions"</span>] <span class="op">=</span> {k: q <span class="cf">for</span> k, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items() <span class="cf">if</span> <span class="st">":"</span> <span class="kw">not</span> <span class="kw">in</span> k}</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> add_nouls(r, <span class="st">"legal_move"</span>, statement<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>mover(b)<span class="sc">}</span><span class="ss"> played square </span><span class="ch">{{</span><span class="ss">label</span><span class="ch">}}</span><span class="ss">."</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>played <span class="op">=</span> log.groupby(<span class="st">"board"</span>).square.agg(Counter)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> played[played.<span class="bu">map</span>(<span class="kw">lambda</span> c: <span class="bu">sum</span>(c.values())).between(<span class="dv">5</span>, <span class="dv">40</span>)].index[<span class="dv">0</span>]</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"logged </span><span class="sc">{</span><span class="bu">sum</span>(played[b].values())<span class="sc">}</span><span class="ss"> times; best squares </span><span class="sc">{</span>[i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i <span class="kw">in</span> best_moves(b)]<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>show(pooled_move(b, played[b]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>logged 19 times; best squares [5]
+
+O to play.
+ 1 | 2 | 3
+---+---+---
+ 4 | 5 | 6
+---+---+---
+ 7 | 8 | X
+
+move             choice Which square did O play? ['1', '2', '3', '4', '5', '6', '7', '8', '9']  →  5: 0.63, 2: 0.16, 3: 0.05, 1: 0.05, 4: 0.11
+legal_move       choice Which square did O play? ['1', '2', '3', '4', '5', '6', '7', '8']  →  5: 0.63, 2: 0.16, 3: 0.05, 1: 0.05, 4: 0.11
+legal_move:noul0 noul   O played square 2.  →  true with p = 0.16
+legal_move:noul1 noul   O played square 3.  →  true with p = 0.05
+legal_move:noul2 noul   O played square 4.  →  true with p = 0.11
+legal_move:noul3 noul   O played square 5.  →  true with p = 0.63
+legal_move:noul4 noul   O played square 7.  →  false
+legal_move:noul5 noul   O played square 8.  →  false
+legal_move:noul6 noul   O played square 1.  →  true with p = 0.05
+legal_move:noul7 noul   O played square 6.  →  false</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/game_pooled.svg" class="img-fluid figure-img"></p>
+<figcaption>The board logged 19 times: each logged move a one-hot target over the free squares, their mean the pooled gold, drawn on the board</figcaption>
+</figure>
+</div>
+<p>The same record as a picture (<a href="../figures.html#a-board-logged-many-times">figures</a>): each column is one logged move, a one-hot target that puts all its weight on the square played, and the pooled gold is their mean, the share of each square.</p>
+<p>O answered X’s corner opening 19 times: in the centre 12 times (63%), the only square that keeps the draw, and elsewhere 7 times. The pooled record says exactly that. As separate records, the log would have said “O played square 5” twelve times and “O played square 2” three times, each time as a certainty. What O <em>should</em> play is the solver’s question, not the log’s.</p>
+</section>
+<section id="eight-boards-for-one" class="level2">
+<h2 class="anchored" data-anchor-id="eight-boards-for-one">Eight boards for one</h2>
+<p>Rotate a board a quarter turn, or mirror it, and the game doesn’t change: the same moves are best, turned the same way. A board has eight such versions, the four rotations and their mirror images, and the log’s move maps onto each. A board that is itself symmetric, like X in two opposite corners, has fewer distinct versions, and its copies would be exact duplicates, so only distinct ones are kept. They are new states, exact and free, which text rarely offers: rewording a sentence costs a model call and can change its meaning, a rotation can’t.</p>
+<div id="e2ea6673" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ROT, FLIP <span class="op">=</span> [<span class="dv">6</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">7</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">8</span>, <span class="dv">5</span>, <span class="dv">2</span>], [<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">3</span>, <span class="dv">8</span>, <span class="dv">7</span>, <span class="dv">6</span>]     <span class="co"># the square each new square takes its mark from</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>SYMS, P <span class="op">=</span> [], <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">9</span>))</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    SYMS <span class="op">+=</span> [P, [P[k] <span class="cf">for</span> k <span class="kw">in</span> FLIP]]</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    P <span class="op">=</span> [P[k] <span class="cf">for</span> k <span class="kw">in</span> ROT]</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform(b, P) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">""</span>.join(b[k] <span class="cf">for</span> k <span class="kw">in</span> P)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> canon(b) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="bu">min</span>(transform(b, P) <span class="cf">for</span> P <span class="kw">in</span> SYMS)       <span class="co"># one name for all eight versions</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> side_by_side(boards) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    blocks <span class="op">=</span> [board_text(b).splitlines() <span class="cf">for</span> b <span class="kw">in</span> boards]</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(<span class="st">"     "</span>.join(rows) <span class="cf">for</span> rows <span class="kw">in</span> <span class="bu">zip</span>(<span class="op">*</span>blocks))</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">all</span>(value(transform(b, P)) <span class="op">==</span> value(b) <span class="cf">for</span> b <span class="kw">in</span> to_play <span class="cf">for</span> P <span class="kw">in</span> SYMS)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(side_by_side([transform(<span class="st">"....O.XX."</span>, P) <span class="cf">for</span> P <span class="kw">in</span> SYMS[<span class="dv">0</span>::<span class="dv">2</span>]]), end<span class="op">=</span><span class="st">"</span><span class="ch">\n\n</span><span class="st">"</span>)      <span class="co"># the four rotations</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(side_by_side([transform(<span class="st">"....O.XX."</span>, P) <span class="cf">for</span> P <span class="kw">in</span> SYMS[<span class="dv">1</span>::<span class="dv">2</span>]]))                   <span class="co"># and their mirror images</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span><span class="bu">len</span>(to_play)<span class="sc">:,}</span><span class="ss"> positions to play are </span><span class="sc">{</span><span class="bu">len</span>({canon(b) <span class="cf">for</span> b <span class="kw">in</span> to_play})<span class="sc">}</span><span class="ss"> up to symmetry"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> 1 | 2 | 3      X | 2 | 3      1 | X | X      1 | 2 | 3
+---+---+---     ---+---+---     ---+---+---     ---+---+---
+ 4 | O | 6      X | O | 6      4 | O | 6      4 | O | X
+---+---+---     ---+---+---     ---+---+---     ---+---+---
+ X | X | 9      7 | 8 | 9      7 | 8 | 9      7 | 8 | X
+
+ 1 | 2 | 3      1 | 2 | X      X | X | 3      1 | 2 | 3
+---+---+---     ---+---+---     ---+---+---     ---+---+---
+ 4 | O | 6      4 | O | X      4 | O | 6      X | O | 6
+---+---+---     ---+---+---     ---+---+---     ---+---+---
+ 7 | X | X      7 | 8 | 9      7 | 8 | 9      X | 8 | 9
+
+4,520 positions to play are 627 up to symmetry</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/game_symmetry.svg" class="img-fluid figure-img"></p>
+<figcaption>The running example’s eight versions, the logged square mapped along, each with its string, and canon, the smallest of them</figcaption>
+</figure>
+</div>
+<p>The same eight boards, drawn (<a href="../figures.html#eight-boards-for-one">figures</a>). The logged square, filled, turns and flips with the board, so each version is a correct record of its own. Each board is also a string, the way the code stores it, and <code>canon</code> picks the smallest of the eight strings: a name that all the versions of a board share, which the split below uses.</p>
+</section>
+<section id="every-logged-move-every-question" class="level2">
+<h2 class="anchored" data-anchor-id="every-logged-move-every-question">Every logged move, every question</h2>
+<p>Putting it together, a logged move becomes a record with all its questions, and each record keeps its board’s canonical form, <code>canon</code>, for the split below. The symmetric versions repeat the record for the seven other boards, the logged square mapped along.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    L["a logged move:&lt;br/&gt;the board, the square played"] --&gt; A["logged_move: the square played,&lt;br/&gt;as two choices and as statements"]
+    L --&gt; B["rule_questions: legality,&lt;br/&gt;a win now, the opponent's threat"]
+    L --&gt; C["solver_questions:&lt;br/&gt;the best squares, the outcome"]
+    A --&gt; R["record: one record,&lt;br/&gt;a none-of-these copy, its canon"]
+    B --&gt; R
+    C --&gt; R
+    R --&gt; V["the board's other versions:&lt;br/&gt;up to seven more records"]
+    V --&gt; S["TypedDecisions.from_records,&lt;br/&gt;with groups='canon'"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div id="21482891" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> record(b, square, <span class="bu">id</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Every question about one logged move"</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> merge(logged_move(b, square, <span class="bu">id</span>), rule_questions(b), solver_questions(b))</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> add_none_of_these(r, <span class="st">"best_move"</span>) <span class="op">|</span> {<span class="st">"canon"</span>: canon(b)}</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>records <span class="op">=</span> [record(r.board, r.square, <span class="ss">f"g</span><span class="sc">{</span>r<span class="sc">.</span>game<span class="sc">:03d}</span><span class="ss">/</span><span class="sc">{</span>r<span class="sc">.</span>turn<span class="sc">}</span><span class="ss">"</span>) <span class="cf">for</span> r <span class="kw">in</span> log.itertuples()]</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>twins <span class="op">=</span> []</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> log.itertuples():</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    versions <span class="op">=</span> <span class="bu">sorted</span>({(transform(r.board, P), P.index(r.square <span class="op">-</span> <span class="dv">1</span>) <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> P <span class="kw">in</span> SYMS})     <span class="co"># fewer than eight for a symmetric board</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    twins <span class="op">+=</span> [record(b, s, <span class="ss">f"g</span><span class="sc">{</span>r<span class="sc">.</span>game<span class="sc">:03d}</span><span class="ss">/</span><span class="sc">{</span>r<span class="sc">.</span>turn<span class="sc">}</span><span class="ss">~</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">"</span>) <span class="cf">for</span> k, (b, s) <span class="kw">in</span> <span class="bu">enumerate</span>(versions)]</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(log)<span class="sc">:,}</span><span class="ss"> logged moves → </span><span class="sc">{</span><span class="bu">len</span>(records)<span class="sc">:,}</span><span class="ss"> records with </span><span class="sc">{</span><span class="bu">sum</span>(<span class="bu">len</span>(r[<span class="st">'questions'</span>]) <span class="cf">for</span> r <span class="kw">in</span> records)<span class="sc">:,}</span><span class="ss"> questions; "</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"with the symmetric boards </span><span class="sc">{</span><span class="bu">len</span>(twins)<span class="sc">:,}</span><span class="ss"> records"</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>question_stats(records)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1,160 logged moves → 1,160 records with 30,923 questions; with the symmetric boards 7,976 records</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">questions</th>
+<th data-quarto-table-cell-role="th">per record</th>
+<th data-quarto-table-cell-role="th">options</th>
+<th data-quarto-table-cell-role="th">gold true</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">kind</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">choice</th>
+<td>3480</td>
+<td>3.000</td>
+<td>6.681</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">noul from choice</th>
+<td>6405</td>
+<td>5.522</td>
+<td>2.000</td>
+<td>0.181</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">noul</th>
+<td>19165</td>
+<td>16.522</td>
+<td>2.000</td>
+<td>0.571</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">score</th>
+<td>1160</td>
+<td>1.000</td>
+<td>3.000</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">choice from choice, none of these</th>
+<td>713</td>
+<td>0.615</td>
+<td>3.431</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>A logged move now asks about 27 questions: three choices (the square played among all nine and among the free ones, and the best square), the game’s outcome, about 5.5 statements about the square played, 16.5 from the rules and the solver, and, on six boards in ten, a none-of-these copy. The share of true statements differs by family: 18% for “O played square N” (one true among the free squares), 57% for the rules’ and the solver’s, most of them about legal squares. A model learns these shares as its prior for each kind of statement, so they are worth choosing rather than inheriting; the last section draws them per epoch.</p>
+</section>
+<section id="a-split-that-keeps-twins-apart" class="level2">
+<h2 class="anchored" data-anchor-id="a-split-that-keeps-twins-apart">A split that keeps twins apart</h2>
+<p>Validation must hold states the model never trained on. With repeated boards and symmetric twins, a split by record doesn’t do that: a board’s twin, or the board itself from another game, lands on the other side. <code>groups="canon"</code> keeps every version of a board on one side:</p>
+<div id="3f4e5e41" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> leak(data) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The share of validation records whose board, in some version, is also in training"</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    seen <span class="op">=</span> <span class="bu">set</span>(data.cases[<span class="st">"train"</span>][<span class="st">"canon"</span>])</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sum</span>(c <span class="kw">in</span> seen <span class="cf">for</span> c <span class="kw">in</span> data.cases[<span class="st">"valid"</span>][<span class="st">"canon"</span>]) <span class="op">/</span> <span class="bu">len</span>(data.cases[<span class="st">"valid"</span>])</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>by_record <span class="op">=</span> TypedDecisions.from_records(twins, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>by_board <span class="op">=</span> TypedDecisions.from_records(twins, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="fl">0.1</span>, groups<span class="op">=</span><span class="st">"canon"</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"split by record: </span><span class="sc">{</span>leak(by_record)<span class="sc">:.0%}</span><span class="ss"> of validation boards also in training; split by board: </span><span class="sc">{</span>leak(by_board)<span class="sc">:.0%}</span><span class="ss">"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>by_board</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>split by record: 100% of validation boards also in training; split by board: 0%</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>TypedDecisions(5716 train, 1604 valid, 656 calib cases · template default · 0 tfms)</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/game_split.svg" class="img-fluid figure-img"></p>
+<figcaption>The two splits of the symmetric records for ten boards: a row per board, a tile per version, coloured by the side it lands on</figcaption>
+</figure>
+</div>
+<p>Ten boards of the log, a row each with a tile for each of their eight versions, coloured by the side each split puts them on (<a href="../figures.html#a-split-by-record-and-a-split-by-board">figures</a>):</p>
+<p>Split by record, every validation board has a twin, or the same board from another game, in training, so validation would measure memory. Split by board, none does.</p>
+</section>
+<section id="more-negatives-every-epoch" class="level2">
+<h2 class="anchored" data-anchor-id="more-negatives-every-epoch">More negatives every epoch</h2>
+<p>A record asks every free square as a statement, so a board with six free squares has five false ones for one true. To keep the mix closer to even, the statements can be drawn instead, per epoch: the <a href="https://sgaseretto.github.io/sysonelib/data.html#nouls"><code>Nouls</code></a> transform asks the played square and one other, a different other each epoch, under the same question ids. Its wording can quote the question, <code>{instructions}</code>, which names the player, so one wording serves X’s moves and O’s. It runs while training only; validation gets one fixed draw from <a href="https://sgaseretto.github.io/sysonelib/data.html#expand_records"><code>expand_records</code></a>, as <a href="https://sgaseretto.github.io/sysonelib/data.html#typeddecisions.expand_eval"><code>TypedDecisions.expand_eval</code></a> would give it.</p>
+<div id="85f0548b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> logged_move(<span class="st">"....O.XX."</span>, <span class="dv">9</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> {<span class="op">**</span>r, <span class="st">"questions"</span>: {k: q <span class="cf">for</span> k, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items() <span class="cf">if</span> <span class="st">":"</span> <span class="kw">not</span> <span class="kw">in</span> k}}     <span class="co"># the two choices, no statements yet</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>draw <span class="op">=</span> Nouls(<span class="st">"legal_move"</span>, negatives<span class="op">=</span><span class="dv">1</span>, statement<span class="op">=</span><span class="st">"</span><span class="sc">{instructions}</span><span class="st"> Square </span><span class="sc">{label}</span><span class="st">."</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    draw.set_epoch(epoch)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> apply_tfms([draw], r, train<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"epoch </span><span class="sc">{</span>epoch<span class="sc">}</span><span class="ss">:"</span>, [(x[<span class="st">"questions"</span>][k][<span class="st">"instructions"</span>], gold_text(x[<span class="st">"gold"</span>][k])) <span class="cf">for</span> k <span class="kw">in</span> x[<span class="st">"questions"</span>] <span class="cf">if</span> <span class="st">":"</span> <span class="kw">in</span> k])</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> expand_records([r], [draw])[<span class="dv">0</span>]</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"validation:"</span>, [v[<span class="st">"questions"</span>][k][<span class="st">"instructions"</span>] <span class="cf">for</span> k <span class="kw">in</span> v[<span class="st">"questions"</span>] <span class="cf">if</span> <span class="st">":"</span> <span class="kw">in</span> k])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>epoch 0: [('Which square did O play? Square 4.', 'false'), ('Which square did O play? Square 9.', 'true')]
+epoch 1: [('Which square did O play? Square 9.', 'true'), ('Which square did O play? Square 6.', 'false')]
+epoch 2: [('Which square did O play? Square 2.', 'false'), ('Which square did O play? Square 9.', 'true')]
+validation: ['Which square did O play? Square 4.', 'Which square did O play? Square 9.']</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/game_epochs.svg" class="img-fluid figure-img"></p>
+<figcaption>The statements Nouls asks about one board at three epochs, and the one fixed draw validation gets</figcaption>
+</figure>
+</div>
+<p>On the board (<a href="../figures.html#statements-drawn-per-epoch">figures</a>): every epoch asks about the played square, 9, and one other, a different one each time. Validation’s draw is fixed: <a href="https://sgaseretto.github.io/sysonelib/data.html#expand_records"><code>expand_records</code></a> draws as training does at epoch 0, so a validation record is asked the same two statements at every evaluation.</p>
+</section>
+<section id="exercises-train-and-compare" class="level2">
+<h2 class="anchored" data-anchor-id="exercises-train-and-compare">Exercises: train and compare</h2>
+<p>The records are ready. The cells below train a model on three versions of them and compare them on boards none of them saw. They don’t run when the tutorial is built; run them yourself. Each trains sysone’s text application, ModernBERT-large with a frozen encoder whose features are cached, so every version sees one fixed draw of its questions. The first run downloads the encoder, about 1.6 GB, and computes its features once for every question, which for the third version is eight times as many.</p>
+<ol type="1">
+<li><strong>The log only</strong>: the questions the log answers, which square was played, as two choices and as statements.</li>
+<li><strong>Every question</strong>: the log’s, the rules’, and the solver’s.</li>
+<li><strong>Every question, eight boards</strong>: the same, on the symmetric boards too.</li>
+</ol>
+<p>All three are tested on the same held-out boards: a fifth of the canonical forms, with every version of them kept out of training.</p>
+<div id="92ebd25a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.text <span class="im">import</span> decision_learner</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.evaluate <span class="im">import</span> evaluate</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>classes <span class="op">=</span> <span class="bu">sorted</span>({r[<span class="st">"canon"</span>] <span class="cf">for</span> r <span class="kw">in</span> records})<span class="op">;</span> random.Random(<span class="dv">0</span>).shuffle(classes)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>held <span class="op">=</span> <span class="bu">set</span>(classes[:<span class="bu">len</span>(classes) <span class="op">//</span> <span class="dv">5</span>])</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>test <span class="op">=</span> [r <span class="cf">for</span> r <span class="kw">in</span> records <span class="cf">if</span> r[<span class="st">"canon"</span>] <span class="kw">in</span> held]</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> only(rs, prefixes):</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The records with only the questions whose ids start with one of `prefixes`"</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    keep <span class="op">=</span> <span class="kw">lambda</span> k: k.startswith(<span class="bu">tuple</span>(prefixes))</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [{<span class="op">**</span>r, <span class="st">"questions"</span>: {k: q <span class="cf">for</span> k, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items() <span class="cf">if</span> keep(k)}, <span class="st">"gold"</span>: {k: g <span class="cf">for</span> k, g <span class="kw">in</span> r[<span class="st">"gold"</span>].items() <span class="cf">if</span> keep(k)}} <span class="cf">for</span> r <span class="kw">in</span> rs]</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>versions <span class="op">=</span> {<span class="st">"the log only"</span>: only([r <span class="cf">for</span> r <span class="kw">in</span> records <span class="cf">if</span> r[<span class="st">"canon"</span>] <span class="kw">not</span> <span class="kw">in</span> held], [<span class="st">"move"</span>, <span class="st">"legal_move"</span>]),</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>            <span class="st">"every question"</span>: [r <span class="cf">for</span> r <span class="kw">in</span> records <span class="cf">if</span> r[<span class="st">"canon"</span>] <span class="kw">not</span> <span class="kw">in</span> held],</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>            <span class="st">"every question, eight boards"</span>: [r <span class="cf">for</span> r <span class="kw">in</span> twins <span class="cf">if</span> r[<span class="st">"canon"</span>] <span class="kw">not</span> <span class="kw">in</span> held]}</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>learners <span class="op">=</span> {}</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, rs <span class="kw">in</span> versions.items():</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> TypedDecisions.from_records(rs, valid<span class="op">=</span><span class="fl">0.1</span>, calib<span class="op">=</span><span class="fl">0.1</span>, groups<span class="op">=</span><span class="st">"canon"</span>)</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    learners[name] <span class="op">=</span> decision_learner(data, preset<span class="op">=</span><span class="st">"macbook"</span>)</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    learners[name].fit_one_cycle(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>On the held-out boards, three things to measure for each model: how often it names the square that was played (accuracy on <code>legal_move</code>), how often its pick for the square played is one of the best moves (since the log mostly shows good play, a model that learned the game should pick well even where the logged player didn’t), and, for the models that saw them, legality and the game’s outcome.</p>
+<div id="f6b42fae" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> picks(decider, rs, qid):</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The square the model picks for question `qid` of each record"</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [decider.predict(r[<span class="st">"state"</span>], {qid: r[<span class="st">"questions"</span>][qid]})[qid][<span class="st">"choice"</span>] <span class="cf">for</span> r <span class="kw">in</span> rs]</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, learn <span class="kw">in</span> learners.items():</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> learn.decider()</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    played <span class="op">=</span> picks(d, test, <span class="st">"legal_move"</span>)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> {<span class="st">"model"</span>: name,</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>           <span class="st">"names the played square"</span>: <span class="bu">sum</span>(p <span class="op">==</span> r[<span class="st">"gold"</span>][<span class="st">"legal_move"</span>][<span class="st">"label"</span>] <span class="cf">for</span> p, r <span class="kw">in</span> <span class="bu">zip</span>(played, test)) <span class="op">/</span> <span class="bu">len</span>(test),</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>           <span class="st">"picks a best square"</span>: <span class="bu">sum</span>(p <span class="kw">in</span> r[<span class="st">"gold"</span>][<span class="st">"best_move"</span>][<span class="st">"probabilities"</span>] <span class="cf">for</span> p, r <span class="kw">in</span> <span class="bu">zip</span>(played, test)) <span class="op">/</span> <span class="bu">len</span>(test)}</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"the log only"</span>:</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>        legal_rs <span class="op">=</span> only(test, [<span class="st">"legal:"</span>])</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"legality accuracy"</span>] <span class="op">=</span> evaluate(d, legal_rs)[<span class="st">"accuracy"</span>]</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"outcome within one level"</span>] <span class="op">=</span> evaluate(d, only(test, [<span class="st">"outcome"</span>]))[<span class="st">"within_one"</span>]</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    rows.append(row)</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).set_index(<span class="st">"model"</span>).<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Some questions to take further:</p>
+<ul>
+<li><strong>Which questions help?</strong> Train on the log’s questions plus one family at a time (the rules’, the solver’s) and see which moves the “picks a best square” column.</li>
+<li><strong>Balance.</strong> The statements “O played square N” are mostly false. Build the records without them (leave <a href="https://sgaseretto.github.io/sysonelib/data.html#add_nouls"><code>add_nouls</code></a> out of <code>logged_move</code>) and put <code>Nouls("legal_move", negatives=1, statement="{instructions} Square {label}.")</code> in the data’s transforms, with <code>train="lora"</code> so the draws change every epoch (the frozen encoder’s cache fixes one), and compare.</li>
+<li><strong>None of these.</strong> Give the deciders an act threshold (<code>learn.calibrate()</code>), then ask the <code>best_move:none</code> questions: how often does the model hand them over rather than pick a bad square?</li>
+<li><strong>More logs or more boards?</strong> Log 1,200 games instead of 150, without the symmetric boards, and compare with 150 games and their twins: about the same number of records, but one is new positions and the other is the same positions turned.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

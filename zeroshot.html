@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Typed answers without a trained head: a two-tower model’s similarity between the state and each option, or a masked language model’s own prediction at an answer slot.">
+
+<title>zeroshot – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="zeroshot – sysone">
+<meta property="og:description" content="Typed answers without a trained head: a two-tower model’s similarity between the state and each option, or a masked language model’s own prediction at an answer slot.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/zeroshot_two_ways.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="zeroshot – sysone">
+<meta name="twitter:description" content="Typed answers without a trained head: a two-tower model’s similarity between the state and each option, or a masked language model’s own prediction at an answer slot.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/zeroshot_two_ways.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./zeroshot.html">zeroshot</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#two-towers-similarity" id="toc-two-towers-similarity" class="nav-link active" data-scroll-target="#two-towers-similarity">Two towers: similarity</a></li>
+  <li><a href="#a-masked-language-model-verbalizers" id="toc-a-masked-language-model-verbalizers" class="nav-link" data-scroll-target="#a-masked-language-model-verbalizers">A masked language model: verbalizers</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="zeroshot.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">zeroshot</h1>
+</div>
+
+<div>
+  <div class="description">
+    Typed answers without a trained head: a two-tower model’s similarity between the state and each option, or a masked language model’s own prediction at an answer slot.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>A sysone head learns to score anchors, and before it has seen labelled data it knows nothing. Some models can answer a typed question without any head, and such a zero-shot answer is worth having for two reasons: it is the baseline a trained head has to beat, and it is all a new task has before anyone labels anything. Two kinds of model can do it, and this module turns each into a backend shaped like a <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a>: <a href="https://sgaseretto.github.io/sysonelib/cli.html#predict"><code>predict</code></a> and <code>predict_batch</code> return answers in the Jev schema, <code>calibrate</code> fits temperatures on held-out records, and <a href="https://sgaseretto.github.io/sysonelib/evaluate.html#evaluate"><code>evaluate</code></a> scores it like any other backend.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    S["state, question, options"] --&gt; T{"which model?"}
+    T -- "two towers&lt;br/&gt;(ProtST, CLIP, a sentence encoder)" --&gt; A["embed the state; embed each option's text;&lt;br/&gt;logit = scale × cosine"]
+    T -- "a masked language model" --&gt; B["one prompt ending in a mask;&lt;br/&gt;logit = the model's score for each&lt;br/&gt;option's verbalizer token there"]
+    A --&gt; P["÷ temperature, softmax:&lt;br/&gt;the Jev answer"]
+    B --&gt; P
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="two-towers-similarity" class="level2">
+<h2 class="anchored" data-anchor-id="two-towers-similarity">Two towers: similarity</h2>
+<p>A two-tower model embeds its two inputs into one space, trained so that a state and a text that describe each other lie close together: CLIP for images and captions, ProtST for proteins and their Swiss-Prot descriptions, a sentence encoder for two texts. Each option becomes a text, its description or else its key, and its logit is the cosine between the state’s embedding and the option text’s, times the model’s <code>scale</code> (the logit scale CLIP and ProtST learn; 1 for a plain sentence encoder). This is how ProtST and ProTrek classify proteins without training, and how CLIP classifies images.</p>
+<p>A noul needs two texts, one per answer. With descriptions of its own (<code>criteria={"false": "a soluble protein", "true": "a membrane protein"}</code>) the two are compared directly. Without them the statement is compared with its negation, which two-tower models read poorly, since contrastive pre-training rarely sees a “not”. The texts come from <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#option_texts"><code>option_texts</code></a>, a <a href="./core.html#generic-functions-and-multiple-dispatch">generic function</a> with a method per kind of question: a choice’s descriptions (or keys), a score’s levels, a noul’s two sides. A backend that wants other texts for one kind adds a method for it.</p>
+<div id="72e516d7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.468776+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.475856+00:00&quot;,&quot;total&quot;:0.00708384800000772}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/zeroshot.py#L94" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="similaritydecider" class="level3">
+<h3 class="anchored" data-anchor-id="similaritydecider">SimilarityDecider</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> SimilarityDecider(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    state_embedder, <span class="co"># states (or their `state_key` part) to unit vectors</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    text_embedder, <span class="co"># option texts to unit vectors, in the same space</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    scale:<span class="bu">float</span><span class="op">=</span><span class="fl">1.0</span>, <span class="co"># the model's logit scale (CLIP's, ProtST's)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    prompt:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{text}</span><span class="st">'</span>, <span class="co"># how an option becomes a text: {text} is its description or key, {key} its key</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    state_key:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># embed state[state_key] of a dict state (a protein's sequence); the whole state otherwise</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    temperatures:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># per type and option-count bucket, as `calibrate` fits them</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    act_threshold:<span class="bu">float</span> <span class="op">|</span> <span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># act where the calibrated top probability ≥ this (`calibrate(act_accuracy=...)` fits them)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    digits:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4</span>, <span class="co"># rounding of reported numbers</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">16</span>, <span class="co"># states per embedding call</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span><span class="op">=</span><span class="st">'similarity'</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Zero-shot typed answers from a two-tower model: <code>scale</code> times the cosine between a state’s embedding and each option text’s</em></p>
+</section>
+</div>
+<div id="59423170" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.480433+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.482658+00:00&quot;,&quot;total&quot;:0.002227953000002003}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/zeroshot.py#L38" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cachedembedder" class="level3">
+<h3 class="anchored" data-anchor-id="cachedembedder">CachedEmbedder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> CachedEmbedder(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    embedder:__main__.Embedder</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An embedder that remembers each item’s vector, so deciders sharing it (one per prompt, say) embed each state once</em></p>
+</section>
+</div>
+<div id="3dec85e8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.482735+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.485023+00:00&quot;,&quot;total&quot;:0.0022911309999926743}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/zeroshot.py#L29" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="sentencetransformerembedder" class="level3">
+<h3 class="anchored" data-anchor-id="sentencetransformerembedder">SentenceTransformerEmbedder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> SentenceTransformerEmbedder(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    model:<span class="bu">str</span><span class="op">=</span><span class="st">'BAAI/bge-small-en-v1.5'</span>, prefix:<span class="bu">str</span><span class="op">=</span><span class="st">''</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A sentence-transformers model (install <code>sysone[shortlist]</code>)</em></p>
+</section>
+</div>
+<div id="d9f8de39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.485099+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.487518+00:00&quot;,&quot;total&quot;:0.0024212139999946203}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/zeroshot.py#L22" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="embedder" class="level3">
+<h3 class="anchored" data-anchor-id="embedder">Embedder</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Embedder(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args, <span class="op">**</span>kwargs</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Items to unit vectors, one row per item: states (texts, proteins, images) or option texts</em></p>
+</section>
+</div>
+<p>The tests use a stand-in two-tower model: character trigrams hashed into 64 dimensions, the same function for both towers, so a text is close to the texts it shares trigrams with:</p>
+<div id="9f626352" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HashEmbedder(Embedder):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Character trigrams hashed into 64 dimensions: a stand-in two-tower model"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> embed(<span class="va">self</span>, items):</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> np.zeros((<span class="bu">len</span>(items), <span class="dv">64</span>), np.float32)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i, s <span class="kw">in</span> <span class="bu">enumerate</span>(items):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            s <span class="op">=</span> <span class="ss">f"  </span><span class="sc">{</span><span class="bu">str</span>(s)<span class="sc">.</span>lower()<span class="sc">}</span><span class="ss">  "</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> <span class="dv">2</span>): out[i, <span class="bu">int</span>(hashlib.md5(s[j:j <span class="op">+</span> <span class="dv">3</span>].encode()).hexdigest(), <span class="dv">16</span>) <span class="op">%</span> <span class="dv">64</span>] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> out</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>he <span class="op">=</span> HashEmbedder()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>zs <span class="op">=</span> SimilarityDecider(he, he, scale<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> {<span class="st">"dept"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which team?"</span>, <span class="st">"criteria"</span>: {<span class="st">"billing"</span>: <span class="st">"invoices and refunds"</span>, <span class="st">"tech"</span>: <span class="st">"bugs and crashes"</span>}},</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"urgent"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"It is urgent."</span>, <span class="st">"criteria"</span>: {<span class="st">"false"</span>: <span class="st">"it can wait"</span>, <span class="st">"true"</span>: <span class="st">"urgent, today"</span>}}}</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>ans <span class="op">=</span> zs.predict(<span class="st">"the app crashes with a bug on start, fix it today, urgent"</span>, qs)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>test_eq((ans[<span class="st">"dept"</span>][<span class="st">"choice"</span>], ans[<span class="st">"urgent"</span>][<span class="st">"noul"</span>] <span class="op">&gt;</span> <span class="fl">0.5</span>), (<span class="st">"tech"</span>, <span class="va">True</span>))</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>test_eq(option_texts(Question.from_dict({<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"The photo shows a hot dog."</span>})),</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        [<span class="st">"It is not the case that the photo shows a hot dog."</span>, <span class="st">"The photo shows a hot dog."</span>])</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>test_eq(zs.predict_batch([<span class="st">"refund my invoice"</span>, <span class="st">"it crashes"</span>], qs)[<span class="dv">0</span>][<span class="st">"dept"</span>][<span class="st">"choice"</span>], <span class="st">"billing"</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>ans</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'dept': {'type': 'choice',
+  'choice': 'tech',
+  'probabilities': {'billing': 0.1959, 'tech': 0.8041},
+  'confidence': 0.2864,
+  'answer_confidence': 0.8041},
+ 'urgent': {'type': 'noul',
+  'noul': 0.8952,
+  'confidence': 0.8952,
+  'answer_confidence': 0.8952}}</code></pre>
+</div>
+</div>
+<p>A state held as a dict can hand one part to the state tower (<code>state_key</code>), the way a protein’s sequence goes to the protein tower. <code>calibrate</code> fits temperatures on labelled records exactly as a learner does, and <a href="https://sgaseretto.github.io/sysonelib/evaluate.html#evaluate"><code>evaluate</code></a> scores the result like any other backend:</p>
+<div id="ea93e1d5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>qd <span class="op">=</span> {<span class="st">"dept"</span>: qs[<span class="st">"dept"</span>]}</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [{<span class="st">"state"</span>: {<span class="st">"sequence"</span>: s, <span class="st">"note"</span>: <span class="st">"n/a"</span>}, <span class="st">"questions"</span>: qd, <span class="st">"gold"</span>: {<span class="st">"dept"</span>: {<span class="st">"label"</span>: g}}}</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> s, g <span class="kw">in</span> [(<span class="st">"invoice refund please"</span>, <span class="st">"billing"</span>), (<span class="st">"crash bug on login"</span>, <span class="st">"tech"</span>), (<span class="st">"refunds for invoices"</span>, <span class="st">"billing"</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                     (<span class="st">"bugs and crashes today"</span>, <span class="st">"tech"</span>)] <span class="op">*</span> <span class="dv">4</span>]</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>zk <span class="op">=</span> SimilarityDecider(he, he, scale<span class="op">=</span><span class="dv">10</span>, state_key<span class="op">=</span><span class="st">"sequence"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>temps <span class="op">=</span> zk.calibrate(recs, min_rows<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">set</span>(temps) <span class="op">&gt;=</span> {<span class="st">"choice"</span>, <span class="st">"choice:2"</span>}, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A zero-shot decider has no act head, but it can still say when to escalate. <code>calibrate(act_accuracy=...)</code> also fits act thresholds on its calibrated top probability, per question type and option-count bucket, and its answers then carry <code>action</code>:</p>
+<div id="2ea60059" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>za <span class="op">=</span> SimilarityDecider(he, he, scale<span class="op">=</span><span class="dv">10</span>, state_key<span class="op">=</span><span class="st">"sequence"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>za.calibrate(recs, min_rows<span class="op">=</span><span class="dv">4</span>, act_accuracy<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>aa <span class="op">=</span> za.predict(recs[<span class="dv">0</span>][<span class="st">"state"</span>], qd)[<span class="st">"dept"</span>]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">sorted</span>(aa[<span class="st">"action"</span>]), aa[<span class="st">"action"</span>][<span class="st">"act_probability"</span>]), ([<span class="st">"act"</span>, <span class="st">"act_probability"</span>], aa[<span class="st">"answer_confidence"</span>]))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"action"</span> <span class="kw">in</span> zk.predict(recs[<span class="dv">0</span>][<span class="st">"state"</span>], qd)[<span class="st">"dept"</span>], <span class="va">False</span>)            <span class="co"># calibrated without act_accuracy: no action</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>aa[<span class="st">"action"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'act_probability': 0.9999, 'act': True}</code></pre>
+</div>
+</div>
+<div id="3764f40d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> evaluate(zk, recs)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>test_eq(m[<span class="st">"accuracy"</span>], <span class="fl">1.0</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">round</span>(m[k], <span class="dv">3</span>) <span class="cf">for</span> k <span class="kw">in</span> (<span class="st">"accuracy"</span>, <span class="st">"brier"</span>, <span class="st">"ece"</span>, <span class="st">"macro_f1"</span>)} <span class="op">|</span> {<span class="st">"temperatures"</span>: temps}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'accuracy': 1.0,
+ 'brier': 0.001,
+ 'ece': 0.008,
+ 'macro_f1': 1.0,
+ 'temperatures': {'choice': 0.5, 'choice:2': 0.5}}</code></pre>
+</div>
+</div>
+<p>The state tower is usually the expensive one (a protein language model, an image tower), and the option texts are few. So a decider embeds each distinct state once per call, however many questions ask about it, and remembers each option text. Comparing prompts means one decider per prompt over the same states. Wrapping the state tower in <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#cachedembedder"><code>CachedEmbedder</code></a> lets them share its vectors, so each state is embedded once for all of them:</p>
+<div id="2ed71518" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CountingEmbedder(HashEmbedder):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A HashEmbedder that counts what it embeds"</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> embed(<span class="va">self</span>, items): <span class="va">self</span>.n <span class="op">+=</span> <span class="bu">len</span>(items)<span class="op">;</span> <span class="cf">return</span> <span class="bu">super</span>().embed(items)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>ce <span class="op">=</span> CountingEmbedder()</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>SimilarityDecider(ce, he, scale<span class="op">=</span><span class="dv">10</span>, state_key<span class="op">=</span><span class="st">"sequence"</span>).calibrate(recs, min_rows<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>test_eq(ce.n, <span class="dv">4</span>)                                      <span class="co"># 16 records, 4 distinct sequences</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>shared <span class="op">=</span> CachedEmbedder(ce <span class="op">:=</span> CountingEmbedder())</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> prompt <span class="kw">in</span> (<span class="st">"</span><span class="sc">{text}</span><span class="st">"</span>, <span class="st">"a ticket about </span><span class="sc">{text}</span><span class="st">"</span>, <span class="st">"</span><span class="sc">{key}</span><span class="st">"</span>):</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    SimilarityDecider(shared, he, scale<span class="op">=</span><span class="dv">10</span>, prompt<span class="op">=</span>prompt, state_key<span class="op">=</span><span class="st">"sequence"</span>).predict_batch([r[<span class="st">"state"</span>] <span class="cf">for</span> r <span class="kw">in</span> recs], qd)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>test_eq(ce.n, <span class="dv">4</span>)                                      <span class="co"># three prompts, each sequence embedded once</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="a-masked-language-model-verbalizers" class="level2">
+<h2 class="anchored" data-anchor-id="a-masked-language-model-verbalizers">A masked language model: verbalizers</h2>
+<p>A masked language model already predicts words: put the options in the prompt with a label each, end the prompt with a mask, and read what the model would write there. Each option is represented by one <em>verbalizer</em> token, its letter (A, B, C…) for a choice, its digit for a score level, <em>yes</em> or <em>no</em> for a noul, and its logit is the model’s logit for that token at the mask. The softmax over the verbalizers is the answer, and a temperature fitted on held-out records calibrates it. This is prompt-based classification (PET), and the zero-shot path the protein note calls Path 1. Which letters or digits stand for the options depends on the kind, through <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#verbalizer_options"><code>verbalizer_options</code></a>, a generic function like <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#option_texts"><code>option_texts</code></a>.</p>
+<p>It works to the extent that the model saw prompts of this shape in pre-training, and its answers move with the prompt’s wording: try a few phrasings and report the best and the average. Letters are used because an option’s own words often break into several tokens, while a mask predicts one.</p>
+<div id="69d4b8c1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.496503+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.499656+00:00&quot;,&quot;total&quot;:0.0031569690000026185}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/zeroshot.py#L182" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="verbalizerdecider" class="level3">
+<h3 class="anchored" data-anchor-id="verbalizerdecider">VerbalizerDecider</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> VerbalizerDecider(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    model, <span class="co"># a transformers `...ForMaskedLM`</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    tokenizer, <span class="co"># its tokenizer, with a mask token</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    prompt:<span class="bu">str</span><span class="op">=</span><span class="st">'</span><span class="sc">{state}</span><span class="ch">\n</span><span class="st">Question: </span><span class="sc">{instructions}</span><span class="ch">\n</span><span class="sc">{options}</span><span class="ch">\n</span><span class="st">Answer: </span><span class="sc">{mask}</span><span class="st">'</span>, <span class="co"># {state}, {instructions}, {options} and {mask}</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    temperatures:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, act_threshold:<span class="bu">float</span> <span class="op">|</span> <span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, digits:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4</span>, max_len:<span class="bu">int</span><span class="op">=</span><span class="dv">512</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    batch_size:<span class="bu">int</span><span class="op">=</span><span class="dv">8</span>, device:NoneType<span class="op">=</span><span class="va">None</span>, name:<span class="bu">str</span><span class="op">=</span><span class="st">'verbalizer'</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Zero-shot typed answers from a masked language model’s head: each option’s logit is the model’s logit for its verbalizer token at the prompt’s mask</em></p>
+</section>
+</div>
+<p>On the fixture’s tiny ModernBERT, whose masked-LM head is untrained, the answers are noise, but the prompt, the verbalizers and the schema are the real ones:</p>
+<div id="eddaf3f1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:41.504170+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:41.504645+00:00&quot;,&quot;total&quot;:0.00047830399999782003}}" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> AutoModelForMaskedLM, AutoTokenizer</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="40d249a6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-modernbert"</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>vd <span class="op">=</span> VerbalizerDecider(AutoModelForMaskedLM.from_pretrained(FIX), AutoTokenizer.from_pretrained(FIX), device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>qv <span class="op">=</span> {<span class="st">"dept"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which team?"</span>, <span class="st">"criteria"</span>: {<span class="st">"billing"</span>: <span class="st">"invoices"</span>, <span class="st">"tech"</span>: <span class="st">"bugs"</span>, <span class="st">"sales"</span>: <span class="st">"pricing"</span>}},</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">"urgent"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"Is it urgent?"</span>},</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">"level"</span>: {<span class="st">"type"</span>: <span class="st">"score"</span>, <span class="st">"instructions"</span>: <span class="st">"How angry?"</span>, <span class="st">"criteria"</span>: [<span class="st">"calm"</span>, <span class="st">"annoyed"</span>, <span class="st">"furious"</span>]}}</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>ids, m, v <span class="op">=</span> vd._ids(<span class="st">"The app crashes when I pay."</span>, Question.from_dict(qv[<span class="st">"dept"</span>], name<span class="op">=</span><span class="st">"dept"</span>))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>test_eq(ids[m], vd.tokenizer.mask_token_id)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vd.tokenizer.decode(ids))</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>va <span class="op">=</span> vd.predict(<span class="st">"The app crashes when I pay."</span>, qv)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">sum</span>(va[<span class="st">"dept"</span>][<span class="st">"probabilities"</span>].values()), <span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">set</span>(va[<span class="st">"dept"</span>][<span class="st">"probabilities"</span>]), va[<span class="st">"urgent"</span>][<span class="st">"type"</span>], va[<span class="st">"level"</span>][<span class="st">"type"</span>]), ({<span class="st">"billing"</span>, <span class="st">"tech"</span>, <span class="st">"sales"</span>}, <span class="st">"noul"</span>, <span class="st">"score"</span>))</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span> <span class="op">=</span> vd._ids(<span class="st">"word "</span> <span class="op">*</span> <span class="dv">2000</span>, Question.from_dict(qv[<span class="st">"dept"</span>], name<span class="op">=</span><span class="st">"dept"</span>))[<span class="dv">0</span>]</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">len</span>(<span class="bu">long</span>) <span class="op">&lt;=</span> vd.max_len, <span class="va">True</span>)                                        <span class="co"># a long state is cut, the question and the mask kept</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>va</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[CLS]The app crashes when I pay.
+Question: Which team?
+Options: A. billing: invoices; B. tech: bugs; C. sales: pricing
+Answer:[MASK][SEP]</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'dept': {'type': 'choice',
+  'choice': 'tech',
+  'probabilities': {'billing': 0.3078, 'tech': 0.3612, 'sales': 0.331},
+  'confidence': 0.002,
+  'answer_confidence': 0.3612},
+ 'urgent': {'type': 'noul',
+  'noul': 0.5005,
+  'confidence': 0.5005,
+  'answer_confidence': 0.5005},
+ 'level': {'type': 'score',
+  'score': 1.0302,
+  'legend': {'0': 'calm', '1': 'annoyed', '2': 'furious'},
+  'probabilities': {'0': 0.3372, '1': 0.2954, '2': 0.3674},
+  'confidence': 0.0036,
+  'answer_confidence': 0.3674}}</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/zeroshot_two_ways.svg" class="img-fluid figure-img"></p>
+<figcaption>A two-tower similarity: the state’s and each option’s vectors, their cosines times the scale, and the probabilities; a masked language model’s prompt with lettered options, its logits for the letters at the mask, and the probabilities</figcaption>
+</figure>
+</div>
+<p>The two paths side by side (<a href="./figures.html#zero-shot-answers-two-ways">figures</a>). Two towers compare: the state and each option are embedded apart, and the closer an option’s vector to the state’s, the likelier it is. A masked language model reads: every option is in one prompt, and the model’s own prediction at the mask, among the options’ letters, is the answer. The <a href="./mdlm.html#reading-a-decision-yes-against-no">diffusion model</a> reads at masks too, one after every option, where it weighs its own Yes against its No.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

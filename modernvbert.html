@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="ModernVBERT under the sysone head: its image tiles spliced into Laya’s row, the pixel batches its encoder expects, and its image defaults, so the multimodal application runs it beside NeoMME.">
+
+<title>modernvbert – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="modernvbert – sysone">
+<meta property="og:description" content="ModernVBERT under the sysone head: its image tiles spliced into Laya’s row, the pixel batches its encoder expects, and its image defaults, so the multimodal application runs it beside NeoMME.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/modernvbert_tiles.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="modernvbert – sysone">
+<meta name="twitter:description" content="ModernVBERT under the sysone head: its image tiles spliced into Laya’s row, the pixel batches its encoder expects, and its image defaults, so the multimodal application runs it beside NeoMME.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/modernvbert_tiles.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./modernvbert.html">modernvbert</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#load-and-inspect" id="toc-load-and-inspect" class="nav-link active" data-scroll-target="#load-and-inspect">1. Load and inspect</a></li>
+  <li><a href="#a-row-by-hand" id="toc-a-row-by-hand" class="nav-link" data-scroll-target="#a-row-by-hand">2. A row by hand</a></li>
+  <li><a href="#the-template" id="toc-the-template" class="nav-link" data-scroll-target="#the-template">3. The template</a></li>
+  <li><a href="#the-spec" id="toc-the-spec" class="nav-link" data-scroll-target="#the-spec">4. The spec</a></li>
+  <li><a href="#one-forward-pass" id="toc-one-forward-pass" class="nav-link" data-scroll-target="#one-forward-pass">5. One forward pass</a></li>
+  <li><a href="#a-head-only-run" id="toc-a-head-only-run" class="nav-link" data-scroll-target="#a-head-only-run">6. A head-only run</a></li>
+  <li><a href="#two-small-image-tasks-on-the-real-checkpoint" id="toc-two-small-image-tasks-on-the-real-checkpoint" class="nav-link" data-scroll-target="#two-small-image-tasks-on-the-real-checkpoint">7. Two small image tasks on the real checkpoint</a></li>
+  <li><a href="#what-to-watch" id="toc-what-to-watch" class="nav-link" data-scroll-target="#what-to-watch">8. What to watch</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="modernvbert.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">modernvbert</h1>
+</div>
+
+<div>
+  <div class="description">
+    ModernVBERT under the sysone head: its image tiles spliced into Laya’s row, the pixel batches its encoder expects, and its image defaults, so the multimodal application runs it beside NeoMME.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>This notebook adds a second multimodal encoder the way the <a href="./neomme.html">multimodal</a> notebook added NeoMME, and follows its outline: load and inspect, a row by hand, the template, the spec, one forward pass, a head-only run, and what to watch. Adding an encoder takes methods, not an application: ModernVBERT’s rows, its inputs and its image defaults are methods of sysone’s <a href="./core.html#generic-functions-and-multiple-dispatch">generic functions</a>, and the multimodal application runs it as it runs NeoMME.</p>
+<p><a href="https://arxiv.org/abs/2510.01149">ModernVBERT</a> (Illuin Technology, 2025; MIT) is a bidirectional vision-language encoder built for visual document retrieval. It has 252M parameters. The text tower is a ModernBERT (22 layers, width 768, with global attention every third layer and a 128-token window in between), and the image tower is SigLIP2 (12 layers, 512-pixel tiles, 16-pixel patches). It fuses the two early. A tile’s 32 × 32 patch vectors are pixel-shuffled into 64 vectors, each projected to the text’s width, and they take the place of 64 <code>&lt;image&gt;</code> tokens in the text. The text tower then reads text and image as one sequence. Its pretraining was masked language modelling on image-text pairs, mostly documents, before the contrastive stage that made the retrievers.</p>
+<p>For sysone this is the easy kind of multimodal encoder, for three reasons:</p>
+<ul>
+<li><strong>Its text tower is ModernBERT, Laya’s own family.</strong> The row uses Laya’s layout, with <code>[CLS]</code>, <code>[SEP]</code> and a <code>[MASK]</code> anchor before each option, as for any ModernBERT.</li>
+<li><strong>An image takes as many positions in the output as it has tokens in the input.</strong> So the anchors sit where the row put them, and gathering them works as it does for text. NeoMME needed two-axis position ids built by hand.</li>
+<li><strong>Its processor, transformers’ <code>Idefics3Processor</code>, accepts text and images mixed in one prompt.</strong> So sysone’s image block can be checked token for token against it. NeoMME’s processor refuses such rows.</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    R["a record: an image,&lt;br/&gt;a question, the gold"] --&gt; T["the Image transform:&lt;br/&gt;load, resize to image_side"]
+    T --&gt; P["Idefics3's image processor:&lt;br/&gt;512-px tiles, plus the global&lt;br/&gt;image when there are several"]
+    P --&gt; W["a row: Laya's layout, the image&lt;br/&gt;as 64 &lt;image&gt; tokens per tile"]
+    W --&gt; E["ModernVBERT: SigLIP2 → pixel shuffle&lt;br/&gt;→ projection, into ModernBERT"]
+    E --&gt; A["a vector at&lt;br/&gt;each anchor"]
+    A --&gt; S["the head: standardise,&lt;br/&gt;score each anchor"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="load-and-inspect" class="level2">
+<h2 class="anchored" data-anchor-id="load-and-inspect">1. Load and inspect</h2>
+<p>The fixture is a random ModernVBERT: a 2-layer, 64-wide ModernBERT beside a 2-layer, 32-wide SigLIP with 64-pixel tiles, whose 16 patches pixel-shuffle into 4 image tokens. Its processor is a real <code>Idefics3Processor</code> over the tiny ModernBERT tokenizer, with ModernVBERT’s image tokens added. It loads by its config like any Hub checkpoint: <a href="https://sgaseretto.github.io/sysonelib/models.html#encoderspec.from_pretrained"><code>EncoderSpec.from_pretrained</code></a> sees the vision config, loads the processor, and the family <code>modernvbert</code> gives the template and the LoRA targets.</p>
+<div id="4d78b844" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>FIX <span class="op">=</span> <span class="st">"fixtures/tiny-modernvbert"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> EncoderSpec.from_pretrained(FIX)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>proc, tok <span class="op">=</span> spec.processor, spec.tokenizer</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>ip <span class="op">=</span> proc.image_processor</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>spec, <span class="bu">type</span>(proc).<span class="va">__name__</span>, {t: tok.convert_tokens_to_ids(t) <span class="cf">for</span> t <span class="kw">in</span> (<span class="st">"&lt;image&gt;"</span>, <span class="st">"&lt;fake_token_around_image&gt;"</span>, <span class="st">"&lt;global-img&gt;"</span>, <span class="st">"[MASK]"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(EncoderSpec(fixtures/tiny-modernvbert: modernvbert, width 64, context 1024, multimodal, template modernvbert),
+ 'Idefics3Processor',
+ {'&lt;image&gt;': 2049,
+  '&lt;fake_token_around_image&gt;': 2048,
+  '&lt;global-img&gt;': 2051,
+  '[MASK]': 4})</code></pre>
+</div>
+</div>
+<div id="d5482c89" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>test_eq((spec.family, spec.modality, spec.template.name, spec.width), (<span class="st">"modernvbert"</span>, <span class="st">"multimodal"</span>, <span class="st">"modernvbert"</span>, <span class="dv">64</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>test_eq((proc.image_seq_len, ip.max_image_size[<span class="st">"longest_edge"</span>], ip.do_image_splitting), (<span class="dv">4</span>, <span class="dv">64</span>, <span class="va">True</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The processor resizes an image so that its long side is <code>size["longest_edge"]</code>, enlarging it if need be. It then cuts the result into tiles of <code>max_image_size</code> and adds the whole image, shrunk to one tile, as a global view. A single-tile image gets no global view: it is its own. Each tile becomes <code>image_seq_len</code> <code>&lt;image&gt;</code> tokens, after a <code>&lt;fake_token_around_image&gt;</code> and a tile tag:</p>
+<div id="ee406c54" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>img <span class="op">=</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">28</span>, <span class="dv">28</span>), (<span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> proc(text<span class="op">=</span>[<span class="st">"&lt;image&gt;"</span>], images<span class="op">=</span>[[img]], add_special_tokens<span class="op">=</span><span class="va">False</span>, return_tensors<span class="op">=</span><span class="st">"pt"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tok.decode(out[<span class="st">"input_ids"</span>][<span class="dv">0</span>]).replace(<span class="st">"&lt;image&gt;"</span> <span class="op">*</span> <span class="dv">4</span>, <span class="st">"&lt;image&gt;×4 "</span>))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">tuple</span>(v.shape) <span class="cf">for</span> k, v <span class="kw">in</span> out.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;fake_token_around_image&gt;&lt;row_1_col_1&gt;&lt;image&gt;×4 &lt;fake_token_around_image&gt;&lt;row_1_col_2&gt;&lt;image&gt;×4 
+&lt;fake_token_around_image&gt;&lt;row_2_col_1&gt;&lt;image&gt;×4 &lt;fake_token_around_image&gt;&lt;row_2_col_2&gt;&lt;image&gt;×4 
+
+&lt;fake_token_around_image&gt;&lt;global-img&gt;&lt;image&gt;×4 &lt;fake_token_around_image&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'input_ids': (1, 34),
+ 'attention_mask': (1, 34),
+ 'pixel_values': (1, 5, 3, 64, 64),
+ 'pixel_attention_mask': (1, 5, 64, 64)}</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/modernvbert_tiles.svg" class="img-fluid figure-img"></p>
+<figcaption>A four-colour image cut into 2 × 2 tiles and a global view, each tile’s tokens in the row’s image block, and the image tokens at the checkpoint’s sizes</figcaption>
+</figure>
+</div>
+<p>The same layout, drawn for an image of four colours (<a href="./figures.html#an-image-as-tiles-and-tokens">figures</a>): each tile’s tokens open with <code>&lt;fake_token_around_image&gt;</code> and the tile’s position, and the global view comes last, so the encoder reads every tile and the whole picture. How large the image is made decides how many tiles it is cut into, and so how many tokens it takes: 64 per tile at the checkpoint’s 512-pixel tiles.</p>
+<p>The real checkpoint’s processor enlarges every image to 2,048 pixels on its long side. A 28-pixel MNIST digit therefore becomes 16 tiles of 512 pixels plus the global view, 17 × 64 = 1,088 image tokens, where a single 512-pixel tile would read the same strokes with 64. Measured with the checkpoint’s processor: So the multimodal application sets <code>size["longest_edge"]</code> from its <code>image_side</code> (one 512-pixel tile by default), and a small image becomes one tile:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>image_side</code></th>
+<th>tiles of a square image</th>
+<th>the image block’s tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>up to 512</td>
+<td>1</td>
+<td>67: 64 <code>&lt;image&gt;</code>, 3 markers</td>
+</tr>
+<tr class="even">
+<td>1,024</td>
+<td>2 × 2 and the global view</td>
+<td>333: 320 <code>&lt;image&gt;</code>, 13 markers and newlines</td>
+</tr>
+<tr class="odd">
+<td>1,536</td>
+<td>3 × 3 and the global view</td>
+<td>664: 640 <code>&lt;image&gt;</code>, 24 others</td>
+</tr>
+<tr class="even">
+<td>2,048 (the checkpoint’s default)</td>
+<td>4 × 4 and the global view</td>
+<td>1,127: 1,088 <code>&lt;image&gt;</code>, 39 others</td>
+</tr>
+</tbody>
+</table>
+<p>A 3:2 photo gets as many tiles as a square up to 1,536 pixels, because the processor rounds both sides up to whole tiles, and 4 × 3 and the global view at 2,048.</p>
+<p>Below 512 the image gets no fewer tokens, only less detail: the processor enlarges it back to the tile’s 512 pixels.</p>
+</section>
+<section id="a-row-by-hand" class="level2">
+<h2 class="anchored" data-anchor-id="a-row-by-hand">2. A row by hand</h2>
+<p>A decision row puts the image between the options and the state, as the <code>modernvbert</code> preset lays it out. The image block is exactly what the processor makes of an <code>&lt;image&gt;</code> in a prompt: the tiles’ tokens, row by row, then the global view. <a href="https://sgaseretto.github.io/sysonelib/modernvbert.html#idefics3_block"><code>idefics3_block</code></a> asks the image processor for the tiles and the processor for their text, and tokenizes that text without special tokens, as the rest of the row is tokenized:</p>
+<div id="a510c368" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.332827+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.337322+00:00&quot;,&quot;total&quot;:0.00449806599999647}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L33" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="build_idefics3_rows" class="level3">
+<h3 class="anchored" data-anchor-id="build_idefics3_rows">build_idefics3_rows</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_idefics3_rows(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.idefics3.processing_idefics3.Idefics3Processor, builder:sysone.template.RowBuilder,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    record:<span class="bu">dict</span>, <span class="op">*</span>, skip_errors:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Rows of a transformed record for an Idefics3-style processor: text by the builder’s budgets, the image as tiles of <img> tokens</em></p>
+</section>
+</div>
+<div id="cee475e6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.337395+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.339835+00:00&quot;,&quot;total&quot;:0.002442675000011718}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L26" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="idefics3_block" class="level3">
+<h3 class="anchored" data-anchor-id="idefics3_block">idefics3_block</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> idefics3_block(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    builder:sysone.template.RowBuilder, image</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The ids of one image as an Idefics3 processor lays it out (its tiles, then the global view), and its pixels and pixel mask</em></p>
+</section>
+</div>
+<div id="99e71230" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> {<span class="st">"digit"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which digit is written in the image?"</span>, <span class="st">"criteria"</span>: [<span class="bu">str</span>(d) <span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)]}}</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> {<span class="st">"id"</span>: <span class="st">"r0"</span>, <span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">""</span>, <span class="st">"image"</span>: img}, <span class="st">"questions"</span>: qs, <span class="st">"gold"</span>: {<span class="st">"digit"</span>: <span class="st">"3"</span>}}</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>row <span class="op">=</span> spec.builder(tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="va">None</span>)]).build_record(rec)[<span class="dv">0</span>]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show_row(row, tok, max_chars<span class="op">=</span><span class="dv">400</span>))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>blk, pixels, pmask <span class="op">=</span> idefics3_block(spec.builder(), img)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>test_eq(blk, out[<span class="st">"input_ids"</span>][<span class="dv">0</span>].tolist())                              <span class="co"># the processor's own layout of the image</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>test_eq((torch.equal(pixels, out[<span class="st">"pixel_values"</span>][<span class="dv">0</span>]), torch.equal(pmask, out[<span class="st">"pixel_attention_mask"</span>][<span class="dv">0</span>])), (<span class="va">True</span>, <span class="va">True</span>))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>at <span class="op">=</span> row.markers[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> <span class="dv">3</span>                                                    <span class="co"># past the last option and the [SEP] after it</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>test_eq(row.ids[at:at <span class="op">+</span> <span class="bu">len</span>(blk)], blk)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>test_eq((row.extras[<span class="st">"image_tiles"</span>], row.extras[<span class="st">"pixel_values"</span>].shape), (<span class="dv">5</span>, (<span class="dv">5</span>, <span class="dv">3</span>, <span class="dv">64</span>, <span class="dv">64</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[CLS] choice question: Which digit is written in the image? [SEP] [MASK] 0 [MASK] 1 [MASK] 2 [MASK] 3 [SEP] &lt;fake_token_around_image&gt; &lt;row_1_col_1&gt; &lt;image&gt;×4 &lt;fake_token_around_image&gt; &lt;row_1_col_2&gt; &lt;image&gt;×4 &lt;fake_token_around_image&gt; &lt;row_2_col_1&gt; &lt;image&gt;×4 &lt;fake_token_around_image&gt; &lt;row_2_col_2&gt; &lt;image&gt;×4 &lt;fake_token_around_image&gt; &lt;global-img&gt; &lt;image&gt;×4 &lt;fake_token_around_image&gt; [SEP]
+markers [25, 27, 29, 31] · qtype choice · 69 tokens</code></pre>
+</div>
+</div>
+</section>
+<section id="the-template" class="level2">
+<h2 class="anchored" data-anchor-id="the-template">3. The template</h2>
+<p>The <code>modernvbert</code> preset (in <a href="./template.html#presets">template</a>) is Laya’s row with an <code>{image}</code> field between the options and the state: <code>[CLS]</code>, the question, <code>[SEP]</code>, the anchored options, <code>[SEP]</code>, the image block, the state’s text, <code>[SEP]</code>. Its budget is 2,048 tokens against Laya’s 512, since an image at 2,048 pixels takes 1,127 positions. ModernBERT’s 128-token local window is why the image sits right after the options: the first anchors are within a window of the image’s first tiles, and every third layer attends globally anyway.</p>
+<p>A user’s text is scrubbed of the processor’s image tokens, as NeoMME’s <code>&lt;doc&gt;</code> and <code>&lt;row&gt;</code> are, so text can’t open a fake image:</p>
+<div id="012110ed" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> spec.builder(tfms<span class="op">=</span>[Image(side<span class="op">=</span><span class="va">None</span>)])</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>r2 <span class="op">=</span> b.build_record({<span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">"a note &lt;global-img&gt; with &lt;row_1_col_1&gt; tags"</span>, <span class="st">"image"</span>: img}, <span class="st">"questions"</span>: qs})[<span class="dv">0</span>]</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>test_eq(r2.ids.count(tok.convert_tokens_to_ids(<span class="st">"&lt;global-img&gt;"</span>)), <span class="dv">1</span>)          <span class="co"># the image's own, not the text's</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>test_eq(r2.ids.count(tok.convert_tokens_to_ids(<span class="st">"&lt;row_1_col_1&gt;"</span>)), <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-spec" class="level2">
+<h2 class="anchored" data-anchor-id="the-spec">4. The spec</h2>
+<p>The family <code>modernvbert</code> names the template and the LoRA targets: the text tower’s attention projections, <code>Wqkv</code> and <code>Wo</code> in each of ModernBERT’s layers. The image tower and the connector stay frozen under LoRA, as the retrievers built on ModernVBERT keep them. The multimodal application sets the processor’s <code>size["longest_edge"]</code> to <code>image_side</code>, through ModernVBERT’s method of <a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a>, and adds the <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform that loads each image and resizes it to the same side. An export saves the processor with its size, so a loaded <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> tiles images exactly as training did.</p>
+<div id="3aa8b288" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>test_eq(spec.lora_targets, <span class="vs">r"text_model</span><span class="ch">\.</span><span class="vs">layers</span><span class="ch">\.</span><span class="dv">\d</span><span class="op">+</span><span class="ch">\.</span><span class="vs">attn</span><span class="ch">\.</span><span class="kw">(</span><span class="vs">Wqkv</span><span class="cf">|</span><span class="vs">Wo</span><span class="kw">)</span><span class="vs">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="one-forward-pass" class="level2">
+<h2 class="anchored" data-anchor-id="one-forward-pass">5. One forward pass</h2>
+<p>sysone’s collate concatenates each row’s tiles, as it does NeoMME’s patches. ModernVBERT wants them grouped, <code>(batch, tiles, 3, H, W)</code>, with a pixel mask of the same shape and all-zero tiles as padding (its vision tower drops them). ModernVBERT’s method of <a href="https://sgaseretto.github.io/sysonelib/models.html#encoder_inputs"><code>encoder_inputs</code></a> regroups a batch’s tiles by each row’s <code>image_tiles</code>:</p>
+<div id="1c3a26ed" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.342249+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.345134+00:00&quot;,&quot;total&quot;:0.002887735999991037}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L52" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="modernvbert_inputs" class="level3">
+<h3 class="anchored" data-anchor-id="modernvbert_inputs">modernvbert_inputs</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> modernvbert_inputs(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    config:transformers.models.modernvbert.configuration_modernvbert.ModernVBertConfig, inputs:<span class="bu">dict</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A batch’s concatenated tiles regrouped per row, (batch, max tiles, 3, H, W), zero-padded, and the pixel mask alike</em></p>
+</section>
+</div>
+<p>A very wide image makes fewer tiles than a square one: at the fixture’s 128 pixels, a 400 × 50 banner is one row of two tiles plus the global view. Batched with the square digit’s five tiles, the banner’s row is padded with two empty tiles. Both rows’ anchors then match what the model gives each row on its own, with the processor’s layout:</p>
+<div id="e1aca515" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>wide <span class="op">=</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">400</span>, <span class="dv">50</span>), (<span class="dv">200</span>, <span class="dv">30</span>, <span class="dv">30</span>))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> [b.build_record(rec)[<span class="dv">0</span>], b.build_record(<span class="bu">dict</span>(rec, <span class="bu">id</span><span class="op">=</span><span class="st">"r1"</span>, state<span class="op">=</span>{<span class="st">"text"</span>: <span class="st">"a banner"</span>, <span class="st">"image"</span>: wide}))[<span class="dv">0</span>]]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>test_eq([r.extras[<span class="st">"image_tiles"</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], [<span class="dv">5</span>, <span class="dv">3</span>])</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>enc <span class="op">=</span> spec.load_encoder().<span class="bu">eval</span>()</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> EncoderDecisionModel(enc, DecisionHead(spec.width, layers<span class="op">=</span><span class="dv">0</span>, scorer<span class="op">=</span><span class="st">"mlp"</span>), spec).<span class="bu">eval</span>()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>bt <span class="op">=</span> collate(rows, tok.pad_token_id)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>extra <span class="op">=</span> {k: v <span class="cf">for</span> k, v <span class="kw">in</span> bt.items() <span class="cf">if</span> k <span class="kw">in</span> (<span class="st">"pixel_values"</span>, <span class="st">"pixel_attention_mask"</span>, <span class="st">"image_tiles"</span>)}</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> model.encode(bt[<span class="st">"input_ids"</span>], bt[<span class="st">"attention_mask"</span>], <span class="op">**</span>extra)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, r <span class="kw">in</span> <span class="bu">enumerate</span>(rows):</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>        ids <span class="op">=</span> torch.tensor([r.ids])</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        alone <span class="op">=</span> enc(input_ids<span class="op">=</span>ids, attention_mask<span class="op">=</span>torch.ones_like(ids), pixel_values<span class="op">=</span>r.extras[<span class="st">"pixel_values"</span>][<span class="va">None</span>],</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>                    pixel_attention_mask<span class="op">=</span>r.extras[<span class="st">"pixel_attention_mask"</span>][<span class="va">None</span>]).last_hidden_state[<span class="dv">0</span>]</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        test_close(h[i, r.markers], alone[r.markers], eps<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> model(<span class="op">**</span>{k: v <span class="cf">for</span> k, v <span class="kw">in</span> bt.items() <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"target"</span>, <span class="st">"label"</span>)})</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>test_eq(logits.shape, (<span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>logits</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[-0.1916, -0.1916, -0.1916, -0.1916],
+        [-0.1917, -0.1917, -0.1917, -0.1917]])</code></pre>
+</div>
+</div>
+</section>
+<section id="a-head-only-run" class="level2">
+<h2 class="anchored" data-anchor-id="a-head-only-run">6. A head-only run</h2>
+<p>The multimodal application, <a href="https://sgaseretto.github.io/sysonelib/neomme.html#decision_learner"><code>sysone.multimodal.decision_learner</code></a>, runs ModernVBERT by default since 2026-09-30 (the <a href="./neomme.html#which-encoder-by-default">NeoMME notebook</a> says why), so <code>decision_learner(data)</code> is <code>decision_learner(data, "ModernVBERT/modernvbert")</code>. The two methods below give it ModernVBERT’s image defaults. <a href="https://sgaseretto.github.io/sysonelib/template.html#default_image_side"><code>default_image_side</code></a> is one tile, the processor’s own tile size (512 pixels for the checkpoint), and <a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a> sets the processor to tile at the chosen side and counts the tiles. Everything else is the application’s, as for NeoMME: the <a href="https://sgaseretto.github.io/sysonelib/template.html#image"><code>Image</code></a> transform, a frozen encoder whose anchors are cached for the default head (in float32), and Laya’s scorer on the standardised anchors. The same defaults make the two encoders comparable, in the <a href="./tutorials/neomme_vs_modernvbert.html">comparison</a> notebook.</p>
+<p>A batch of rows is a batch of tiles for the vision tower, so an <code>image_side</code> above 512 multiplies SigLIP’s batch: 8 rows at 1,536 pixels are 80 tiles of 1,024 patches each. The application therefore divides the preset’s batch sizes by the tiles per image, unless they are given, so the vision tower’s batch stays about the size it has at one tile.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: eight rows at 1,536 pixels held 8 GB of GPU memory">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: eight rows at 1,536 pixels held 8 GB of GPU memory
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The first run of the <a href="./tutorials/modernvbert_images.html">ModernVBERT tutorial</a>’s image-size sweep cached the anchors in batches of 8 rows, as the laptop preset says. At 1,536 pixels that is 80 tiles in one SigLIP pass, and 10 GB of the M3 Pro’s 18 GB was wired: GPU memory, which macOS can’t page out. Free memory fell to 16%, with swap all but full, and the run was stopped before it could take the machine down. Stopping it released 8.4 GB at once. Batches of one row at 1,536 pixels, 10 tiles, keep the vision tower’s batch close to what 8 one-tile rows make.</p>
+</div>
+</div>
+<div id="fad9bff0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.347027+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.349433+00:00&quot;,&quot;total&quot;:0.002409302000003777}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L84" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="idefics3_prepare" class="level3">
+<h3 class="anchored" data-anchor-id="idefics3_prepare">idefics3_prepare</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> idefics3_prepare(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.idefics3.processing_idefics3.Idefics3Processor, side:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Tile at <code>side</code> pixels (None: the processor’s own size): the tiles a square image then makes, the global view included</em></p>
+</section>
+</div>
+<div id="f32143a0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.349515+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.351682+00:00&quot;,&quot;total&quot;:0.002168992999997954}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L80" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="idefics3_image_side" class="level3">
+<h3 class="anchored" data-anchor-id="idefics3_image_side">idefics3_image_side</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> idefics3_image_side(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.idefics3.processing_idefics3.Idefics3Processor</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An Idefics3 processor’s default image side: one tile, the processor’s own tile size (512 pixels for ModernVBERT)</em></p>
+</section>
+</div>
+<div id="25a57034" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.351746+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.354049+00:00&quot;,&quot;total&quot;:0.002305457999995042}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L75" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="tiles_for" class="level3">
+<h3 class="anchored" data-anchor-id="tiles_for">tiles_for</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tiles_for(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    side:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span>, tile:<span class="bu">int</span><span class="op">=</span><span class="dv">512</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The tiles a square image makes at <code>side</code> pixels (None: the checkpoint’s 2,048): one up to a tile, else a grid and the global view</em></p>
+</section>
+</div>
+<p>Going back, from a row to the picture, ModernVBERT’s method of <a href="./template.html">[<code>pixel_tiles</code>](https://sgaseretto.github.io/sysonelib/template.html#pixel_tiles)</a> stitches the tiles back into the image they were cut from, reading the grid off the row’s <code>&lt;row_i_col_j&gt;</code> tokens, and returns the global view beside it. An image of one tile is that tile.</p>
+<div id="0fa6f04a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:42.355726+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:42.358655+00:00&quot;,&quot;total&quot;:0.002931308000000854}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/modernvbert.py#L93" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="idefics3_tiles" class="level3">
+<h3 class="anchored" data-anchor-id="idefics3_tiles">idefics3_tiles</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> idefics3_tiles(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    processor:transformers.models.idefics3.processing_idefics3.Idefics3Processor, row:sysone.core.Row,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    values:NoneType<span class="op">=</span><span class="va">None</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>ModernVBERT’s pixels as the image they show: the tiles stitched back into the image (from its <code>&lt;row_i_col_j&gt;</code> tokens), then the global view</em></p>
+</section>
+</div>
+<p>With NeoMME’s adapter imported as well, the multimodal application finds a method for each encoder, and the fallback (<code>object</code>) for any other:</p>
+<div id="ea784253" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>{f.<span class="va">__name__</span>: methods(f) <span class="cf">for</span> f <span class="kw">in</span> (processor_rows, default_image_side, prepare_processor, encoder_inputs, pixel_tiles)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'processor_rows': [('object', 'Any', 'dict'),
+  ('NeoMMEProcessor', 'RowBuilder', 'dict'),
+  ('Idefics3Processor', 'RowBuilder', 'dict')],
+ 'default_image_side': [('object',),
+  ('NeoMMEProcessor',),
+  ('Idefics3Processor',)],
+ 'prepare_processor': [('object', 'int | None'),
+  ('Idefics3Processor', 'int | None')],
+ 'encoder_inputs': [('object', 'dict'),
+  ('NeoMMEConfig', 'dict'),
+  ('ModernVBertConfig', 'dict')],
+ 'pixel_tiles': [('object', 'Row', 'Any'),
+  ('object', 'Row'),
+  ('NeoMMEProcessor', 'Row', 'Any'),
+  ('NeoMMEProcessor', 'Row'),
+  ('Idefics3Processor', 'Row', 'Any'),
+  ('Idefics3Processor', 'Row')]}</code></pre>
+</div>
+</div>
+<p>On the fixture, 24 images in three colours, and a choice among the colours. The encoder is random, so what matters is the path, from records to an exported <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> that answers as the learner did:</p>
+<div id="9de64bf7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="op">=</span> Path(tempfile.mkdtemp())</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>COLOURS <span class="op">=</span> {<span class="st">"red"</span>: (<span class="dv">200</span>, <span class="dv">30</span>, <span class="dv">30</span>), <span class="st">"green"</span>: (<span class="dv">30</span>, <span class="dv">170</span>, <span class="dv">60</span>), <span class="st">"blue"</span>: (<span class="dv">40</span>, <span class="dv">60</span>, <span class="dv">200</span>)}</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>cq <span class="op">=</span> {<span class="st">"colour"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"Which colour fills the image?"</span>, <span class="st">"criteria"</span>: <span class="bu">list</span>(COLOURS)}}</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>crecs <span class="op">=</span> []</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">24</span>):</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> <span class="bu">list</span>(COLOURS)[i <span class="op">%</span> <span class="dv">3</span>]</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> tmp <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">.png"</span><span class="op">;</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">40</span> <span class="op">+</span> <span class="dv">7</span> <span class="op">*</span> i, <span class="dv">40</span>), COLOURS[name]).save(p)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    crecs.append({<span class="st">"id"</span>: <span class="ss">f"c</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, <span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">""</span>, <span class="st">"image"</span>: <span class="bu">str</span>(p)}, <span class="st">"questions"</span>: cq, <span class="st">"gold"</span>: {<span class="st">"colour"</span>: name}})</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>cdata <span class="op">=</span> TypedDecisions.from_records(crecs, valid<span class="op">=</span><span class="fl">0.25</span>, calib<span class="op">=</span><span class="fl">0.25</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(cdata, FIX, image_side<span class="op">=</span><span class="dv">64</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp(), calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>test_eq((learn.cache, learn.model.head.scorer_kind, learn.model.head.layers), (<span class="st">"masks"</span>, <span class="st">"laya"</span>, <span class="dv">0</span>))      <span class="co"># Laya's scorer on the anchors</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>test_eq((default_image_side(proc), learn.data.builder.template.name), (<span class="dv">64</span>, <span class="st">"modernvbert"</span>))           <span class="co"># one of the fixture's 64-pixel tiles</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>test_eq(cdata.builder.processor.image_processor.size, {<span class="st">"longest_edge"</span>: <span class="dv">64</span>})</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>learn.fit(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">3e-3</span>)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>test_eq(learn.dataset(<span class="st">"train"</span>)[<span class="dv">0</span>][<span class="st">"anchors"</span>].shape, (<span class="dv">3</span>, <span class="dv">64</span>))</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> crecs[<span class="dv">1</span>]</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> learn.predict(r[<span class="st">"state"</span>], r[<span class="st">"questions"</span>])</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> learn.export(tmp <span class="op">/</span> <span class="st">"colour-jev"</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>jev <span class="op">=</span> Decider.load(out, device<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>test_eq(jev.predict(r[<span class="st">"state"</span>], r[<span class="st">"questions"</span>]), before)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>test_eq(jev.builder.processor.image_processor.size[<span class="st">"longest_edge"</span>], <span class="dv">64</span>)       <span class="co"># the export tiles as training did</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>before</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.096', 'eval_accuracy': '0.3333', 'eval_soft_accuracy': '0.3341', 'eval_brier': '0.6652', 'eval_kl': '1.096', 'eval_tv': '0.6659', 'eval_ece': '0.001701', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 6, 'eval_accuracy_choice': '0.3333', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.002', 'eval_samples_per_second': '3072', 'eval_steps_per_second': '512', 'epoch': '1'}
+{'eval_loss': '1.092', 'eval_accuracy': '0.5', 'eval_soft_accuracy': '0.3356', 'eval_brier': '0.6621', 'eval_kl': '1.092', 'eval_tv': '0.6644', 'eval_ece': '0.1638', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 6, 'eval_accuracy_choice': '0.5', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0017', 'eval_samples_per_second': '3591', 'eval_steps_per_second': '598.4', 'epoch': '2'}
+{'eval_loss': '1.087', 'eval_accuracy': '0.5', 'eval_soft_accuracy': '0.3373', 'eval_brier': '0.6589', 'eval_kl': '1.087', 'eval_tv': '0.6627', 'eval_ece': '0.1621', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 6, 'eval_accuracy_choice': '0.5', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.002', 'eval_samples_per_second': '3061', 'eval_steps_per_second': '510.2', 'epoch': '3'}
+{'train_runtime': '0.0204', 'train_samples_per_second': '2063', 'train_steps_per_second': '294.8', 'train_loss': '1.093', 'epoch': '3'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'colour': {'type': 'choice',
+  'choice': 'blue',
+  'probabilities': {'red': 0.3323, 'green': 0.3332, 'blue': 0.3345},
+  'confidence': 0.0,
+  'answer_confidence': 0.3345}}</code></pre>
+</div>
+</div>
+<div id="5c476c78" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>test_eq([tiles_for(s) <span class="cf">for</span> s <span class="kw">in</span> (<span class="dv">256</span>, <span class="dv">512</span>, <span class="dv">1024</span>, <span class="dv">1536</span>, <span class="va">None</span>)], [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">17</span>])</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>many <span class="op">=</span> decision_learner(cdata, FIX, image_side<span class="op">=</span><span class="dv">128</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, cache_dir<span class="op">=</span>tempfile.mkdtemp(), calibrate_after_fit<span class="op">=</span><span class="va">False</span>)   <span class="co"># 2 × 2 tiles + the global view</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>test_eq((many.args.per_device_train_batch_size, many.args.per_device_eval_batch_size), (<span class="dv">8</span>, <span class="dv">16</span> <span class="op">//</span> <span class="dv">5</span>))    <span class="co"># cached: only the encoding batch shrinks</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>lora <span class="op">=</span> decision_learner(cdata, FIX, train<span class="op">=</span><span class="st">"lora"</span>, image_side<span class="op">=</span><span class="dv">128</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>test_eq((lora.args.per_device_train_batch_size, lora.args.per_device_eval_batch_size), (<span class="dv">8</span> <span class="op">//</span> <span class="dv">5</span> <span class="kw">or</span> <span class="dv">1</span>, <span class="dv">16</span> <span class="op">//</span> <span class="dv">5</span>))   <span class="co"># no cache: both do</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> many, lora</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>At 128 pixels, a fixture image is cut into 2 × 2 tiles, and <a href="https://sgaseretto.github.io/sysonelib/template.html#pixel_tiles"><code>pixel_tiles</code></a> puts them back together: an image whose quarters are four colours comes back with its quarters in place, beside the global view:</p>
+<div id="f3c63310" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>quarters <span class="op">=</span> PILImage.new(<span class="st">"RGB"</span>, (<span class="dv">128</span>, <span class="dv">128</span>))</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c, xy <span class="kw">in</span> <span class="bu">zip</span>(<span class="bu">list</span>(COLOURS.values()) <span class="op">+</span> [(<span class="dv">240</span>, <span class="dv">240</span>, <span class="dv">240</span>)], [(<span class="dv">0</span>, <span class="dv">0</span>), (<span class="dv">64</span>, <span class="dv">0</span>), (<span class="dv">0</span>, <span class="dv">64</span>), (<span class="dv">64</span>, <span class="dv">64</span>)]): quarters.paste(c, xy <span class="op">+</span> (xy[<span class="dv">0</span>] <span class="op">+</span> <span class="dv">64</span>, xy[<span class="dv">1</span>] <span class="op">+</span> <span class="dv">64</span>))</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>p4 <span class="op">=</span> AutoProcessor.from_pretrained(FIX)<span class="op">;</span> idefics3_prepare(p4, <span class="dv">128</span>)                  <span class="co"># a processor of its own, tiling at 128 pixels</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>four <span class="op">=</span> RowBuilder(p4, spec.template, [Image(side<span class="op">=</span><span class="dv">128</span>)])</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>qrow <span class="op">=</span> four.build_record({<span class="st">"state"</span>: {<span class="st">"text"</span>: <span class="st">""</span>, <span class="st">"image"</span>: quarters}, <span class="st">"questions"</span>: cq})[<span class="dv">0</span>]</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>qtiles, qvals <span class="op">=</span> pixel_tiles(four.processor, qrow, np.ones((<span class="dv">1</span>,) <span class="op">+</span> <span class="bu">tuple</span>(qrow.extras[<span class="st">"pixel_values"</span>].shape)))</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>test_eq([t.shape <span class="cf">for</span> t <span class="kw">in</span> qtiles], [(<span class="dv">128</span>, <span class="dv">128</span>, <span class="dv">3</span>), (<span class="dv">64</span>, <span class="dv">64</span>, <span class="dv">3</span>)])</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>test_eq([v.shape <span class="cf">for</span> v <span class="kw">in</span> qvals], [(<span class="dv">1</span>, <span class="dv">128</span>, <span class="dv">128</span>), (<span class="dv">1</span>, <span class="dv">64</span>, <span class="dv">64</span>)])</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>test_close(qtiles[<span class="dv">0</span>][<span class="dv">32</span>, <span class="dv">32</span>], np.array(COLOURS[<span class="st">"red"</span>]) <span class="op">/</span> <span class="dv">255</span>, eps<span class="op">=</span><span class="fl">0.02</span>)<span class="op">;</span> test_close(qtiles[<span class="dv">0</span>][<span class="dv">96</span>, <span class="dv">96</span>], np.full(<span class="dv">3</span>, <span class="dv">240</span> <span class="op">/</span> <span class="dv">255</span>), eps<span class="op">=</span><span class="fl">0.02</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Finding: tiles shrank a cached head's training batch">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Finding: tiles shrank a cached head’s training batch
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The application shrinks the batches for a tiling processor, since each row then carries several images through the vision tower. It shrank the training batch too, even when the head trains from cached anchors and the vision tower runs only to fill the cache. So at 1,024 pixels, five images a row, a cached head trained on batches of one row instead of four: a different recipe from the one it gets at 512. Now, with cached anchors, only the batches that encode images shrink. Without a cache (LoRA, full fine-tuning) the vision tower runs in every training step, and the training batch shrinks as before. The <a href="./tutorials/modernvbert_images.html#one-more-setting-the-image-size">ModernVBERT tutorial</a>’s image-size sweep ran before the fix, so there the default head trained on batches of one row at 1,024 and 1,536 pixels. Its linear head, fitted in one full batch, is unaffected.</p>
+</div>
+</div>
+<p>The LoRA regime puts adapters on the text tower’s <code>Wqkv</code> and <code>Wo</code> alone, and trains them with the head:</p>
+<div id="63785cf2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>ll <span class="op">=</span> decision_learner(cdata, FIX, train<span class="op">=</span><span class="st">"lora"</span>, image_side<span class="op">=</span><span class="dv">64</span>, preset<span class="op">=</span><span class="st">"cpu"</span>, loss<span class="op">=</span><span class="st">"soft_ce"</span>, calibrate_after_fit<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>trainable <span class="op">=</span> [n <span class="cf">for</span> n, q <span class="kw">in</span> ll.model.encoder.named_parameters() <span class="cf">if</span> q.requires_grad]</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>test_eq((ll.cache, <span class="bu">len</span>(trainable) <span class="op">&gt;</span> <span class="dv">0</span>, <span class="bu">all</span>(<span class="st">"text_model"</span> <span class="kw">in</span> n <span class="kw">and</span> <span class="st">"lora_"</span> <span class="kw">in</span> n <span class="cf">for</span> n <span class="kw">in</span> trainable)), (<span class="va">None</span>, <span class="va">True</span>, <span class="va">True</span>))</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>ll.fit(<span class="dv">1</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'eval_loss': '1.097', 'eval_accuracy': '0.3333', 'eval_soft_accuracy': '0.3338', 'eval_brier': '0.6658', 'eval_kl': '1.097', 'eval_tv': '0.6662', 'eval_ece': '0.001924', 'eval_score_mae': 'nan', 'eval_within_one': 'nan', 'eval_n': 6, 'eval_accuracy_choice': '0.3333', 'eval_accuracy_score': 'nan', 'eval_accuracy_noul': 'nan', 'eval_n_unanswerable': 0, 'eval_runtime': '0.0074', 'eval_samples_per_second': '805.9', 'eval_steps_per_second': '134.3', 'epoch': '1'}
+{'train_runtime': '0.0286', 'train_samples_per_second': '489.6', 'train_steps_per_second': '69.94', 'train_loss': '1.098', 'epoch': '1'}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>{'epoch': 1.0,
+ 'loss': 1.0973469018936157,
+ 'accuracy': 0.3333333333333333,
+ 'soft_accuracy': 0.33376070815662184,
+ 'brier': 0.6658196388733407,
+ 'kl': 1.0973469185878548,
+ 'tv': 0.6662392918433783,
+ 'ece': 0.001924100426870412,
+ 'score_mae': nan,
+ 'within_one': nan,
+ 'n': 6,
+ 'accuracy_choice': 0.3333333333333333,
+ 'accuracy_score': nan,
+ 'accuracy_noul': nan,
+ 'n_unanswerable': 0,
+ 'runtime': 0.0074,
+ 'samples_per_second': 805.874,
+ 'steps_per_second': 134.312}</code></pre>
+</div>
+</div>
+</section>
+<section id="two-small-image-tasks-on-the-real-checkpoint" class="level2">
+<h2 class="anchored" data-anchor-id="two-small-image-tasks-on-the-real-checkpoint">7. Two small image tasks on the real checkpoint</h2>
+<p>The <a href="./tutorials/modernvbert_images.html">ModernVBERT tutorial</a> runs the multimodal application with <code>ModernVBERT/modernvbert</code> as its encoder, with every output shown. It uses the NeoMME tutorial’s records and recipes, and the whole run takes 23 minutes on an M3 Pro. Held-out accuracy:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>default head</th>
+<th>linear head</th>
+<th>LoRA</th>
+<th>probe on the image vectors</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>digits (a 10-way choice, 100 test images)</td>
+<td>0.84</td>
+<td>0.77</td>
+<td>0.84</td>
+<td>0.92</td>
+</tr>
+<tr class="even">
+<td>hot dog (a noul, 80 test photos)</td>
+<td>0.94</td>
+<td>0.93</td>
+<td>0.96</td>
+<td>0.98</td>
+</tr>
+</tbody>
+</table>
+<p>With the same recipes NeoMME scored 0.31, 0.41 and 0.33 on the digits, and 0.74, 0.70 and 0.73 on the photos (see the <a href="./tutorials/neomme_vs_modernvbert.html">comparison</a>). Standardising the anchors still matters: on the digits the head reaches 0.67 without it, since ModernVBERT’s channel 256 carries 58% of every anchor’s length. More tiles helped neither task. One 512-pixel tile, 102 tokens a row, did as well as 5 or 10.</p>
+</section>
+<section id="what-to-watch" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-watch">8. What to watch</h2>
+<ul>
+<li><strong>The processor enlarges images.</strong> The checkpoint’s processor resizes every image to 2,048 pixels on its long side before tiling it, so a thumbnail left at that size costs 1,127 positions. The multimodal application’s default is one tile, 512 pixels. A large page may need 1,024 or more.</li>
+<li><strong>Below 512 pixels, <code>image_side</code> changes the detail, not the cost.</strong> Every tile is 512 pixels when it reaches SigLIP, so a smaller side only blurs the image first.</li>
+<li><strong>The load report.</strong> <code>ModernVBERT/modernvbert</code> holds its masked-LM head and a projection head beside the encoder, and transformers reports them as unused when it loads the encoder. The weights are the encoder’s all the same.</li>
+<li><strong>Tiles multiply the vision tower’s batch.</strong> A row at <code>image_side</code> 1,024 is 5 tiles and at 1,536 it is 10, each 1,024 SigLIP patches. The application divides the preset’s batch sizes by the tiles per image (the finding in <a href="#a-head-only-run">section 6</a>). A batch size given by hand is kept as it is, so size it the same way.</li>
+<li><strong>Batches are not bit-for-bit.</strong> On MPS a row’s anchors differ from those of the same row alone by up to 3 × 10⁻⁵, the reordering noise of float32 kernels. The feature cache and the <a href="https://sgaseretto.github.io/sysonelib/inference.html#decider"><code>Decider</code></a> see the same numbers only when they batch the same way.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

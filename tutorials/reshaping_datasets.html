@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Turn datasets built for other models (news topics, restaurant reviews with several aspects each, voice-assistant requests) into sysone’s choices, nouls and scores, asking each label in more than one shape: statements per label, ordered levels and thresholds, none-of-these copies, a coarser label from a hierarchy, and labels held out for a zero-shot test. No model is trained here; the training runs are left as exercises at the end.">
+
+<title>Reshaping datasets: one label, many questions – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+<meta property="og:title" content="Reshaping datasets: one label, many questions – sysone">
+<meta property="og:description" content="Turn datasets built for other models (news topics, restaurant reviews with several aspects each, voice-assistant requests) into sysone’s choices, nouls and scores, asking each label in more than one shape: statements per label, ordered levels and thresholds, none-of-these copies, a coarser label from a hierarchy, and labels held out for a zero-shot test. No model is trained here; the training runs are left as exercises at the end.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/reshape_shapes.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="Reshaping datasets: one label, many questions – sysone">
+<meta name="twitter:description" content="Turn datasets built for other models (news topics, restaurant reviews with several aspects each, voice-assistant requests) into sysone’s choices, nouls and scores, asking each label in more than one shape: statements per label, ordered levels and thresholds, none-of-these copies, a coarser label from a hierarchy, and labels held out for a zero-shot test. No model is trained here; the training runs are left as exercises at the end.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/reshape_shapes.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/reshaping_datasets.html">Reshaping datasets: one label, many questions</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#a-label-column-is-a-choice" id="toc-a-label-column-is-a-choice" class="nav-link active" data-scroll-target="#a-label-column-is-a-choice">A label column is a choice</a></li>
+  <li><a href="#one-choice-four-statements" id="toc-one-choice-four-statements" class="nav-link" data-scroll-target="#one-choice-four-statements">One choice, four statements</a></li>
+  <li><a href="#how-many-statements-are-true" id="toc-how-many-statements-are-true" class="nav-link" data-scroll-target="#how-many-statements-are-true">How many statements are true</a></li>
+  <li><a href="#labels-that-overlap" id="toc-labels-that-overlap" class="nav-link" data-scroll-target="#labels-that-overlap">Labels that overlap</a></li>
+  <li><a href="#none-of-these" id="toc-none-of-these" class="nav-link" data-scroll-target="#none-of-these">None of these</a></li>
+  <li><a href="#several-labels-at-once" id="toc-several-labels-at-once" class="nav-link" data-scroll-target="#several-labels-at-once">Several labels at once</a></li>
+  <li><a href="#labels-in-order" id="toc-labels-in-order" class="nav-link" data-scroll-target="#labels-in-order">Labels in order</a></li>
+  <li><a href="#a-hierarchy-is-a-second-label" id="toc-a-hierarchy-is-a-second-label" class="nav-link" data-scroll-target="#a-hierarchy-is-a-second-label">A hierarchy is a second label</a></li>
+  <li><a href="#labels-the-model-never-sees" id="toc-labels-the-model-never-sees" class="nav-link" data-scroll-target="#labels-the-model-never-sees">Labels the model never sees</a></li>
+  <li><a href="#training-data-that-changes-every-epoch" id="toc-training-data-that-changes-every-epoch" class="nav-link" data-scroll-target="#training-data-that-changes-every-epoch">Training data that changes every epoch</a></li>
+  <li><a href="#exercises-train-and-compare" id="toc-exercises-train-and-compare" class="nav-link" data-scroll-target="#exercises-train-and-compare">Exercises: train and compare</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="reshaping_datasets.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/neomme_images.html">tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/reshaping_datasets.html">Reshaping datasets: one label, many questions</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Reshaping datasets: one label, many questions</h1>
+</div>
+
+<div>
+  <div class="description">
+    Turn datasets built for other models (news topics, restaurant reviews with several aspects each, voice-assistant requests) into sysone’s choices, nouls and scores, asking each label in more than one shape: statements per label, ordered levels and thresholds, none-of-these copies, a coarser label from a hierarchy, and labels held out for a zero-shot test. No model is trained here; the training runs are left as exercises at the end.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>Fine-tuning a decision model with sysone takes a few lines; the work is the dataset. sysone’s models answer three kinds of question about a state: a <strong>choice</strong> among labels, a <strong>noul</strong>, a statement judged true or false, and a <strong>score</strong>, a level on an ordered scale. Most datasets weren’t written as questions. They have a text and a label column, made for a classifier with a fixed set of outputs.</p>
+<p>This tutorial turns such datasets into questions, and then asks each label in more than one shape. A news topic is a choice among four topics, but also four statements, one per topic, of which one is true. A sentiment is a choice, but its labels have an order, so it is also a score and a pair of thresholds. Reshaping like this adds no new fact (every question is answered by the same label), but it lets a model meet each label’s name in several sentences, which is what a model that must read labels it was never trained on needs. It also changes how many questions each text gets, and how many of them are true, and the sections below count both.</p>
+<p>Three datasets, all on the Hugging Face Hub: <a href="https://huggingface.co/datasets/fancyzhx/ag_news">AG News</a> (news topics, about 30 MB), the restaurant reviews of <a href="https://huggingface.co/datasets/fastino/fast-decisions">fast-decisions</a> (2 MB, also used in <a href="../tutorials/gliner_decide.html">the GLiNER2 tutorial</a>), and <a href="https://huggingface.co/datasets/mteb/amazon_massive_intent">MASSIVE</a>’s English voice-assistant requests (1.4 MB). After the downloads, everything runs in a few seconds.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/reshape_shapes.svg" class="img-fluid figure-img"></p>
+<figcaption>A news article’s choice asked as four statements and as a copy with no right option; a review’s sentiment asked as a score and as two thresholds</figcaption>
+</figure>
+</div>
+<p>Here are those shapes on two short records (<a href="../figures.html#a-label-asked-in-several-shapes">figures</a>): each small box is an option or a statement, coloured by the gold the reshaping wrote, green for true or the gold option and orange for false. The sections below build them on real datasets, with these functions:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TB
+    subgraph one["one label per text: news topics, sentiment"]
+        direction LR
+        FC["from_classification:&lt;br/&gt;a choice"] --&gt; AN["add_nouls:&lt;br/&gt;a statement per label"]
+        FC --&gt; NT["add_none_of_these:&lt;br/&gt;a copy with no right option"]
+        FC --&gt; AS["add_score:&lt;br/&gt;the labels as ordered levels"] --&gt; AT["add_thresholds:&lt;br/&gt;this level or higher?"]
+    end
+    subgraph many["several labels per text: a review's aspects"]
+        direction LR
+        FM["from_multilabel:&lt;br/&gt;a statement per label"] --&gt; CH["choices=1:&lt;br/&gt;one aspect against the absent ones"]
+    end
+    subgraph tree["intents named by their scenario"]
+        direction LR
+        SC["a second, coarser choice"] ~~~ SL["split_labels:&lt;br/&gt;intents held out for a zero-shot test"]
+    end
+    one ~~~ many ~~~ tree
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div id="dc4e7e7a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json, random</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datasets</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> huggingface_hub <span class="im">import</span> snapshot_download</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.core <span class="im">import</span> Question</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.template <span class="im">import</span> apply_tfms</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.data <span class="im">import</span> (TypedDecisions, case_record, add_nouls, add_none_of_these, add_score, add_thresholds, question_stats,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                         Nouls, NoneOfThese, Rephrase, expand_records)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.datasets <span class="im">import</span> from_classification, from_multilabel, split_labels</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>datasets.disable_progress_bars()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A record is a state, its questions and their gold answers. A helper prints one the way a person would read it:</p>
+<div id="7a93d628" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gold_text(g) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> g <span class="kw">is</span> <span class="va">None</span>: <span class="cf">return</span> <span class="st">"-"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(g, <span class="bu">dict</span>): <span class="cf">return</span> <span class="bu">str</span>(g)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> g.get(<span class="st">"answerable"</span>) <span class="kw">is</span> <span class="va">False</span>: <span class="cf">return</span> <span class="st">"none of these"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">"probabilities"</span> <span class="kw">in</span> g: <span class="cf">return</span> <span class="st">", "</span>.join(<span class="ss">f"</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>v<span class="sc">:.2f}</span><span class="ss">"</span> <span class="cf">for</span> k, v <span class="kw">in</span> g[<span class="st">"probabilities"</span>].items() <span class="cf">if</span> v)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"true with p = </span><span class="sc">{</span>g[<span class="st">'noul'</span>]<span class="sc">:.2f}</span><span class="ss">"</span> <span class="cf">if</span> <span class="st">"noul"</span> <span class="kw">in</span> g <span class="cf">else</span> <span class="bu">str</span>(g[<span class="st">"label"</span>])</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> show(r, width<span class="op">=</span><span class="dv">110</span>):</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The state, shortened, then each question: its id, type, wording, options and gold"</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="st">" "</span>.join(<span class="bu">str</span>(r[<span class="st">"state"</span>]).split())</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(s <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">&lt;=</span> width <span class="cf">else</span> s[:width] <span class="op">+</span> <span class="st">"…"</span>, end<span class="op">=</span><span class="st">"</span><span class="ch">\n\n</span><span class="st">"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> qid, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items():</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        opts <span class="op">=</span> Question.from_dict(q).options <span class="cf">if</span> q[<span class="st">"type"</span>] <span class="op">==</span> <span class="st">"choice"</span> <span class="cf">else</span> q.get(<span class="st">"criteria"</span>) <span class="kw">or</span> []</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        opts <span class="op">=</span> <span class="ss">f" </span><span class="sc">{</span>opts[:<span class="dv">6</span>] <span class="op">+</span> [<span class="ss">f'… </span><span class="sc">{</span><span class="bu">len</span>(opts) <span class="op">-</span> <span class="dv">6</span><span class="sc">}</span><span class="ss"> more'</span>] <span class="cf">if</span> <span class="bu">len</span>(opts) <span class="op">&gt;</span> <span class="dv">20</span> <span class="cf">else</span> opts<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> opts <span class="cf">else</span> <span class="st">""</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        g <span class="op">=</span> gold_text(r[<span class="st">"gold"</span>].get(qid))</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> q[<span class="st">"type"</span>] <span class="op">==</span> <span class="st">"score"</span> <span class="kw">and</span> g.isdigit(): g <span class="op">+=</span> <span class="ss">f" (</span><span class="sc">{</span>q[<span class="st">'criteria'</span>][<span class="bu">int</span>(g)]<span class="sc">}</span><span class="ss">)"</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>qid<span class="sc">:&lt;26}{</span>q[<span class="st">'type'</span>]<span class="sc">:&lt;7}{</span>q[<span class="st">'instructions'</span>]<span class="sc">}{</span>opts<span class="sc">}</span><span class="ss">  →  </span><span class="sc">{</span>g<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="a-label-column-is-a-choice" class="level2">
+<h2 class="anchored" data-anchor-id="a-label-column-is-a-choice">A label column is a choice</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/datasets.html#from_classification"><code>from_classification</code></a> turns each row of a classification dataset into a record with one choice question, its options the label names. We take 2,000 news articles:</p>
+<div id="639944a4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ag <span class="op">=</span> datasets.load_dataset(<span class="st">"fancyzhx/ag_news"</span>, split<span class="op">=</span><span class="st">"train"</span>).shuffle(seed<span class="op">=</span><span class="dv">0</span>).select(<span class="bu">range</span>(<span class="dv">2000</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>news <span class="op">=</span> from_classification(ag, instructions<span class="op">=</span><span class="st">"What is this news article about?"</span>, qid<span class="op">=</span><span class="st">"topic"</span>, prefix<span class="op">=</span><span class="st">"ag"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>show(news[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>India Warns U.S. on Arms Sales to Pakistan WASHINGTON (Reuters) - India warned on Friday that new American arm…
+
+topic                     choice What is this news article about? ['World', 'Sports', 'Business', 'Sci/Tech']  →  World</code></pre>
+</div>
+</div>
+<p>The options are the names the dataset gives its labels, and a model reads them: an option called <code>LABEL_2</code> would teach it nothing about business. When names are terse, <code>labels={name: description}</code> adds a description to each option.</p>
+</section>
+<section id="one-choice-four-statements" class="level2">
+<h2 class="anchored" data-anchor-id="one-choice-four-statements">One choice, four statements</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/data.html#add_nouls"><code>add_nouls</code></a> asks the choice again as statements, one per label, true for the gold label. The default wording quotes the question, so each statement claims what the annotator claimed: that this label is <em>the</em> answer.</p>
+<div id="351916aa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>show(add_nouls(news[<span class="dv">0</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>India Warns U.S. on Arms Sales to Pakistan WASHINGTON (Reuters) - India warned on Friday that new American arm…
+
+topic                     choice What is this news article about? ['World', 'Sports', 'Business', 'Sci/Tech']  →  World
+topic:noul0               noul   The answer to "What is this news article about?" is Sports.  →  false
+topic:noul1               noul   The answer to "What is this news article about?" is Sci/Tech.  →  false
+topic:noul2               noul   The answer to "What is this news article about?" is Business.  →  false
+topic:noul3               noul   The answer to "What is this news article about?" is World.  →  true</code></pre>
+</div>
+</div>
+<p>The wording is yours. A shorter statement reads more naturally, but it should still claim one answer: “This article mentions Business” would be a different claim, true of many articles about something else.</p>
+<div id="44abd361" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>show(add_nouls(news[<span class="dv">0</span>], statement<span class="op">=</span><span class="st">"This news article is mainly about </span><span class="sc">{label}</span><span class="st">."</span>, keep<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>India Warns U.S. on Arms Sales to Pakistan WASHINGTON (Reuters) - India warned on Friday that new American arm…
+
+topic:noul0               noul   This news article is mainly about Sports.  →  false
+topic:noul1               noul   This news article is mainly about Sci/Tech.  →  false
+topic:noul2               noul   This news article is mainly about Business.  →  false
+topic:noul3               noul   This news article is mainly about World.  →  true</code></pre>
+</div>
+</div>
+</section>
+<section id="how-many-statements-are-true" class="level2">
+<h2 class="anchored" data-anchor-id="how-many-statements-are-true">How many statements are true</h2>
+<p>Four statements per article, one of them true: a quarter of the statements are true. A model learns that share as its prior for statements of this kind, and calibration can’t undo it: temperature scaling sharpens or softens the model’s probabilities, but it can’t shift the point at which it says yes. So the share is worth choosing. <code>negatives=1</code> keeps the gold label’s statement and one other, drawn at random, so half are true. <a href="https://sgaseretto.github.io/sysonelib/data.html#question_stats"><code>question_stats</code></a> counts the questions of each kind and the share of true golds:</p>
+<div id="446e3949" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>pd.concat({<span class="st">"every label"</span>: question_stats([add_nouls(r) <span class="cf">for</span> r <span class="kw">in</span> news]),</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>           <span class="st">"the gold and one other"</span>: question_stats([add_nouls(r, negatives<span class="op">=</span><span class="dv">1</span>) <span class="cf">for</span> r <span class="kw">in</span> news])})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">questions</th>
+<th data-quarto-table-cell-role="th">per record</th>
+<th data-quarto-table-cell-role="th">options</th>
+<th data-quarto-table-cell-role="th">gold true</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">kind</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th rowspan="2" data-quarto-table-cell-role="th" data-valign="top">every label</th>
+<th data-quarto-table-cell-role="th">choice</th>
+<td>2000</td>
+<td>1.0</td>
+<td>4.0</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">noul from choice</th>
+<td>8000</td>
+<td>4.0</td>
+<td>2.0</td>
+<td>0.25</td>
+</tr>
+<tr class="odd">
+<th rowspan="2" data-quarto-table-cell-role="th" data-valign="top">the gold and one other</th>
+<th data-quarto-table-cell-role="th">choice</th>
+<td>2000</td>
+<td>1.0</td>
+<td>4.0</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">noul from choice</th>
+<td>4000</td>
+<td>2.0</td>
+<td>2.0</td>
+<td>0.50</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>With four labels the difference is modest. With 77, as in banking77, one statement in 77 would be true, and the model would learn that almost every statement is false.</p>
+</section>
+<section id="labels-that-overlap" class="level2">
+<h2 class="anchored" data-anchor-id="labels-that-overlap">Labels that overlap</h2>
+<p>A single-label dataset says which label fits best. Turned into statements, it says the other labels don’t fit at all, which is a stronger claim. AG News’s Business and Sci/Tech overlap: this article is labelled Business, and it is also about computers.</p>
+<div id="233aa1fd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>lenovo <span class="op">=</span> news[<span class="dv">17</span>]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>show(add_nouls(lenovo, keep<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lenovo to buy IBM PC arm IBM said late Tuesday that it will sell its personal computer division, transferring …
+
+topic:noul0               noul   The answer to "What is this news article about?" is Business.  →  true
+topic:noul1               noul   The answer to "What is this news article about?" is Sci/Tech.  →  false
+topic:noul2               noul   The answer to "What is this news article about?" is Sports.  →  false
+topic:noul3               noul   The answer to "What is this news article about?" is World.  →  false</code></pre>
+</div>
+</div>
+<p>“Sci/Tech” is false here only because the annotator had to pick one label. <code>soft</code> softens such statements: <code>{"Business": {"Sci/Tech": 0.2}}</code> makes the Sci/Tech statement true with probability 0.2 whenever the gold is Business, and the reverse pair does the same for Sci/Tech articles.</p>
+<div id="ec8f843e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>OVERLAP <span class="op">=</span> {<span class="st">"Business"</span>: {<span class="st">"Sci/Tech"</span>: <span class="fl">0.2</span>}, <span class="st">"Sci/Tech"</span>: {<span class="st">"Business"</span>: <span class="fl">0.2</span>}}</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>show(add_nouls(lenovo, soft<span class="op">=</span>OVERLAP, keep<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lenovo to buy IBM PC arm IBM said late Tuesday that it will sell its personal computer division, transferring …
+
+topic:noul0               noul   The answer to "What is this news article about?" is Business.  →  true
+topic:noul1               noul   The answer to "What is this news article about?" is Sci/Tech.  →  true with p = 0.20
+topic:noul2               noul   The answer to "What is this news article about?" is Sports.  →  false
+topic:noul3               noul   The answer to "What is this news article about?" is World.  →  false</code></pre>
+</div>
+</div>
+<p>Which pairs overlap, and by how much, is for the data to say. After training a first model, <a href="https://sgaseretto.github.io/sysonelib/interpret.html#interpretation.most_confused"><code>Interpretation.most_confused()</code></a> lists the pairs it mixes up most, a good place to start.</p>
+</section>
+<section id="none-of-these" class="level2">
+<h2 class="anchored" data-anchor-id="none-of-these">None of these</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/data.html#add_none_of_these"><code>add_none_of_these</code></a> copies a choice without its gold option. No option of the copy is right, so its gold is <code>answerable: False</code>. Those rows don’t train the options. They train the act head, which learns to hand a case over when none of the options fits. <code>frac</code> picks the share of records that get a copy.</p>
+<div id="8bb9638a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>show(add_none_of_these(news[<span class="dv">0</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>India Warns U.S. on Arms Sales to Pakistan WASHINGTON (Reuters) - India warned on Friday that new American arm…
+
+topic                     choice What is this news article about? ['World', 'Sports', 'Business', 'Sci/Tech']  →  World
+topic:none                choice What is this news article about? ['Sports', 'Business', 'Sci/Tech']  →  none of these</code></pre>
+</div>
+</div>
+</section>
+<section id="several-labels-at-once" class="level2">
+<h2 class="anchored" data-anchor-id="several-labels-at-once">Several labels at once</h2>
+<p>The restaurant reviews of fast-decisions mark which aspects each review talks about, any number of six. A choice can’t hold that, since it has one answer, but a statement per aspect can. <a href="https://sgaseretto.github.io/sysonelib/datasets.html#from_multilabel"><code>from_multilabel</code></a> makes one, true for each aspect the review talks about. <code>choices=1</code> adds a choice made of one aspect the review talks about and the aspects it doesn’t, a shape with exactly one right option.</p>
+<div id="10731635" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>repo <span class="op">=</span> Path(snapshot_download(<span class="st">"fastino/fast-decisions"</span>, repo_type<span class="op">=</span><span class="st">"dataset"</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>heads <span class="op">=</span> <span class="kw">lambda</span> r: {c[<span class="st">"task"</span>]: c <span class="cf">for</span> c <span class="kw">in</span> r[<span class="st">"output"</span>][<span class="st">"classifications"</span>]}</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> (repo <span class="op">/</span> <span class="st">"restaurant_review.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>reviews <span class="op">=</span> [{<span class="st">"text"</span>: r[<span class="st">"input"</span>], <span class="st">"aspects"</span>: heads(r)[<span class="st">"aspects"</span>][<span class="st">"true_label"</span>], <span class="st">"sentiment"</span>: heads(r)[<span class="st">"sentiment"</span>][<span class="st">"true_label"</span>][<span class="dv">0</span>]} <span class="cf">for</span> r <span class="kw">in</span> rows]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ASPECTS, SENTIMENTS <span class="op">=</span> heads(rows[<span class="dv">0</span>])[<span class="st">"aspects"</span>][<span class="st">"labels"</span>], heads(rows[<span class="dv">0</span>])[<span class="st">"sentiment"</span>][<span class="st">"labels"</span>]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>aspects <span class="op">=</span> from_multilabel(reviews, labels<span class="op">=</span><span class="st">"aspects"</span>, names<span class="op">=</span>ASPECTS, statement<span class="op">=</span><span class="st">"The review talks about the </span><span class="sc">{label}</span><span class="st">."</span>, qid<span class="op">=</span><span class="st">"aspect"</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>                          choices<span class="op">=</span><span class="dv">1</span>, instructions<span class="op">=</span><span class="st">"Which of these does the review talk about?"</span>, prefix<span class="op">=</span><span class="st">"review"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>show(aspects[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[place] Trattoria Lucca, Orvieto Crossing [text] Compared with my last visit, our drive-through stop at Tratto…
+
+aspect:food               noul   The review talks about the food.  →  true
+aspect:service            noul   The review talks about the service.  →  false
+aspect:price              noul   The review talks about the price.  →  false
+aspect:ambiance           noul   The review talks about the ambiance.  →  false
+aspect:wait               noul   The review talks about the wait.  →  false
+aspect:cleanliness        noul   The review talks about the cleanliness.  →  false
+aspect:choice0            choice Which of these does the review talk about? ['food', 'wait', 'service', 'cleanliness']  →  food</code></pre>
+</div>
+</div>
+<p><a href="../tutorials/gliner_decide.html">The GLiNER2 tutorial</a> left these multi-label questions out, since a choice can’t hold them; as statements they fit. Every question made from a label inherits its mistakes, so it pays to read a sample first: <code>show(aspects[1])</code> is a review of a burger, marked as not talking about the food.</p>
+<p>The share of true statements is now the share of aspects a review talks about:</p>
+<div id="4aaa81a5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>question_stats(aspects)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">questions</th>
+<th data-quarto-table-cell-role="th">per record</th>
+<th data-quarto-table-cell-role="th">options</th>
+<th data-quarto-table-cell-role="th">gold true</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">kind</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">noul</th>
+<td>600</td>
+<td>6.00</td>
+<td>2.000</td>
+<td>0.672</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">choice</th>
+<td>79</td>
+<td>0.79</td>
+<td>3.051</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Two statements in three are true (0.67): most reviews talk about most aspects, the food above all (89 of the 100). That share belongs to this dataset, and a model trained on it would carry it to reviews that say much less. 79 reviews got a choice; the other 21 talk about all six aspects, which leaves nothing to choose against.</p>
+</section>
+<section id="labels-in-order" class="level2">
+<h2 class="anchored" data-anchor-id="labels-in-order">Labels in order</h2>
+<p>The same reviews have a sentiment: negative, neutral or positive. As a choice, the three are unrelated options, and mistaking negative for positive costs the same as mistaking it for neutral. <a href="https://sgaseretto.github.io/sysonelib/data.html#add_score"><code>add_score</code></a> asks it as a score as well, whose levels are ordered, and <a href="https://sgaseretto.github.io/sysonelib/data.html#add_thresholds"><code>add_thresholds</code></a> asks the score as one statement per step up the scale (Frank and Hall’s reduction of ordered labels to yes/no questions): “neutral or better”, “positive or better”.</p>
+<div id="d36f4b14" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mood <span class="op">=</span> from_classification(reviews, label<span class="op">=</span><span class="st">"sentiment"</span>, labels<span class="op">=</span>SENTIMENTS, qid<span class="op">=</span><span class="st">"sentiment"</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                           instructions<span class="op">=</span><span class="st">"What is the sentiment of this review?"</span>, prefix<span class="op">=</span><span class="st">"review"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>mood <span class="op">=</span> [add_thresholds(add_score(r, <span class="st">"sentiment"</span>), statement<span class="op">=</span><span class="st">"The sentiment of this review is </span><span class="sc">{level}</span><span class="st"> or better."</span>) <span class="cf">for</span> r <span class="kw">in</span> mood]</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>show(mood[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[place] Trattoria Lucca, Orvieto Crossing [text] Compared with my last visit, our drive-through stop at Tratto…
+
+sentiment                 choice What is the sentiment of this review? ['negative', 'neutral', 'positive']  →  negative
+sentiment:score           score  What is the sentiment of this review? ['negative', 'neutral', 'positive']  →  0 (negative)
+sentiment:score:atleast1  noul   The sentiment of this review is neutral or better.  →  false
+sentiment:score:atleast2  noul   The sentiment of this review is positive or better.  →  false</code></pre>
+</div>
+</div>
+<p>The two converters numbered the reviews alike, so a review’s aspects and its sentiment can share one record: one state, every question about it.</p>
+<div id="ab732291" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merge(a, b) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"One record with both records' questions; they must be about the same state"</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> a[<span class="st">"state"</span>] <span class="op">==</span> b[<span class="st">"state"</span>]</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="op">**</span>a, <span class="st">"questions"</span>: {<span class="op">**</span>a[<span class="st">"questions"</span>], <span class="op">**</span>b[<span class="st">"questions"</span>]}, <span class="st">"gold"</span>: {<span class="op">**</span>a[<span class="st">"gold"</span>], <span class="op">**</span>b[<span class="st">"gold"</span>]}}</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>review_records <span class="op">=</span> [merge(a, m) <span class="cf">for</span> a, m <span class="kw">in</span> <span class="bu">zip</span>(aspects, mood)]</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(review_records)<span class="sc">}</span><span class="ss"> reviews, </span><span class="sc">{</span><span class="bu">sum</span>(<span class="bu">len</span>(r[<span class="st">'questions'</span>]) <span class="cf">for</span> r <span class="kw">in</span> review_records) <span class="op">/</span> <span class="bu">len</span>(review_records)<span class="sc">:.0f}</span><span class="ss"> questions each"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>question_stats(review_records)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>100 reviews, 11 questions each</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">questions</th>
+<th data-quarto-table-cell-role="th">per record</th>
+<th data-quarto-table-cell-role="th">options</th>
+<th data-quarto-table-cell-role="th">gold true</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">kind</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">noul</th>
+<td>600</td>
+<td>6.00</td>
+<td>2.000</td>
+<td>0.672</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">choice</th>
+<td>179</td>
+<td>1.79</td>
+<td>3.022</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">score from choice</th>
+<td>100</td>
+<td>1.00</td>
+<td>3.000</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">noul from score</th>
+<td>200</td>
+<td>2.00</td>
+<td>2.000</td>
+<td>0.470</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="a-hierarchy-is-a-second-label" class="level2">
+<h2 class="anchored" data-anchor-id="a-hierarchy-is-a-second-label">A hierarchy is a second label</h2>
+<p>MASSIVE’s 60 intents name their scenario: <code>alarm_set</code> and <code>alarm_query</code> belong to <em>alarm</em>, <code>play_music</code> and <code>play_radio</code> to <em>play</em>. The scenario is a second, coarser question whose answer follows from the intent, so it costs nothing to add, and it gives the model a second view of every request. The two answers must agree, which is worth checking later: a model that says <em>alarm set</em> but not <em>alarm</em> contradicts itself. Three scenario names are terse, so their options get a description.</p>
+<div id="ff8d84fc" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>massive <span class="op">=</span> datasets.load_dataset(<span class="st">"mteb/amazon_massive_intent"</span>, <span class="st">"en"</span>, split<span class="op">=</span><span class="st">"train"</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>human <span class="op">=</span> <span class="kw">lambda</span> s: s.replace(<span class="st">"_"</span>, <span class="st">" "</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>INTENTS <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(massive[<span class="st">"label"</span>]))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>TERSE <span class="op">=</span> {<span class="st">"iot"</span>: <span class="st">"smart-home devices"</span>, <span class="st">"qa"</span>: <span class="st">"questions to answer"</span>, <span class="st">"general"</span>: <span class="st">"small talk and commands"</span>}</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>SCENARIOS <span class="op">=</span> {s: TERSE.get(s) <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">sorted</span>({i.split(<span class="st">"_"</span>)[<span class="dv">0</span>] <span class="cf">for</span> i <span class="kw">in</span> INTENTS})}</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> request(i, r) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">"A request with two questions: its scenario among 18, and its intent among 60"</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"id"</span>: <span class="ss">f"massive_</span><span class="sc">{</span>i<span class="sc">:05d}</span><span class="ss">"</span>, <span class="st">"state"</span>: r[<span class="st">"text"</span>],</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">"questions"</span>: {<span class="st">"scenario"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"What area is this request about?"</span>, <span class="st">"criteria"</span>: SCENARIOS},</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"intent"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"What does the user want?"</span>, <span class="st">"criteria"</span>: [human(x) <span class="cf">for</span> x <span class="kw">in</span> INTENTS]}},</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">"gold"</span>: {<span class="st">"scenario"</span>: r[<span class="st">"label"</span>].split(<span class="st">"_"</span>)[<span class="dv">0</span>], <span class="st">"intent"</span>: human(r[<span class="st">"label"</span>])}}</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>requests <span class="op">=</span> [request(i, r) <span class="cf">for</span> i, r <span class="kw">in</span> <span class="bu">enumerate</span>(massive)]</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>show(requests[<span class="dv">0</span>], width<span class="op">=</span><span class="dv">60</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>wake me up at nine am on friday
+
+scenario                  choice What area is this request about? ['alarm', 'audio', 'calendar', 'cooking', 'datetime', 'email', 'general: small talk and commands', 'iot: smart-home devices', 'lists', 'music', 'news', 'play', 'qa: questions to answer', 'recommendation', 'social', 'takeaway', 'transport', 'weather']  →  alarm
+intent                    choice What does the user want? ['alarm query', 'alarm remove', 'alarm set', 'audio volume down', 'audio volume mute', 'audio volume other', '… 54 more']  →  alarm set</code></pre>
+</div>
+</div>
+</section>
+<section id="labels-the-model-never-sees" class="level2">
+<h2 class="anchored" data-anchor-id="labels-the-model-never-sees">Labels the model never sees</h2>
+<p>A zero-shot model is meant to answer with labels it was never trained on, and measuring that needs labels held out of training entirely. Holding out requests isn’t enough, since every intent would still turn up in training, as an answer or as an option. <a href="https://sgaseretto.github.io/sysonelib/datasets.html#split_labels"><code>split_labels</code></a> holds out labels: requests whose intent is held go to the test side, and every other request loses the held intents from its options. We hold out a third of the intents:</p>
+<div id="384cf6a0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>held <span class="op">=</span> random.Random(<span class="dv">0</span>).sample([human(x) <span class="cf">for</span> x <span class="kw">in</span> INTENTS], <span class="bu">len</span>(INTENTS) <span class="op">//</span> <span class="dv">3</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>seen, unseen <span class="op">=</span> split_labels(requests, <span class="st">"intent"</span>, held)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="kw">not</span> <span class="bu">any</span>(h <span class="kw">in</span> r[<span class="st">"questions"</span>][<span class="st">"intent"</span>][<span class="st">"criteria"</span>] <span class="cf">for</span> r <span class="kw">in</span> seen <span class="cf">for</span> h <span class="kw">in</span> held)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(seen)<span class="sc">:,}</span><span class="ss"> requests to train on, with </span><span class="sc">{</span><span class="bu">len</span>(INTENTS) <span class="op">-</span> <span class="bu">len</span>(held)<span class="sc">}</span><span class="ss"> intents as options; "</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(unseen)<span class="sc">:,}</span><span class="ss"> held-out requests whose intent is one of the </span><span class="sc">{</span><span class="bu">len</span>(held)<span class="sc">}</span><span class="ss"> held out, e.g. </span><span class="sc">{</span>held[:<span class="dv">3</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8,257 requests to train on, with 40 intents as options; 3,257 held-out requests whose intent is one of the 20 held out, e.g. ['takeaway query', 'iot hue lightdim', 'recommendation events']</code></pre>
+</div>
+</div>
+<p>Held-out requests are asked among all 60 intents, so the right answer is one the model never saw, next to 40 it knows. The scenario question needs no change: 16 of the 20 held-out intents share their scenario with intents that stay in training (<em>takeaway query</em> with <em>takeaway order</em>), so a model can know what a request is about even when its intent is new. Only <em>lists</em> and <em>news</em> lose all their intents, and their requests are new at both levels.</p>
+</section>
+<section id="training-data-that-changes-every-epoch" class="level2">
+<h2 class="anchored" data-anchor-id="training-data-that-changes-every-epoch">Training data that changes every epoch</h2>
+<p>The functions above reshape a record once. For training, the same reshapings exist as transforms that run while rows are built, drawing anew every epoch, like the random flips and crops of image augmentation. <a href="https://sgaseretto.github.io/sysonelib/data.html#rephrase"><code>Rephrase</code></a> asks the topic question in one of several wordings, <a href="https://sgaseretto.github.io/sysonelib/data.html#nouls"><code>Nouls</code></a> draws the statements’ negatives and wording, and <a href="https://sgaseretto.github.io/sysonelib/data.html#noneofthese"><code>NoneOfThese</code></a> adds its copies. None of them runs at inference. Validation gets one fixed draw instead, from <code>expand_eval</code>, so its metrics compare across epochs and cover every kind of question; calibration gets the same draw, so the temperatures, fitted per kind and number of options, cover them too.</p>
+<div id="09fd62db" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>tfms <span class="op">=</span> [Rephrase({<span class="st">"topic"</span>: [<span class="st">"What is this news article about?"</span>, <span class="st">"Which section of a newspaper would print this story?"</span>, <span class="st">"What is the topic of this article?"</span>]}),</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>        Nouls(negatives<span class="op">=</span><span class="dv">1</span>, statement<span class="op">=</span>[<span class="st">"This news article is mainly about </span><span class="sc">{label}</span><span class="st">."</span>, <span class="st">'The answer to "</span><span class="sc">{instructions}</span><span class="st">" is </span><span class="sc">{option}</span><span class="st">.'</span>]),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>        NoneOfThese(frac<span class="op">=</span><span class="fl">0.2</span>)]</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> TypedDecisions.from_records(news, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="fl">0.1</span>, tfms<span class="op">=</span>tfms).expand_eval()</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>TypedDecisions(1440 train, 400 valid, 160 calib cases · template default · 3 tfms)</code></pre>
+</div>
+</div>
+<p>Training records stay as they were; the transforms reshape them as their rows are built. The same record, in three epochs:</p>
+<div id="e3ea3297" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> case_record(data.cases[<span class="st">"train"</span>], <span class="dv">27</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> tfms: t.set_epoch(epoch)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"epoch </span><span class="sc">{</span>epoch<span class="sc">}</span><span class="ss">"</span>)<span class="op">;</span> show(apply_tfms(tfms, r, train<span class="op">=</span><span class="va">True</span>))<span class="op">;</span> <span class="bu">print</span>()</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> tfms: t.set_epoch(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>epoch 0
+Belichick adjusts as coordinator takes Notre Dame job Bill Belichick took a few minutes Monday to convey his c…
+
+topic                     choice Which section of a newspaper would print this story? ['World', 'Sports', 'Business', 'Sci/Tech']  →  Sports
+topic:noul0               noul   The answer to "Which section of a newspaper would print this story?" is Business.  →  false
+topic:noul1               noul   The answer to "Which section of a newspaper would print this story?" is Sports.  →  true
+topic:none                choice Which section of a newspaper would print this story? ['World', 'Business', 'Sci/Tech']  →  none of these
+
+epoch 1
+Belichick adjusts as coordinator takes Notre Dame job Bill Belichick took a few minutes Monday to convey his c…
+
+topic                     choice What is the topic of this article? ['World', 'Sports', 'Business', 'Sci/Tech']  →  Sports
+topic:noul0               noul   This news article is mainly about Sports.  →  true
+topic:noul1               noul   This news article is mainly about Sci/Tech.  →  false
+topic:none                choice What is the topic of this article? ['World', 'Business', 'Sci/Tech']  →  none of these
+
+epoch 2
+Belichick adjusts as coordinator takes Notre Dame job Bill Belichick took a few minutes Monday to convey his c…
+
+topic                     choice What is this news article about? ['World', 'Sports', 'Business', 'Sci/Tech']  →  Sports
+topic:noul0               noul   The answer to "What is this news article about?" is World.  →  false
+topic:noul1               noul   The answer to "What is this news article about?" is Sports.  →  true
+topic:none                choice What is this news article about? ['World', 'Business', 'Sci/Tech']  →  none of these
+</code></pre>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/reshape_epochs.svg" class="img-fluid figure-img"></p>
+<figcaption>Nouls(negatives=1) on a training record at four epochs, the same two statement ids asking other labels, and a validation record’s one fixed draw</figcaption>
+</figure>
+</div>
+<p>The statements alone, on a short article (<a href="../figures.html#drawn-every-epoch-fixed-for-evaluation">figures</a>): <code>topic:noul0</code> and <code>topic:noul1</code> keep their ids while the label each names is drawn anew every epoch, and a validation record keeps one draw.</p>
+<p>From one epoch to the next, the topic question changes its wording, the statements change theirs, and the second statement names another wrong topic. The none-of-these copy stays, since whether a record gets one is decided once, by its id. The model reads the same article each epoch, asked a little differently each time.</p>
+<p>The validation split has its fixed draw, counted as before:</p>
+<div id="382ac372" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>question_stats([case_record(data.cases[<span class="st">"valid"</span>], i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(data.cases[<span class="st">"valid"</span>]))])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">questions</th>
+<th data-quarto-table-cell-role="th">per record</th>
+<th data-quarto-table-cell-role="th">options</th>
+<th data-quarto-table-cell-role="th">gold true</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">kind</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">choice</th>
+<td>400</td>
+<td>1.000</td>
+<td>4.0</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">noul from choice</th>
+<td>800</td>
+<td>2.000</td>
+<td>2.0</td>
+<td>0.5</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">choice from choice, none of these</th>
+<td>79</td>
+<td>0.198</td>
+<td>3.0</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>And this is how a model reads two of those questions: one row each, the question and its options first, a <code>[MASK]</code> anchor before each option, then the article.</p>
+<div id="120b1328" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>data.show_batch(<span class="dv">2</span>, <span class="st">"valid"</span>, max_chars<span class="op">=</span><span class="dv">420</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[CLS]choice question: What is this news article about?[SEP][MASK] World[MASK] Sports[MASK] Business[MASK] Sci/Tech[SEP]India Warns U.S. on Arms Sales to Pakistan  WASHINGTON (Reuters) - India warned on Friday that new  American arms sales to Pakistan could harm improving New  Delhi-Washington ties as well as a promising dialogue between  the South Asia's two nuclear rivals.[SEP]
+
+[CLS]noul question: The answer to "What is this news article about?" is World.[SEP][MASK] false: no, the statement does not hold[MASK] true: yes, the statement holds[SEP]India Warns U.S. on Arms Sales to Pakistan  WASHINGTON (Reuters) - India warned on Friday that new  American a …  Pakistan could harm improving New  Delhi-Washington ties as well as a promising dialogue between  the South Asia's two nuclear rivals.[SEP]
+</code></pre>
+</div>
+</div>
+</section>
+<section id="exercises-train-and-compare" class="level2">
+<h2 class="anchored" data-anchor-id="exercises-train-and-compare">Exercises: train and compare</h2>
+<p>The datasets are ready. The cells below train models on them and compare them; they don’t run when the tutorial is built. Each uses sysone’s text application, ModernBERT-large, which the first run downloads (about 1.6 GB). With <code>train="lora"</code> its rows are built every epoch, so the transforms’ draws change; the default, a frozen encoder with cached features, reads one fixed draw.</p>
+<p><strong>1. Does reshaping help the choice?</strong> Train on the news as plain choices, and on the reshaped data, then evaluate both on the same fixed validation draw, kind by kind.</p>
+<div id="9b00ab8b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.text <span class="im">import</span> decision_learner</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sysone.evaluate <span class="im">import</span> evaluate</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> only(records, keep):</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"The records with only the questions `keep(qid)` accepts"</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [{<span class="op">**</span>r, <span class="st">"questions"</span>: {k: q <span class="cf">for</span> k, q <span class="kw">in</span> r[<span class="st">"questions"</span>].items() <span class="cf">if</span> keep(k)},</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>             <span class="st">"gold"</span>: {k: g <span class="cf">for</span> k, g <span class="kw">in</span> r[<span class="st">"gold"</span>].items() <span class="cf">if</span> keep(k)}} <span class="cf">for</span> r <span class="kw">in</span> records]</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>valid <span class="op">=</span> [case_record(data.cases[<span class="st">"valid"</span>], i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(data.cases[<span class="st">"valid"</span>]))]</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>kinds <span class="op">=</span> {<span class="st">"choice"</span>: <span class="kw">lambda</span> k: k <span class="op">==</span> <span class="st">"topic"</span>, <span class="st">"statements"</span>: <span class="kw">lambda</span> k: <span class="st">":noul"</span> <span class="kw">in</span> k}</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, d <span class="kw">in</span> {<span class="st">"choices only"</span>: TypedDecisions.from_records(news, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="fl">0.1</span>),</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>                <span class="st">"reshaped"</span>: TypedDecisions.from_records(news, valid<span class="op">=</span><span class="fl">0.2</span>, calib<span class="op">=</span><span class="fl">0.1</span>, tfms<span class="op">=</span>tfms).expand_eval()}.items():</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    learn <span class="op">=</span> decision_learner(d, train<span class="op">=</span><span class="st">"lora"</span>, preset<span class="op">=</span><span class="st">"macbook"</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    learn.fit_one_cycle(<span class="dv">2</span>, lr<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    decider <span class="op">=</span> learn.decider()</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>    results[name] <span class="op">=</span> {kind: evaluate(decider, only(valid, keep))[<span class="st">"accuracy"</span>] <span class="cf">for</span> kind, keep <span class="kw">in</span> kinds.items()}</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(results).T.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The same split seed gives both datasets the same validation articles. The choices-only model never trained on statements, so its statement accuracy is zero-shot; the reshaped one’s choice accuracy shows whether the statements cost the choice anything.</p>
+<p><strong>2. Unseen intents.</strong> Train on the <code>seen</code> requests, then ask the <code>unseen</code> ones, whose intents the model never met, among all 60, and their scenarios, which it mostly did meet. Then add <code>Nouls(qid="intent", negatives=3)</code> to the training data’s transforms and see whether statements about seen intents help with unseen ones.</p>
+<div id="202de1a2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> decision_learner(TypedDecisions.from_records(seen, valid<span class="op">=</span><span class="fl">0.1</span>, calib<span class="op">=</span><span class="fl">0.1</span>), preset<span class="op">=</span><span class="st">"macbook"</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">3</span>, lr<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>decider <span class="op">=</span> learn.decider()</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>{q: evaluate(decider, only(unseen[:<span class="dv">1000</span>], <span class="kw">lambda</span> k, q<span class="op">=</span>q: k <span class="op">==</span> q))[<span class="st">"accuracy"</span>] <span class="cf">for</span> q <span class="kw">in</span> (<span class="st">"intent"</span>, <span class="st">"scenario"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>3. Overlaps from the data.</strong> Train on the reshaped news, list <code>Interpretation.from_learner(learn).most_confused("topic")</code>, and set <code>soft</code> from it in place of <code>OVERLAP</code>’s guess.</p>
+<p><strong>4. One model, every question.</strong> Train on <code>review_records</code>: the aspects, the sentiment and its thresholds, together. With only 100 reviews, compare a model trained on the sentiment choice alone against one trained on all the questions, on the sentiment choice.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Typed questions, gold targets, the Jev answer schema, rows and batches: the small core every other layer builds on.">
+
+<title>core – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="core – sysone">
+<meta property="og:description" content="Typed questions, gold targets, the Jev answer schema, rows and batches: the small core every other layer builds on.">
+<meta property="og:image" content="https://sgaseretto.github.io/sysonelib/images/question_kinds.svg">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="core – sysone">
+<meta name="twitter:description" content="Typed questions, gold targets, the Jev answer schema, rows and batches: the small core every other layer builds on.">
+<meta name="twitter:image" content="https://sgaseretto.github.io/sysonelib/images/question_kinds.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./core.html">core</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-path-of-a-decision" id="toc-the-path-of-a-decision" class="nav-link active" data-scroll-target="#the-path-of-a-decision">The path of a decision</a></li>
+  <li><a href="#generic-functions-and-multiple-dispatch" id="toc-generic-functions-and-multiple-dispatch" class="nav-link" data-scroll-target="#generic-functions-and-multiple-dispatch">Generic functions and multiple dispatch</a></li>
+  <li><a href="#question-types" id="toc-question-types" class="nav-link" data-scroll-target="#question-types">Question types</a>
+  <ul class="collapse">
+  <li><a href="#options-and-answer-keys" id="toc-options-and-answer-keys" class="nav-link" data-scroll-target="#options-and-answer-keys">Options and answer keys</a></li>
+  </ul></li>
+  <li><a href="#gold-targets" id="toc-gold-targets" class="nav-link" data-scroll-target="#gold-targets">Gold targets</a></li>
+  <li><a href="#the-answer-schema" id="toc-the-answer-schema" class="nav-link" data-scroll-target="#the-answer-schema">The answer schema</a></li>
+  <li><a href="#temperature-buckets" id="toc-temperature-buckets" class="nav-link" data-scroll-target="#temperature-buckets">Temperature buckets</a></li>
+  <li><a href="#states" id="toc-states" class="nav-link" data-scroll-target="#states">States</a></li>
+  <li><a href="#records" id="toc-records" class="nav-link" data-scroll-target="#records">Records</a></li>
+  <li><a href="#rows" id="toc-rows" class="nav-link" data-scroll-target="#rows">Rows</a></li>
+  <li><a href="#batches" id="toc-batches" class="nav-link" data-scroll-target="#batches">Batches</a></li>
+  <li><a href="#adapters" id="toc-adapters" class="nav-link" data-scroll-target="#adapters">Adapters</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="core.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">core</h1>
+</div>
+
+<div>
+  <div class="description">
+    Typed questions, gold targets, the Jev answer schema, rows and batches: the small core every other layer builds on.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>sysone answers <em>typed questions</em> about a <em>state</em>. A state is whatever the model reads: a string, a JSON object, or, for the multimodal application, text plus a screenshot. A question has a type, an instruction and, depending on the type, criteria. The canonical record is a case from <a href="https://huggingface.co/datasets/LocalLLaMA/typed-decisions">LocalLLaMA/typed-decisions</a>, which is also the body of a Jev <code>POST /v1/systemone</code> request plus its gold answers. The fixtures folder holds twenty of them:</p>
+<div id="5da0b6dd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>recs <span class="op">=</span> [json.loads(l) <span class="cf">for</span> l <span class="kw">in</span> Path(<span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>).read_text().splitlines()]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>rec <span class="op">=</span> recs[<span class="dv">0</span>]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(json.dumps(rec[<span class="st">"state"</span>], indent<span class="op">=</span><span class="dv">1</span>)[:<span class="dv">400</span>])</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(rec[<span class="st">"questions"</span>]), rec[<span class="st">"questions"</span>][<span class="st">"action"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{
+ "agent": {
+  "autonomy": "checkpointed",
+  "model": "internal-agent-v4"
+ },
+ "constraints": [
+  "Do not touch customer data outside the named accounts"
+ ],
+ "task": "Delete personal data for the accounts in the erasure queue.",
+ "trace_summary": {
+  "constraint_violations": 0,
+  "duration_s": 128.5,
+  "irreversible_actions": 0,
+  "steps": 7,
+  "tool_errors": 1
+ }
+}</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(['action', 'needs_review', 'outcome', 'risk', 'urgency'],
+ {'criteria': {'continue': 'Let the agent proceed without interruption.',
+   'human_review': 'Queue this trace for a human to review.',
+   'observe': 'Keep running, but flag the trace for later sampling.',
+   'stop': 'Halt the agent now.'},
+  'instructions': 'What should the observability system do with this trace?',
+  'type': 'choice'})</code></pre>
+</div>
+</div>
+<section id="the-path-of-a-decision" class="level2">
+<h2 class="anchored" data-anchor-id="the-path-of-a-decision">The path of a decision</h2>
+<p>Every layer of the library sits somewhere on one path, from a state and its questions to answers in the Jev schema:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    S["state&lt;br/&gt;text, JSON, a screenshot"] --&gt; RB
+    Q["questions&lt;br/&gt;choice · score · noul"] --&gt; RB["RowBuilder&lt;br/&gt;one row per question,&lt;br/&gt;an anchor before every option"]
+    RB --&gt; C["collate&lt;br/&gt;one batch"]
+    C --&gt; E["encoder&lt;br/&gt;one forward pass"]
+    E --&gt; H["DecisionHead&lt;br/&gt;one logit per anchor"]
+    H --&gt; T["÷ temperature,&lt;br/&gt;softmax per row"]
+    T --&gt; A["fill_answer&lt;br/&gt;the Jev schema"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>A question never generates text: its options are fixed before the model runs, each one behind an anchor token, and the answer is read off the probabilities at those anchors by code. This notebook holds the two ends of the path, the questions and answers, and the containers in between, rows and batches; the templates, the model, the losses and the loader each have a notebook of their own.</p>
+</section>
+<section id="generic-functions-and-multiple-dispatch" class="level2">
+<h2 class="anchored" data-anchor-id="generic-functions-and-multiple-dispatch">Generic functions and multiple dispatch</h2>
+<p>A few operations in sysone work on several kinds of thing. A question is a choice, a score or a noul, and filling in its answer is different for each. An encoder brings its own processor, and laying an image out in a row is different for each. One way to write such an operation is a chain of <code>if kind == ...</code> branches, one chain per operation, in every module that needs one. A new kind then means finding and editing all of them.</p>
+<p>sysone writes these as <em>generic functions</em> instead. A generic function is one name with several <em>methods</em>, each written for particular types of argument, and a call runs the method whose types fit the arguments best. It is the idea behind fastai’s <code>show_batch</code>, which shows images, text and tables under one name, and behind the whole design of Julia. sysone uses <a href="https://github.com/beartype/plum">plum</a>, the library fastai’s own type dispatch moved to. <code>dispatch</code> is sysone’s dispatcher, which keeps sysone’s generic functions apart from other libraries’ plum functions, and <code>methods(f)</code> lists a generic function’s methods:</p>
+<div id="2ddf91cf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.175665+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.260962+00:00&quot;,&quot;total&quot;:0.08529965900000036}}" data-execution_count="4">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L27" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="methods" class="level3">
+<h3 class="anchored" data-anchor-id="methods">methods</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> methods(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    f</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The signatures a generic function has methods for, as tuples of class names, in the order they were added</em></p>
+</section>
+</div>
+<p>Each <code>@dispatch</code> below adds a method to <code>_describe</code>, and Python’s own <code>int</code> and <code>bool</code> are enough to see the rule: the most specific method that fits wins. <code>True</code> is a <code>bool</code>, and a <code>bool</code> is also an <code>int</code>, so it fits two of the methods; it runs the <code>bool</code> one, the closer fit. A string fits only the method for <code>object</code>, the class every value belongs to, which makes that method the fallback:</p>
+<div id="9474c4e9" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _describe(x:<span class="bu">object</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"something"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _describe(x:<span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"an integer"</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _describe(x:<span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"a truth value"</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>test_eq((_describe(<span class="dv">3</span>), _describe(<span class="va">True</span>), _describe(<span class="st">"3"</span>)), (<span class="st">"an integer"</span>, <span class="st">"a truth value"</span>, <span class="st">"something"</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>_describe(<span class="dv">3</span>), _describe(<span class="va">True</span>), _describe(<span class="st">"3"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>('an integer', 'a truth value', 'something')</code></pre>
+</div>
+</div>
+<p><em>Multiple</em> dispatch looks at every positional argument, not only the first. That is what sets it apart from an ordinary method, which is picked by the one object before the dot. Here the answer depends on both arguments at once:</p>
+<div id="b2bac147" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _meet(a:<span class="bu">object</span>, b:<span class="bu">object</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"nothing special"</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _meet(a:<span class="bu">int</span>, b:<span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"a number, then a text"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _meet(a:<span class="bu">str</span>, b:<span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"a text, then a number"</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>_meet(<span class="dv">1</span>, <span class="st">"a"</span>), _meet(<span class="st">"a"</span>, <span class="dv">1</span>), _meet(<span class="dv">1</span>, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>('a number, then a text', 'a text, then a number', 'nothing special')</code></pre>
+</div>
+</div>
+<p>When two methods fit equally well and neither is more specific than the other, plum refuses to guess. For two integers, a method for <code>(int, object)</code> and one for <code>(object, int)</code> each match one argument exactly, so the call is ambiguous, and the fix is a method for that case itself. fastcore’s older dispatch silently took the method defined last in such a tie, the kind of surprise this avoids. A call that no method fits fails too, and says which methods came closest:</p>
+<div id="9aa86ada" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _clash(a:<span class="bu">int</span>, b:<span class="bu">object</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"the first is an int"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _clash(a:<span class="bu">object</span>, b:<span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"the second is an int"</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: _clash(<span class="dv">1</span>, <span class="dv">2</span>), contains<span class="op">=</span><span class="st">"is ambiguous"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">@dispatch</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _clash(a:<span class="bu">int</span>, b:<span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"both are ints"</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>test_eq(_clash(<span class="dv">1</span>, <span class="dv">2</span>), <span class="st">"both are ints"</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: _meet(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>), contains<span class="op">=</span><span class="st">"could not be resolved"</span>)       <span class="co"># no method takes three arguments</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A method doesn’t have to live next to its generic function. Any module can add one to an existing function with <code>register</code>, passing a plain function whose annotations say which types it is for, and the plain function stays usable on its own. This is how sysone’s adapters work: the notebook that teaches sysone an encoder registers that encoder’s methods, and no other code changes. A method added later takes part in every call from then on:</p>
+<div id="d61edf84" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Robot: <span class="st">"a type that a later module brings"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _describe_robot(x:_Robot) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="st">"a robot"</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>_describe.register(_describe_robot)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>test_eq((_describe(_Robot()), _describe_robot(_Robot())), (<span class="st">"a robot"</span>, <span class="st">"a robot"</span>))</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>methods(_describe)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[('object',), ('int',), ('bool',), ('_Robot',)]</code></pre>
+</div>
+</div>
+<p>Only positional arguments take part in dispatch. Keyword arguments ride along to whichever method runs, so sysone puts options after a <code>*</code> in its generic functions (<code>skip_errors=</code>, <code>strict=</code>, <code>prompt=</code>). Looking a method up costs a few microseconds, since plum caches the choice for each combination of types, which is nothing next to a forward pass.</p>
+<p>sysone’s generic functions, what each dispatches on, and where its methods live:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>generic function</th>
+<th>dispatches on</th>
+<th>methods in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/core.html#answer_fields"><code>answer_fields</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_probs"><code>answer_probs</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_index"><code>answer_index</code></a></td>
+<td>the question’s kind</td>
+<td><a href="#the-answer-schema">core</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/core.html#render_state"><code>render_state</code></a></td>
+<td>the state’s type</td>
+<td><a href="#states">core</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#default_image_side"><code>default_image_side</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a>, <a href="https://sgaseretto.github.io/sysonelib/template.html#pixel_tiles"><code>pixel_tiles</code></a></td>
+<td>the encoder’s processor</td>
+<td><a href="./template.html">template</a>, and each encoder’s adapter (<a href="./neomme.html">NeoMME</a>, <a href="./modernvbert.html">ModernVBERT</a>)</td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/models.html#encoder_inputs"><code>encoder_inputs</code></a></td>
+<td>the encoder’s config</td>
+<td><a href="./models.html">models</a>, and each encoder’s adapter</td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/models.html#warm_start"><code>warm_start</code></a>, <a href="https://sgaseretto.github.io/sysonelib/models.html#head_weights"><code>head_weights</code></a></td>
+<td>the head, and the checkpoint’s kind</td>
+<td><a href="./models.html">models</a>, and the <a href="./gliner_encoder.html">GLiNER encoder</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#option_texts"><code>option_texts</code></a>, <a href="https://sgaseretto.github.io/sysonelib/zeroshot.html#verbalizer_options"><code>verbalizer_options</code></a></td>
+<td>the question’s kind</td>
+<td><a href="./zeroshot.html">zeroshot</a></td>
+</tr>
+<tr class="odd">
+<td><a href="https://sgaseretto.github.io/sysonelib/gliner_backend.html#gliner_labels"><code>gliner_labels</code></a></td>
+<td>the question’s kind</td>
+<td><a href="./gliner_backend.html">GLiNER backend</a></td>
+</tr>
+<tr class="even">
+<td><a href="https://sgaseretto.github.io/sysonelib/interpret.html#part_figure"><code>part_figure</code></a></td>
+<td>the kind of input an attribution scores (an image, a sequence)</td>
+<td><a href="./interpret.html">interpret</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="question-types" class="level2">
+<h2 class="anchored" data-anchor-id="question-types">Question types</h2>
+<p>The three primitives, and the integer each one is embedded as. The order is Laya’s, so a head trained here reads the same type embedding row as a Laya checkpoint, and Laya-format exports stay loadable.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/question_kinds.svg" class="img-fluid figure-img"></p>
+<figcaption>A choice, a score and a noul from their definitions through their options and keys and one probability per option to the answers fill_answer writes</figcaption>
+</figure>
+</div>
+<p>One question of each kind on its way through this notebook (<a href="./figures.html#three-kinds-of-question">figures</a>): its definition, as a record holds it; the options a row puts behind its anchors, and the keys its answers are reported under; one probability per option, made up here; and the answer <a href="https://sgaseretto.github.io/sysonelib/core.html#fill_answer"><code>fill_answer</code></a> reads off them. A choice names its likeliest label, a score reports the expected level, and a noul its probability of being true.</p>
+<div id="c6dbf468" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.267122+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.269862+00:00&quot;,&quot;total&quot;:0.002742595000000847}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L106" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="noul" class="level3">
+<h3 class="anchored" data-anchor-id="noul">Noul</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Noul(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>:<span class="bu">str</span>, <span class="co"># "choice", "score" or "noul"</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    instructions:<span class="bu">str</span>, <span class="co"># the text the model answers</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    criteria:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># choice: {label: description} or [labels]; score: [level descriptions]; noul: {"false": .., "true": ..} or None</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    labels:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># noul only: the words shown for false and true, e.g. {"false": "no", "true": "yes"}</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># the question's id within its case</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A statement judged true or false, answered by p(true)</em></p>
+</section>
+</div>
+<div id="6bb22b59" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.269938+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.272526+00:00&quot;,&quot;total&quot;:0.0025900100000058046}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L103" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="score" class="level3">
+<h3 class="anchored" data-anchor-id="score">Score</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Score(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>:<span class="bu">str</span>, <span class="co"># "choice", "score" or "noul"</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    instructions:<span class="bu">str</span>, <span class="co"># the text the model answers</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    criteria:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># choice: {label: description} or [labels]; score: [level descriptions]; noul: {"false": .., "true": ..} or None</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    labels:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># noul only: the words shown for false and true, e.g. {"false": "no", "true": "yes"}</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># the question's id within its case</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>An ordered rubric of levels, level 0 first, answered by the expected level</em></p>
+</section>
+</div>
+<div id="fe2f3299" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.272601+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.275178+00:00&quot;,&quot;total&quot;:0.0025801219999976865}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L99" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="choice" class="level3">
+<h3 class="anchored" data-anchor-id="choice">Choice</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Choice(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>:<span class="bu">str</span>, <span class="co"># "choice", "score" or "noul"</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    instructions:<span class="bu">str</span>, <span class="co"># the text the model answers</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    criteria:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># choice: {label: description} or [labels]; score: [level descriptions]; noul: {"false": .., "true": ..} or None</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    labels:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># noul only: the words shown for false and true, e.g. {"false": "no", "true": "yes"}</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># the question's id within its case</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A choice among labels, answered by one of them: criteria as <code>{label: description}</code>, or a list of labels</em></p>
+</section>
+</div>
+<div id="317c4fc6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.275252+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.277865+00:00&quot;,&quot;total&quot;:0.002616028000005599}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L69" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question" class="level3">
+<h3 class="anchored" data-anchor-id="question">Question</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Question(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>:<span class="bu">str</span>, <span class="co"># "choice", "score" or "noul"</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    instructions:<span class="bu">str</span>, <span class="co"># the text the model answers</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    criteria:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># choice: {label: description} or [labels]; score: [level descriptions]; noul: {"false": .., "true": ..} or None</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    labels:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># noul only: the words shown for false and true, e.g. {"false": "no", "true": "yes"}</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, <span class="co"># the question's id within its case</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>One typed question over a state: a <code>choice</code> among labels, an ordered <code>score</code> rubric, or a yes/no <code>noul</code></em></p>
+</section>
+</div>
+<p>A question’s kind is its class. <code>Question("noul", ...)</code>, like <a href="https://sgaseretto.github.io/sysonelib/core.html#question.from_dict"><code>Question.from_dict</code></a> on a noul’s definition, makes a <a href="https://sgaseretto.github.io/sysonelib/core.html#noul"><code>Noul</code></a>, and every kind is a subclass of <a href="https://sgaseretto.github.io/sysonelib/core.html#question"><code>Question</code></a>. What differs between the kinds lives in one of two places:</p>
+<ul>
+<li><strong>What a question is</strong> belongs to its class: its answer keys, its option texts, and how it reads a gold are methods of <a href="https://sgaseretto.github.io/sysonelib/core.html#choice"><code>Choice</code></a>, <a href="https://sgaseretto.github.io/sysonelib/core.html#score"><code>Score</code></a> and <a href="https://sgaseretto.github.io/sysonelib/core.html#noul"><code>Noul</code></a>.</li>
+<li><strong>What the rest of sysone does with a question</strong> belongs to generic functions dispatched on the kind: the answer it fills in, the texts a zero-shot model reads, GLiNER2’s labels. A backend adds its handling as methods, without touching the classes.</li>
+</ul>
+<div id="8e836ca5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>{qid: <span class="bu">type</span>(Question.from_dict(d, name<span class="op">=</span>qid)).<span class="va">__name__</span> <span class="cf">for</span> qid, d <span class="kw">in</span> rec[<span class="st">"questions"</span>].items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'action': 'Choice',
+ 'needs_review': 'Noul',
+ 'outcome': 'Choice',
+ 'risk': 'Score',
+ 'urgency': 'Score'}</code></pre>
+</div>
+</div>
+<div id="26764659" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>nq0 <span class="op">=</span> Question(<span class="st">"noul"</span>, <span class="st">"The invoice is a duplicate."</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">type</span>(nq0).<span class="va">__name__</span>, <span class="bu">isinstance</span>(nq0, Question), nq0.<span class="bu">type</span>), (<span class="st">"Noul"</span>, <span class="va">True</span>, <span class="st">"noul"</span>))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>test_eq((<span class="bu">type</span>(copy.deepcopy(nq0)), <span class="bu">type</span>(pickle.loads(pickle.dumps(nq0)))), (Noul, Noul))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A question is built from its definition exactly as it appears in the record. Choice criteria given as a list become labels without descriptions, noul criteria keys are normalised to <code>"false"</code>/<code>"true"</code>:</p>
+<div id="a91deaef" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> Question.from_dict(rec[<span class="st">"questions"</span>][<span class="st">"action"</span>], name<span class="op">=</span><span class="st">"action"</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>q</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+
+</div>
+</div>
+<div id="ed2fd7fa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>test_eq(Question(<span class="st">"choice"</span>, <span class="st">"Pick one"</span>, [<span class="st">"a"</span>, <span class="st">"b"</span>]).criteria, {<span class="st">"a"</span>: <span class="va">None</span>, <span class="st">"b"</span>: <span class="va">None</span>})</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>test_eq(Question(<span class="st">"noul"</span>, <span class="st">"Is it?"</span>, {<span class="va">True</span>: <span class="st">"yes it is"</span>}).criteria, {<span class="st">"true"</span>: <span class="st">"yes it is"</span>})</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Question(<span class="st">"choice"</span>, <span class="st">"Pick one"</span>, {}), contains<span class="op">=</span><span class="st">"non-empty"</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Question(<span class="st">"score"</span>, <span class="st">"Rate"</span>, {<span class="st">"a"</span>: <span class="dv">1</span>}), contains<span class="op">=</span><span class="st">"list of level"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Question(<span class="st">"noul"</span>, <span class="st">"Is it?"</span>, {<span class="st">"maybe"</span>: <span class="st">"x"</span>}), contains<span class="op">=</span><span class="st">"keyed only"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Question(<span class="st">"choice"</span>, <span class="st">"x"</span>, [<span class="st">"a"</span>], labels<span class="op">=</span>{<span class="st">"false"</span>: <span class="st">"n"</span>, <span class="st">"true"</span>: <span class="st">"y"</span>}), contains<span class="op">=</span><span class="st">"only supported for noul"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: Question(<span class="st">"bool"</span>, <span class="st">"x"</span>), contains<span class="op">=</span><span class="st">"unknown type"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="options-and-answer-keys" class="level3">
+<h3 class="anchored" data-anchor-id="options-and-answer-keys">Options and answer keys</h3>
+<p>Every question becomes an ordered list of <em>options</em>, the texts that sit behind the anchor tokens in a row, and the same number of <em>keys</em>, the names the answer is reported under. A choice’s keys are its labels, a score’s are the level indices as strings, a noul’s are always <code>false</code> then <code>true</code>. The option texts follow Laya’s rendering: <code>label: description</code> for choices, <code>level i: description</code> for scores, and <code>false: …</code>, <code>true: …</code> for nouls, with Laya’s default descriptions when none is given. Each kind’s class answers both for itself.</p>
+<div id="89192da9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.281143+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.283557+00:00&quot;,&quot;total&quot;:0.0024162960000069234}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L144" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="noul.options" class="level3">
+<h3 class="anchored" data-anchor-id="noul.options">Noul.options</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> options()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A noul’s option texts, false then true, with Laya’s default descriptions when none is given</em></p>
+</section>
+</div>
+<div id="4da2c357" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.283632+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.285874+00:00&quot;,&quot;total&quot;:0.002244204000007244}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L139" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="score.options" class="level3">
+<h3 class="anchored" data-anchor-id="score.options">Score.options</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> options()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A score’s option texts: <code>level i: description</code></em></p>
+</section>
+</div>
+<div id="6a674fe7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.285948+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.288199+00:00&quot;,&quot;total&quot;:0.0022540719999994963}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L134" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="choice.options" class="level3">
+<h3 class="anchored" data-anchor-id="choice.options">Choice.options</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> options()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A choice’s option texts, as Laya renders them: <code>label: description</code>, or the label alone</em></p>
+</section>
+</div>
+<div id="91aa1167" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.288299+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.290445+00:00&quot;,&quot;total&quot;:0.002148505000008072}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L131" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question.k" class="level3">
+<h3 class="anchored" data-anchor-id="question.k">Question.k</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> k()<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Number of options</em></p>
+</section>
+</div>
+<div id="10b8775e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.290520+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.292670+00:00&quot;,&quot;total&quot;:0.002152732999988416}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L128" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="noul.keys" class="level3">
+<h3 class="anchored" data-anchor-id="noul.keys">Noul.keys</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> keys()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A noul’s answer keys: false, then true</em></p>
+</section>
+</div>
+<div id="81baf817" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.292745+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.294919+00:00&quot;,&quot;total&quot;:0.002176157000008061}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L126" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="score.keys" class="level3">
+<h3 class="anchored" data-anchor-id="score.keys">Score.keys</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> keys()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A score’s answer keys: its levels’ indices, as strings</em></p>
+</section>
+</div>
+<div id="5e1ee961" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.294992+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.297106+00:00&quot;,&quot;total&quot;:0.002115864000003853}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L124" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="choice.keys" class="level3">
+<h3 class="anchored" data-anchor-id="choice.keys">Choice.keys</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> keys()<span class="op">-&gt;</span><span class="bu">list</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A choice’s answer keys: its labels</em></p>
+</section>
+</div>
+<div id="a40d1043" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.297179+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.299333+00:00&quot;,&quot;total&quot;:0.002157412000002523}}" data-execution_count="20">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L121" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question.qtype" class="level3">
+<h3 class="anchored" data-anchor-id="question.qtype">Question.qtype</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qtype()<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The type’s integer id</em></p>
+</section>
+</div>
+<div id="4960a4ba" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.299410+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.301616+00:00&quot;,&quot;total&quot;:0.0022086479999927633}}" data-execution_count="21">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L113" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="render_criterion" class="level3">
+<h3 class="anchored" data-anchor-id="render_criterion">render_criterion</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> render_criterion(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    value</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A criterion value as text: strings pass through, anything structured becomes compact JSON</em></p>
+</section>
+</div>
+<div id="b2435c00" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>q.keys, q.options</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(['continue', 'human_review', 'observe', 'stop'],
+ ['continue: Let the agent proceed without interruption.',
+  'human_review: Queue this trace for a human to review.',
+  'observe: Keep running, but flag the trace for later sampling.',
+  'stop: Halt the agent now.'])</code></pre>
+</div>
+</div>
+<div id="667ac44c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>urg <span class="op">=</span> Question.from_dict(rec[<span class="st">"questions"</span>][<span class="st">"urgency"</span>], name<span class="op">=</span><span class="st">"urgency"</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>test_eq(urg.keys, [<span class="st">"0"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span>])</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>test_eq(urg.options[<span class="dv">0</span>], <span class="st">"level 0: No time pressure; can wait indefinitely."</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>nq <span class="op">=</span> Question(<span class="st">"noul"</span>, <span class="st">"The invoice is a duplicate."</span>)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>test_eq(nq.options, [<span class="st">"false: no, the statement does not hold"</span>, <span class="st">"true: yes, the statement holds"</span>])</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>test_eq(Question(<span class="st">"noul"</span>, <span class="st">"Is it?"</span>, labels<span class="op">=</span>{<span class="st">"false"</span>: <span class="st">"B"</span>, <span class="st">"true"</span>: <span class="st">"A"</span>}).options[<span class="dv">1</span>], <span class="st">"A: yes, the statement holds"</span>)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>test_eq(Question(<span class="st">"choice"</span>, <span class="st">"Pick"</span>, [<span class="dv">1</span>, <span class="dv">2</span>]).options, [<span class="st">"1"</span>, <span class="st">"2"</span>])</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>test_eq(Question(<span class="st">"choice"</span>, <span class="st">"Pick"</span>, {<span class="st">"a"</span>: {<span class="st">"desc"</span>: <span class="st">"x"</span>}}).options, [<span class="st">'a: {"desc": "x"}'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="60503dbe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.303143+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.305425+00:00&quot;,&quot;total&quot;:0.002284810000006132}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L159" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="as_questions" class="level3">
+<h3 class="anchored" data-anchor-id="as_questions">as_questions</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> as_questions(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    questions</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em><code>{qid: Question}</code> from a mapping of definitions (or <a href="https://sgaseretto.github.io/sysonelib/core.html#question"><code>Question</code></a>s)</em></p>
+</section>
+</div>
+<div id="707937ac" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.305500+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.307846+00:00&quot;,&quot;total&quot;:0.002348539000010419}}" data-execution_count="24">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L152" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question.to_dict" class="level3">
+<h3 class="anchored" data-anchor-id="question.to_dict">Question.to_dict</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> to_dict()<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The Jev definition of this question</em></p>
+</section>
+</div>
+<div id="a535a386" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> as_questions(rec[<span class="st">"questions"</span>])</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">list</span>(qs), <span class="bu">list</span>(rec[<span class="st">"questions"</span>]))</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>test_eq(Question.from_dict(qs[<span class="st">"risk"</span>].to_dict()).options, qs[<span class="st">"risk"</span>].options)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>qs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'action': Question(action: choice, 'What should the observability system do…', 4 options),
+ 'needs_review': Question(needs_review: noul, 'This trace requires human review.', 2 options),
+ 'outcome': Question(outcome: choice, 'How did this agent run turn out?', 4 options),
+ 'risk': Question(risk: score, "How risky was the agent's behaviour in …", 4 options),
+ 'urgency': Question(urgency: score, 'How quickly does this trace need attent…', 4 options)}</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="gold-targets" class="level2">
+<h2 class="anchored" data-anchor-id="gold-targets">Gold targets</h2>
+<p>Training needs, for every question, a distribution over its options. Gold may be a label, a distribution, or both: typed-decisions ships the mean of three teacher samples as <code>probabilities</code> plus the argmax <code>label</code>, and converters from classification datasets only have labels. <a href="https://sgaseretto.github.io/sysonelib/core.html#question.target"><code>Question.target</code></a> turns any of these into the target distribution (in option order) and the index of the gold label, the notebook’s <code>build_training_item</code>. When a label is present its index is kept for accuracy, otherwise the argmax of the distribution is used. What differs between the kinds is answered by each kind’s class: how a bare value reads (a fractional one is a noul’s p(true) or a score’s expected level), how a distribution names its options, and what the kind’s own field says (a noul’s <code>noul</code>, a score’s <code>score</code>).</p>
+<div id="9a745c95" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.313680+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.316681+00:00&quot;,&quot;total&quot;:0.003003442999997219}}" data-execution_count="26">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L239" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question.target" class="level3">
+<h3 class="anchored" data-anchor-id="question.target">Question.target</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> target(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    gold</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">tuple</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The gold distribution over options (key order) and the gold label’s index; <code>(None, -1)</code> without gold</em></p>
+</section>
+</div>
+<div id="e4ea630e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>t, label <span class="op">=</span> q.target(rec[<span class="st">"gold"</span>][<span class="st">"action"</span>])</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>test_close(<span class="bu">sum</span>(t), <span class="fl">1.0</span>)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>test_eq(q.keys[label], rec[<span class="st">"gold"</span>][<span class="st">"action"</span>][<span class="st">"label"</span>])</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>t, label</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>([0.28333328333328334,
+  0.4333334333334333,
+  0.25000025000025,
+  0.033333033333033335],
+ 1)</code></pre>
+</div>
+</div>
+<p>A record can also say that none of the offered options answers the question: gold <code>{"answerable": false}</code>. It has no target, so the option loss leaves it out, but it is not a missing label either. <code>answerable</code> tells the three cases apart, and a head with an act output learns from the unanswerable ones to hand the case over rather than answer (see <a href="./models.html#acting-or-escalating">models</a>):</p>
+<div id="0cccf1e8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.317745+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.320069+00:00&quot;,&quot;total&quot;:0.0023263869999965436}}" data-execution_count="28">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L259" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="question.answerable" class="level3">
+<h3 class="anchored" data-anchor-id="question.answerable">Question.answerable</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> answerable(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    gold</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">int</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>1 if the gold answers the question with its options, 0 if it says none of them does (<code>{'answerable': False}</code>), -1 without gold</em></p>
+</section>
+</div>
+<div id="f57d75a4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>test_eq(q.answerable({<span class="st">"answerable"</span>: <span class="va">False</span>}), <span class="dv">0</span>)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>test_eq(q.target({<span class="st">"answerable"</span>: <span class="va">False</span>}), (<span class="va">None</span>, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>test_eq((q.answerable(<span class="st">"stop"</span>), q.answerable(<span class="va">None</span>), q.answerable({<span class="st">"label"</span>: <span class="st">"not an option"</span>})), (<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The other gold shapes: a bare label, a noul probability, an expected score (spread over the two nearest levels so the expectation is preserved), a distribution in option order.</p>
+<div id="50a2e787" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>test_eq(q.target(<span class="st">"stop"</span>), ([<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>], <span class="dv">3</span>))</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>test_eq(nq.target({<span class="st">"noul"</span>: <span class="fl">0.8</span>}), ([<span class="fl">0.19999999999999996</span>, <span class="fl">0.8</span>], <span class="dv">1</span>))</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>test_eq(nq.target(<span class="va">True</span>)[<span class="dv">1</span>], <span class="dv">1</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>test_close(urg.target({<span class="st">"score"</span>: <span class="fl">1.4</span>})[<span class="dv">0</span>], [<span class="dv">0</span>, <span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="dv">0</span>])</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>test_eq(urg.target([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>]), ([<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="dv">0</span>], <span class="dv">1</span>))</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>test_eq(q.target(<span class="va">None</span>), (<span class="va">None</span>, <span class="op">-</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Truth values may be written yes/no, booleans or 1/0, integer keys and integral floats name the same option as their strings, a fractional bare value is an expected score or a p(true), and a distribution that names none of the options is no gold at all rather than a uniform target:</p>
+<div id="93312680" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>test_eq(nq.target({<span class="st">"probabilities"</span>: {<span class="st">"yes"</span>: <span class="fl">0.8</span>, <span class="st">"no"</span>: <span class="fl">0.2</span>}}), ([<span class="fl">0.2</span>, <span class="fl">0.8</span>], <span class="dv">1</span>))</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>test_eq(nq.target({<span class="st">"probabilities"</span>: {<span class="va">True</span>: <span class="fl">0.7</span>}})[<span class="dv">0</span>], [<span class="fl">0.30000000000000004</span>, <span class="fl">0.7</span>])</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>test_eq(urg.target({<span class="st">"probabilities"</span>: {<span class="dv">0</span>: <span class="fl">0.1</span>, <span class="dv">1</span>: <span class="fl">0.9</span>}}), ([<span class="fl">0.1</span>, <span class="fl">0.9</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>], <span class="dv">1</span>))</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>test_eq(urg.target(<span class="fl">2.0</span>), ([<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>], <span class="dv">2</span>))</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>test_close(urg.target(<span class="fl">1.4</span>)[<span class="dv">0</span>], [<span class="dv">0</span>, <span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="dv">0</span>])</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>test_eq(nq.target(<span class="fl">0.9</span>)[<span class="dv">1</span>], <span class="dv">1</span>)</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>test_eq(q.target({<span class="st">"probabilities"</span>: {<span class="st">"elsewhere"</span>: <span class="fl">1.0</span>}}), (<span class="va">None</span>, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>test_eq(q.target({<span class="st">"probabilities"</span>: {<span class="st">"elsewhere"</span>: <span class="fl">1.0</span>}, <span class="st">"label"</span>: <span class="st">"stop"</span>}), ([<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>], <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-answer-schema" class="level2">
+<h2 class="anchored" data-anchor-id="the-answer-schema">The answer schema</h2>
+<p>The model returns one probability per option; code reads the answer off it, as Jev and Laya do, so nothing is generated and nothing is parsed. Two confidences are reported. <code>confidence</code> is Laya’s normalised-entropy confidence, <span class="math inline">\(1 - H(p)/\log k\)</span>, how concentrated the whole distribution is. <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_confidence"><code>answer_confidence</code></a> is <span class="math inline">\(\max p\)</span>, the probability of the reported answer, which is the quantity temperature scaling fits and ECE measures, so it is the one to gate on.</p>
+<div id="04cf7c75" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.322008+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.324247+00:00&quot;,&quot;total&quot;:0.0022415490000042837}}" data-execution_count="30">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L273" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="answer_confidence" class="level3">
+<h3 class="anchored" data-anchor-id="answer_confidence">answer_confidence</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> answer_confidence(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    p</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>max(p): the probability of the reported answer</em></p>
+</section>
+</div>
+<div id="a0470248" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.324350+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.326707+00:00&quot;,&quot;total&quot;:0.0023595099999909053}}" data-execution_count="31">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L266" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="entropy_confidence" class="level3">
+<h3 class="anchored" data-anchor-id="entropy_confidence">entropy_confidence</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> entropy_confidence(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    p</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>1 − H(p)/log k: how concentrated the distribution is</em></p>
+</section>
+</div>
+<div id="fd1bfe3f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>test_eq(entropy_confidence([<span class="fl">0.25</span>] <span class="op">*</span> <span class="dv">4</span>), <span class="fl">0.0</span>)</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>test_eq(entropy_confidence([<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>]), <span class="fl">1.0</span>)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>test_close(entropy_confidence([<span class="fl">0.7</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>]), <span class="fl">0.2702</span>, eps<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>test_eq(answer_confidence([<span class="fl">0.7</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>]), <span class="fl">0.7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The two can disagree on which of two answers is the surer. A tie between two options is concentrated, half the options having no mass at all, yet its answer is a coin toss; a weak favourite among four is spread out, yet its answer is the likelier to be right:</p>
+<div id="7999e2ee" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>tie, favourite <span class="op">=</span> [<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.55</span>, <span class="fl">0.15</span>, <span class="fl">0.15</span>, <span class="fl">0.15</span>]</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>test_eq(entropy_confidence(tie) <span class="op">&gt;</span> entropy_confidence(favourite), <span class="va">True</span>)</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>test_eq(answer_confidence(tie) <span class="op">&lt;</span> answer_confidence(favourite), <span class="va">True</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>{<span class="st">"tie"</span>: (<span class="bu">round</span>(entropy_confidence(tie), <span class="dv">3</span>), answer_confidence(tie)), <span class="st">"favourite"</span>: (<span class="bu">round</span>(entropy_confidence(favourite), <span class="dv">3</span>), answer_confidence(favourite))}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'tie': (0.5, 0.5), 'favourite': (0.147, 0.55)}</code></pre>
+</div>
+</div>
+<p>So <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_confidence"><code>answer_confidence</code></a> is the number to gate an answer on, and <code>confidence</code> is the better sign of ambiguity among a few options.</p>
+<p>What an answer holds depends on the question’s kind: a choice names a label, a score an expected level, a noul p(true). So <a href="https://sgaseretto.github.io/sysonelib/core.html#fill_answer"><code>fill_answer</code></a> asks <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_fields"><code>answer_fields</code></a>, a generic function with a method per kind, and adds what every answer has: its type, the confidences and, from an act head, the <code>action</code>.</p>
+<div id="c2d3dbc5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.329655+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.332481+00:00&quot;,&quot;total&quot;:0.002829177999998933}}" data-execution_count="33">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L303" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="fill_answer" class="level3">
+<h3 class="anchored" data-anchor-id="fill_answer">fill_answer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fill_answer(</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>    q:__main__.Question, probs, digits:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="dv">4</span>, act:<span class="bu">float</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, act_threshold:<span class="bu">float</span> <span class="op">|</span> <span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Answer:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The Jev answer for <code>q</code> from its option probabilities (its kind’s <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_fields"><code>answer_fields</code></a>); <code>act</code>, from an act head, adds <code>action</code></em></p>
+</section>
+</div>
+<div id="604e3167" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.337064+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.339209+00:00&quot;,&quot;total&quot;:0.0021474939999990283}}" data-execution_count="37">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L279" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="answer" class="level3">
+<h3 class="anchored" data-anchor-id="answer">Answer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Answer(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args, <span class="op">**</span>kwargs</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A typed answer in the Jev schema: a <code>dict</code>, with attribute access for convenience</em></p>
+</section>
+</div>
+<div id="69b257e6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fill_answer(q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'type': 'choice',
+ 'choice': 'human_review',
+ 'probabilities': {'continue': 0.1,
+  'human_review': 0.6,
+  'observe': 0.2,
+  'stop': 0.1},
+ 'confidence': 0.2145,
+ 'answer_confidence': 0.6}</code></pre>
+</div>
+</div>
+<div id="01c7f192" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> fill_answer(urg, [<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>])</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>test_eq(a.score, <span class="fl">2.0</span>)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>test_eq(a.legend[<span class="st">"3"</span>], urg.criteria[<span class="dv">3</span>])</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> fill_answer(nq, [<span class="fl">0.25</span>, <span class="fl">0.75</span>])</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>test_eq((b.noul, b.confidence, b.answer_confidence), (<span class="fl">0.75</span>, <span class="fl">0.75</span>, <span class="fl">0.75</span>))</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>test_eq(fill_answer(q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>]).choice, <span class="st">"human_review"</span>)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads(json.dumps(b)), <span class="bu">dict</span>(b))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Reading an answer back goes the other way. The metrics and the evaluation probes turn any backend’s answers into probabilities again, through two more generic functions on the kind. <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_probs"><code>answer_probs</code></a> is the distribution an answer states (a noul’s two sides come from its p(true)), and <a href="https://sgaseretto.github.io/sysonelib/core.html#answer_index"><code>answer_index</code></a> is the option it picks (for a noul, true when p(true) is at least a half). A method for <a href="https://sgaseretto.github.io/sysonelib/core.html#question"><code>Question</code></a> serves every kind without one of its own, here the choice and the score. In the method tables below, <code>Any</code> marks an argument without a type, which takes no part in the choice:</p>
+<div id="aa0f210b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> qq, probs <span class="kw">in</span> ((q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>]), (urg, [<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>]), (nq, [<span class="fl">0.25</span>, <span class="fl">0.75</span>])):</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    back <span class="op">=</span> answer_probs(qq, fill_answer(qq, probs))</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    test_close(back, probs, eps<span class="op">=</span><span class="fl">1e-4</span>)<span class="op">;</span> test_eq(answer_index(qq, back), <span class="bu">int</span>(np.argmax(probs)))</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>test_eq(answer_index(nq, np.array([<span class="fl">0.5</span>, <span class="fl">0.5</span>])), <span class="dv">1</span>)                       <span class="co"># a coin toss reads as true</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>{f.<span class="va">__name__</span>: methods(f) <span class="cf">for</span> f <span class="kw">in</span> (answer_fields, answer_probs, answer_index)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'answer_fields': [('Choice', 'Any', 'Any'),
+  ('Score', 'Any', 'Any'),
+  ('Noul', 'Any', 'Any')],
+ 'answer_probs': [('Question', 'dict'), ('Noul', 'dict')],
+ 'answer_index': [('Question', 'Any'), ('Noul', 'Any')]}</code></pre>
+</div>
+</div>
+<p>A model with an act head adds Laya’s <code>action</code> field: the probability that it should act on this answer rather than escalate the case, and, once a threshold has been fitted on held-out rows, the decision itself. The threshold is one number, or one per question type and option-count bucket (see <a href="#temperature-buckets">below</a>):</p>
+<div id="6abfb3d6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> fill_answer(q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>], act<span class="op">=</span><span class="fl">0.83</span>, act_threshold<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>test_eq(a.action, {<span class="st">"act_probability"</span>: <span class="fl">0.83</span>, <span class="st">"act"</span>: <span class="va">True</span>})</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="st">"action"</span> <span class="kw">in</span> fill_answer(q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>]), <span class="va">False</span>)</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>a.action</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'act_probability': 0.83, 'act': True}</code></pre>
+</div>
+</div>
+</section>
+<section id="temperature-buckets" class="level2">
+<h2 class="anchored" data-anchor-id="temperature-buckets">Temperature buckets</h2>
+<p>Calibration fits one temperature per question type and option-count bucket (2, 3 to 5, 6 to 10, 11+), named as Laya names them, so the same keys work in <code>sysone.json</code> and in <code>rl_agent_config.json</code>. A missing bucket falls back to the type’s temperature, then to 1.</p>
+<div id="a013bdd0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.348695+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.351075+00:00&quot;,&quot;total&quot;:0.0023831339999986767}}" data-execution_count="44">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L349" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="lookup_temperature" class="level3">
+<h3 class="anchored" data-anchor-id="lookup_temperature">lookup_temperature</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_temperature(</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    temps:<span class="bu">dict</span> <span class="op">|</span> <span class="va">None</span>, qtype, k:<span class="bu">int</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The temperature for a row: its bucket, else its type, else 1</em></p>
+</section>
+</div>
+<div id="2c2dec7b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.351147+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.353461+00:00&quot;,&quot;total&quot;:0.0023172399999964455}}" data-execution_count="45">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L342" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="clamp_temperature" class="level3">
+<h3 class="anchored" data-anchor-id="clamp_temperature">clamp_temperature</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clamp_temperature(</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    t, lo:<span class="bu">float</span><span class="op">=</span><span class="fl">0.5</span>, hi:<span class="bu">float</span><span class="op">=</span><span class="fl">5.0</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A usable temperature: <code>t</code> confined to [lo, hi], or 1.0 if it is not a finite number</em></p>
+</section>
+</div>
+<div id="0b8a7927" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.353533+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.355853+00:00&quot;,&quot;total&quot;:0.002323101999991195}}" data-execution_count="46">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L334" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="temp_bucket" class="level3">
+<h3 class="anchored" data-anchor-id="temp_bucket">temp_bucket</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> temp_bucket(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    qtype, k:<span class="bu">int</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">str</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The calibration bucket of a question type (name or id) with k options, e.g.&nbsp;<code>choice:3-5</code></em></p>
+</section>
+</div>
+<div id="5183bbf7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>test_eq([temp_bucket(<span class="st">"choice"</span>, k) <span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">20</span>)], [<span class="st">"choice:2"</span>, <span class="st">"choice:3-5"</span>, <span class="st">"choice:6-10"</span>, <span class="st">"choice:11+"</span>])</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>test_eq(temp_bucket(<span class="dv">2</span>, <span class="dv">2</span>), <span class="st">"noul:2"</span>)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>temps <span class="op">=</span> {<span class="st">"choice:3-5"</span>: <span class="fl">1.4</span>, <span class="st">"choice"</span>: <span class="fl">1.1</span>, <span class="st">"score:3-5"</span>: <span class="fl">0.1</span>}</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>test_eq(lookup_temperature(temps, <span class="st">"choice"</span>, <span class="dv">4</span>), <span class="fl">1.4</span>)</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>test_eq(lookup_temperature(temps, <span class="st">"choice"</span>, <span class="dv">7</span>), <span class="fl">1.1</span>)</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>test_eq(lookup_temperature(temps, <span class="st">"score"</span>, <span class="dv">4</span>), <span class="fl">0.5</span>)</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>test_eq(lookup_temperature(<span class="va">None</span>, <span class="st">"noul"</span>, <span class="dv">2</span>), <span class="fl">1.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Act thresholds are keyed the same way. A bucket’s threshold applies first, then its type’s, then the one fitted over all rows (<code>all</code>), so a question kind whose act scores run lower than the others’ still gets a threshold of its own:</p>
+<div id="0c8bed29" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.357090+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.359557+00:00&quot;,&quot;total&quot;:0.002469755999996437}}" data-execution_count="48">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L356" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="lookup_threshold" class="level3">
+<h3 class="anchored" data-anchor-id="lookup_threshold">lookup_threshold</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lookup_threshold(</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>    thresholds, qtype, k:<span class="bu">int</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">float</span> <span class="op">|</span> <span class="va">None</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The act threshold for a row: a single number, or from a dict its bucket’s, else its type’s, else the one over all rows (<code>all</code>)</em></p>
+</section>
+</div>
+<div id="856de10d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>thr <span class="op">=</span> {<span class="st">"all"</span>: <span class="fl">0.8</span>, <span class="st">"choice"</span>: <span class="fl">0.7</span>, <span class="st">"choice:3-5"</span>: <span class="fl">0.6</span>}</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>test_eq([lookup_threshold(thr, <span class="st">"choice"</span>, <span class="dv">4</span>), lookup_threshold(thr, <span class="st">"choice"</span>, <span class="dv">8</span>), lookup_threshold(thr, <span class="st">"noul"</span>, <span class="dv">2</span>)], [<span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>])</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>test_eq((lookup_threshold(<span class="fl">0.5</span>, <span class="st">"noul"</span>, <span class="dv">2</span>), lookup_threshold(<span class="va">None</span>, <span class="st">"noul"</span>, <span class="dv">2</span>), lookup_threshold({<span class="st">"choice"</span>: <span class="fl">0.7</span>}, <span class="st">"noul"</span>, <span class="dv">2</span>)), (<span class="fl">0.5</span>, <span class="va">None</span>, <span class="va">None</span>))</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>test_eq(fill_answer(q, [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>], act<span class="op">=</span><span class="fl">0.65</span>, act_threshold<span class="op">=</span>thr).action, {<span class="st">"act_probability"</span>: <span class="fl">0.65</span>, <span class="st">"act"</span>: <span class="va">True</span>})    <span class="co"># its bucket's 0.6</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>test_eq(fill_answer(nq, [<span class="fl">0.25</span>, <span class="fl">0.75</span>], act<span class="op">=</span><span class="fl">0.65</span>, act_threshold<span class="op">=</span>thr).action[<span class="st">"act"</span>], <span class="va">False</span>)                                    <span class="co"># 'all': 0.8</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="states" class="level2">
+<h2 class="anchored" data-anchor-id="states">States</h2>
+<p>A state is rendered to the text the encoder reads: strings pass through and anything else becomes JSON, exactly as Laya serialises it, so rows built here match rows Laya builds. <a href="https://sgaseretto.github.io/sysonelib/core.html#render_state"><code>render_state</code></a> is a generic function on the state’s type: a type that should render differently gets a method, with <code>@render_state.dispatch</code> or <code>render_state.register</code> (the transforms in <code>sysone.template</code> are the usual way to shape a state; this is the fallback).</p>
+<div id="add181fa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>test_eq(render_state(<span class="st">"plain text"</span>), <span class="st">"plain text"</span>)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>test_eq(render_state({<span class="st">"a"</span>: <span class="st">"é"</span>, <span class="st">"b"</span>: [<span class="dv">1</span>, <span class="dv">2</span>]}), <span class="st">'{"a": "é", "b": [1, 2]}'</span>)</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _Point:</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, x, y): <span class="va">self</span>.x, <span class="va">self</span>.y <span class="op">=</span> x, y</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="at">@render_state.dispatch</span></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _render_point(state:_Point) <span class="op">-&gt;</span> <span class="bu">str</span>: <span class="cf">return</span> <span class="ss">f"a point at (</span><span class="sc">{</span>state<span class="sc">.</span>x<span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>state<span class="sc">.</span>y<span class="sc">}</span><span class="ss">)"</span></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>test_eq(render_state(_Point(<span class="dv">1</span>, <span class="dv">2</span>)), <span class="st">"a point at (1, 2)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="records" class="level2">
+<h2 class="anchored" data-anchor-id="records">Records</h2>
+<p>A <em>record</em> is one case: a state, its questions, and (for training) the gold answers. Hub datasets often store the three as JSON strings; <a href="https://sgaseretto.github.io/sysonelib/core.html#load_record"><code>load_record</code></a> parses them, leaves everything else in place, and checks the questions. A state passed at inference is taken as it is (<code>parse_state=False</code>), as Laya’s runtime takes it: a string that happens to be JSON stays a string.</p>
+<div id="50fe3e96" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.365118+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.367616+00:00&quot;,&quot;total&quot;:0.0025004729999977826}}" data-execution_count="53">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L382" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_record" class="level3">
+<h3 class="anchored" data-anchor-id="load_record">load_record</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_record(</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>    r:<span class="bu">dict</span>, parse_state:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">dict</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A case record with <code>questions</code> and <code>gold</code> parsed from JSON strings, and the <code>state</code> too when <code>parse_state</code></em></p>
+</section>
+</div>
+<div id="3bb41689" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>hub_row <span class="op">=</span> {<span class="st">"id"</span>: <span class="st">"x"</span>, <span class="st">"state"</span>: json.dumps(rec[<span class="st">"state"</span>]), <span class="st">"questions"</span>: json.dumps(rec[<span class="st">"questions"</span>]), <span class="st">"gold"</span>: json.dumps(rec[<span class="st">"gold"</span>])}</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>test_eq(load_record(hub_row)[<span class="st">"state"</span>], rec[<span class="st">"state"</span>])</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>test_eq(load_record({<span class="st">"state"</span>: <span class="st">"text"</span>, <span class="st">"questions"</span>: {}})[<span class="st">"state"</span>], <span class="st">"text"</span>)</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>test_eq(load_record({<span class="st">"state"</span>: <span class="st">'{"a":1}'</span>, <span class="st">"questions"</span>: {}}, parse_state<span class="op">=</span><span class="va">False</span>)[<span class="st">"state"</span>], <span class="st">'{"a":1}'</span>)</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>test_fail(<span class="kw">lambda</span>: load_record({<span class="st">"state"</span>: <span class="st">"x"</span>, <span class="st">"questions"</span>: {<span class="st">"q"</span>: {<span class="st">"type"</span>: <span class="st">"choice"</span>, <span class="st">"instructions"</span>: <span class="st">"x"</span>}}}), contains<span class="op">=</span><span class="st">"choice"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="rows" class="level2">
+<h2 class="anchored" data-anchor-id="rows">Rows</h2>
+<p>One question over one state is one <em>row</em>: token ids, the positions of the anchor before each option (<code>markers</code>), the question type, and, for training, the target distribution and label. Everything a multimodal encoder needs beyond ids (<code>pixel_values</code>, <code>position_ids</code>, <code>image_grid_hw</code>, or a side stream’s token ids) rides in <code>extras</code>, and so do cached encoder outputs (<code>anchors</code>, the vectors at the markers, or <code>hidden</code>, the whole sequence), so nothing downstream of the encoder needs to know the modality. A row also records where each option’s own tokens are (<code>spans</code>, for heads that read an option as the mean of its tokens rather than at its anchor), and whether its gold answers the question at all (<code>answerable</code>, for the act head). <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>sysone.template.RowBuilder</code></a> makes rows; this is only the container.</p>
+<div id="626d867e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.370607+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.372931+00:00&quot;,&quot;total&quot;:0.0023263869999965436}}" data-execution_count="55">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L396" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="row" class="level3">
+<h3 class="anchored" data-anchor-id="row">Row</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Row(</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>    ids:<span class="bu">list</span>, markers:<span class="bu">list</span>, qtype:<span class="bu">int</span>, target:<span class="bu">list</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, label:<span class="bu">int</span><span class="op">=-</span><span class="dv">1</span>, extras:<span class="bu">dict</span><span class="op">=&lt;</span>factory<span class="op">&gt;</span>,</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>    meta:<span class="bu">dict</span><span class="op">=&lt;</span>factory<span class="op">&gt;</span>, spans:<span class="bu">list</span> <span class="op">|</span> <span class="va">None</span><span class="op">=</span><span class="va">None</span>, answerable:<span class="bu">int</span><span class="op">=-</span><span class="dv">1</span></span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="va">None</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>One question over one state, as token ids with the anchor position of every option</em></p>
+</section>
+</div>
+<div id="ca5de4f4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> Row([<span class="dv">1</span>, <span class="dv">7</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">9</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">2</span>], markers<span class="op">=</span>[<span class="dv">3</span>, <span class="dv">5</span>], qtype<span class="op">=</span><span class="dv">2</span>, target<span class="op">=</span>[<span class="fl">0.2</span>, <span class="fl">0.8</span>], label<span class="op">=</span><span class="dv">1</span>, spans<span class="op">=</span>[(<span class="dv">4</span>, <span class="dv">5</span>), (<span class="dv">6</span>, <span class="dv">8</span>)], answerable<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>test_eq((r.n_tokens, r.k), (<span class="dv">10</span>, <span class="dv">2</span>))</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>test_eq(Row.from_dict(r.to_dict()), r)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="batches" class="level2">
+<h2 class="anchored" data-anchor-id="batches">Batches</h2>
+<p><a href="https://sgaseretto.github.io/sysonelib/core.html#collate"><code>collate</code></a> pads a list of rows into one batch: ids to the longest row, marker positions to the largest option count with <code>marker_mask</code> saying which are real, and targets zero-padded to match. Rows from different questions, cases and option counts mix freely; this is what lets several questions of one state run in a single forward pass. Extras are collated by kind: token-aligned tensors are padded along the sequence, per-image tensors are concatenated, cached features and side streams are padded to the batch. A kind can carry its pad value, <code>(kind, pad)</code>: a side stream’s token ids pad with that tokenizer’s own pad id, which need not be 0. Option spans are padded like the markers, and <code>answerable</code> rides along for the act head’s loss and metrics.</p>
+<div id="38f5b6db" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.378603+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.382712+00:00&quot;,&quot;total&quot;:0.00411190399999839}}" data-execution_count="57">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L461" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="collate" class="level3">
+<h3 class="anchored" data-anchor-id="collate">collate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> collate(</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>    rows, pad_id:<span class="bu">int</span><span class="op">=</span><span class="dv">0</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>__main__.Batch:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Pad rows (<a href="https://sgaseretto.github.io/sysonelib/core.html#row"><code>Row</code></a>s or their dict form) into one <a href="https://sgaseretto.github.io/sysonelib/core.html#batch"><code>Batch</code></a></em></p>
+</section>
+</div>
+<div id="efd45d34" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.382787+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.384940+00:00&quot;,&quot;total&quot;:0.002156800999998154}}" data-execution_count="58">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L432" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="batch" class="level3">
+<h3 class="anchored" data-anchor-id="batch">Batch</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Batch(</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args, <span class="op">**</span>kwargs</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A collated batch: <code>input_ids</code>, <code>attention_mask</code>, <code>marker_pos</code>, <code>marker_mask</code>, <code>qtype</code>, plus <code>target</code>/<code>label</code> and extras</em></p>
+</section>
+</div>
+<div id="662573fd" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>r2 <span class="op">=</span> Row([<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">2</span>, <span class="dv">9</span>, <span class="dv">9</span>, <span class="dv">2</span>], markers<span class="op">=</span>[<span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>], qtype<span class="op">=</span><span class="dv">0</span>, target<span class="op">=</span>[<span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.8</span>], label<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> collate([r, r2], pad_id<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>test_eq(b[<span class="st">"input_ids"</span>].shape, (<span class="dv">2</span>, <span class="dv">13</span>))</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>test_eq(b[<span class="st">"input_ids"</span>][<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>].item(), <span class="dv">3</span>)</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>test_eq(b[<span class="st">"marker_mask"</span>].tolist(), [[<span class="va">True</span>, <span class="va">True</span>, <span class="va">False</span>], [<span class="va">True</span>, <span class="va">True</span>, <span class="va">True</span>]])</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>test_eq(b[<span class="st">"target"</span>][<span class="dv">0</span>].tolist(), [<span class="fl">0.20000000298023224</span>, <span class="fl">0.800000011920929</span>, <span class="fl">0.0</span>])</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>test_eq(b[<span class="st">"label"</span>].tolist(), [<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>{k: <span class="bu">tuple</span>(v.shape) <span class="cf">for</span> k, v <span class="kw">in</span> b.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'input_ids': (2, 13),
+ 'attention_mask': (2, 13),
+ 'marker_pos': (2, 3),
+ 'marker_mask': (2, 3),
+ 'qtype': (2,),
+ 'target': (2, 3),
+ 'label': (2,),
+ 'spans': (2, 3, 2),
+ 'answerable': (2,)}</code></pre>
+</div>
+</div>
+<p>Drawn cell by cell, a batch of three rows: the ids coloured by the part of the row they belong to, and the marker positions and mask that tell the head where the anchors are. The rows have different lengths and different option counts; the short rows are padded, and the padded option slots, hatched, point at position 0, with the mask keeping them out of the softmax. (The fixture’s tokenizer is a 2,048-token BPE, so its words break into several pieces; a real tokenizer keeps most of them whole.)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/batch.svg" class="img-fluid figure-img"></p>
+<figcaption>A batch of three rows: input_ids coloured by segment, and the marker positions and mask</figcaption>
+</figure>
+</div>
+<p><em>Drawn from <a href="https://sgaseretto.github.io/sysonelib/template.html#rowbuilder"><code>RowBuilder</code></a> and <a href="https://sgaseretto.github.io/sysonelib/core.html#collate"><code>collate</code></a> in <a href="./figures.html#a-batch-of-rows">figures</a>.</em></p>
+<p>Extras are collated by kind; cached anchor vectors, for example, are padded to the batch’s option count:</p>
+<div id="c9bedb6b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>fr <span class="op">=</span> [Row([<span class="dv">1</span>, <span class="dv">2</span>], [<span class="dv">0</span>], <span class="dv">0</span>, extras<span class="op">=</span>{<span class="st">"anchors"</span>: np.ones((k, <span class="dv">4</span>), dtype<span class="op">=</span>np.float16)}) <span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">3</span>)]</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>test_eq(collate(fr)[<span class="st">"anchors"</span>].shape, (<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>pr <span class="op">=</span> [Row([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>][:n], [<span class="dv">0</span>], <span class="dv">0</span>, extras<span class="op">=</span>{<span class="st">"position_ids"</span>: np.arange(n)[<span class="va">None</span>].repeat(<span class="dv">2</span>, <span class="dv">0</span>)}) <span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">2</span>, <span class="dv">3</span>)]</span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>test_eq(collate(pr)[<span class="st">"position_ids"</span>].shape, (<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>EXTRA_COLLATE[<span class="st">"side_input_ids"</span>] <span class="op">=</span> (<span class="st">"pad_rows"</span>, <span class="dv">1</span>)       <span class="co"># a side stream whose tokenizer pads with id 1</span></span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>sr <span class="op">=</span> [Row([<span class="dv">1</span>, <span class="dv">2</span>], [<span class="dv">0</span>], <span class="dv">0</span>, extras<span class="op">=</span>{<span class="st">"side_input_ids"</span>: <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">3</span>, <span class="dv">3</span> <span class="op">+</span> m))}, spans<span class="op">=</span>[(<span class="dv">1</span>, <span class="dv">2</span>)], answerable<span class="op">=</span>a) <span class="cf">for</span> m, a <span class="kw">in</span> ((<span class="dv">2</span>, <span class="dv">1</span>), (<span class="dv">4</span>, <span class="dv">0</span>))]</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>sb <span class="op">=</span> collate(sr)</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>test_eq(sb[<span class="st">"side_input_ids"</span>].tolist(), [[<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">1</span>], [<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]])</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>test_eq((sb[<span class="st">"spans"</span>].shape, sb[<span class="st">"answerable"</span>].tolist()), ((<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), [<span class="dv">1</span>, <span class="dv">0</span>]))</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> EXTRA_COLLATE[<span class="st">"side_input_ids"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="adapters" class="level2">
+<h2 class="anchored" data-anchor-id="adapters">Adapters</h2>
+<p>Each encoder brings its own classes: a config (<code>NeoMMEConfig</code>, <code>ModernVBertConfig</code>) and, for images, a processor (<code>NeoMMEProcessor</code>, <code>Idefics3Processor</code>). Where sysone has to treat encoders differently, it calls a <a href="#generic-functions-and-multiple-dispatch">generic function</a> that dispatches on those classes. <a href="https://sgaseretto.github.io/sysonelib/template.html#processor_rows"><code>processor_rows</code></a> lays an image out in a row, <a href="https://sgaseretto.github.io/sysonelib/template.html#default_image_side"><code>default_image_side</code></a> and <a href="https://sgaseretto.github.io/sysonelib/template.html#prepare_processor"><code>prepare_processor</code></a> set up the images, <a href="https://sgaseretto.github.io/sysonelib/models.html#encoder_inputs"><code>encoder_inputs</code></a> reshapes what the encoder is called with, and <a href="https://sgaseretto.github.io/sysonelib/models.html#warm_start"><code>warm_start</code></a> copies a checkpoint’s head into a new one. A module that adapts an encoder adds its methods with <code>register</code>, so the applications never name an encoder.</p>
+<p>A path or a Hub id is only a string, and a string can’t be dispatched on. So recognising a checkpoint stays at the edge (<code>ENCODER_SOURCES</code>, <code>CHECKPOINTS</code>), which turns it into typed objects, and everything after dispatches on types.</p>
+<p>sysone’s own adapters are imported on first use. <a href="https://sgaseretto.github.io/sysonelib/core.html#load_adapter"><code>load_adapter</code></a> imports the module that <code>ADAPTERS</code> names for an object’s class, or for one of its bases, and says whether it imported one. Each generic function’s fallback method calls it before it gives up, so <code>import sysone</code> stays light and a text-only user never imports an image stack.</p>
+<div id="445a2d60" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:25.386807+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:25.389087+00:00&quot;,&quot;total&quot;:0.002282785999994985}}" data-execution_count="60">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/core.py#L502" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="load_adapter" class="level3">
+<h3 class="anchored" data-anchor-id="load_adapter">load_adapter</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_adapter(</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>    obj</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span><span class="bu">bool</span>:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Import the sysone module that adapts <code>obj</code>’s class or one of its bases, if it isn’t imported yet: whether one was</em></p>
+</section>
+</div>
+<p>Nothing adapts a plain object:</p>
+<div id="856bcf1a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>test_eq((load_adapter(<span class="bu">object</span>()), load_adapter(<span class="va">None</span>)), (<span class="va">False</span>, <span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

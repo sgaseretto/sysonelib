@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="sysone train | eval | predict | serve | run | jobs | publish | login | whoami | image | deploy | undeploy | iac: the library from the command line.">
+
+<title>cli – sysone</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f2788e636de456f6409e966386820849.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="cli – sysone">
+<meta property="og:description" content="sysone train | eval | predict | serve | run | jobs | publish | login | whoami | image | deploy | undeploy | iac: the library from the command line.">
+<meta property="og:site_name" content="sysone">
+<meta name="twitter:title" content="cli – sysone">
+<meta name="twitter:description" content="sysone train | eval | predict | serve | run | jobs | publish | login | whoami | image | deploy | undeploy | iac: the library from the command line.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">sysone</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./cli.html">cli</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sysone</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./template.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">template</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">losses</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./metrics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">metrics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./learner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">learner</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./record.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">record</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">inference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cache</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">evaluate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpret.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">interpret</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">text</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./zeroshot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">zeroshot</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./neomme.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">multimodal</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">screens</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./protein.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">protein</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">modernvbert</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mdlm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mdlm</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_encoder.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER encoder</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./gliner_backend.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER backend</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cloud.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cloud</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./hub.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">hub</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./auth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">auth</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./track.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">track</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">colab</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./kaggle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">kaggle</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./xla.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">xla</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./aws.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aws</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./deploy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">deploy</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">cli</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">figures</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/modernvbert_images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ModernVBERT on images: digits and hot dogs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/neomme_vs_modernvbert.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">NeoMME and ModernVBERT, side by side</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/protein_decisions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ProtST as a decision model: zero-shot, then a head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/gliner_decide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GLiNER2.5-Decide under the sysone head</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_text.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as text</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/web_screens.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Web pages as screenshots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interpreting decisions: text, images and proteins</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/reshaping_datasets.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reshaping datasets: one label, many questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/game_logs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Decisions from game logs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/mdlm_browser.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">A diffusion model as a browser agent</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#train" id="toc-train" class="nav-link active" data-scroll-target="#train">train</a></li>
+  <li><a href="#eval-and-predict" id="toc-eval-and-predict" class="nav-link" data-scroll-target="#eval-and-predict">eval and predict</a></li>
+  <li><a href="#serve" id="toc-serve" class="nav-link" data-scroll-target="#serve">serve</a></li>
+  <li><a href="#run-jobs-and-publish" id="toc-run-jobs-and-publish" class="nav-link" data-scroll-target="#run-jobs-and-publish">run, jobs and publish</a></li>
+  <li><a href="#trying-it" id="toc-trying-it" class="nav-link" data-scroll-target="#trying-it">Trying it</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="cli.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">cli</h1>
+</div>
+
+<div>
+  <div class="description">
+    <code>sysone train | eval | predict | serve | run | jobs | publish | login | whoami | image | deploy | undeploy | iac</code>: the library from the command line.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>Each command is a few lines over the library, so anything the command line does, a script does the same way. The heavy imports happen inside the commands, so <code>sysone --help</code> is instant.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    TR["sysone train"] --&gt; T1["decision_learner (text or multimodal),&lt;br/&gt;lr_find, fit_one_cycle, calibrate, export"]
+    EV["sysone eval"] --&gt; T2["Decider.load, then evaluate"]
+    PR["sysone predict"] --&gt; T3["Decider.load, then predict"]
+    SV["sysone serve"] --&gt; T4["serve_app under uvicorn"]
+    RU["sysone run"] --&gt; T5["cloud.remote: here, Colab, Kaggle or SageMaker"]
+    JB["sysone jobs list / watch / logs / fetch / stop"] --&gt; T6["cloud.jobs and a job's methods"]
+    PB["sysone publish"] --&gt; T7["the Hub with a model card, or Kaggle Models"]
+    LG["sysone login / whoami"] --&gt; T8["auth.login, auth.whoami"]
+    DP["sysone image / deploy / undeploy / iac"] --&gt; T9["aws.build_image, deploy.deploy, deploy.cloudformation / cdk_app"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="train" class="level2">
+<h2 class="anchored" data-anchor-id="train">train</h2>
+<p><code>sysone train DATA ENCODER</code> is the ten-line example: data from a JSON-lines file, a registry name or a Hub dataset, a learner for the encoder (the text application’s defaults, or the multimodal one’s for a multimodal encoder), one-cycle training, calibration, export.</p>
+<div id="20292257" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.045249+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.049591+00:00&quot;,&quot;total&quot;:0.0043455520000037495}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L34" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="train-1" class="level3">
+<h3 class="anchored" data-anchor-id="train-1">train</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    data:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f83541142f0</span><span class="op">&gt;</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    encoder:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354287d90</span><span class="op">&gt;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    output:pathlib.Path <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354287ed0</span><span class="op">&gt;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    regime:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138050</span><span class="op">&gt;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    epochs:<span class="bu">int</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138190</span><span class="op">&gt;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    lr:<span class="bu">float</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541382d0</span><span class="op">&gt;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    valid:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138410</span><span class="op">&gt;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    calib:<span class="bu">float</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138550</span><span class="op">&gt;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    cache:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138690</span><span class="op">&gt;</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    loss:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541387d0</span><span class="op">&gt;</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    preset:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138910</span><span class="op">&gt;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Train a decision model and export it</em></p>
+</section>
+</div>
+</section>
+<section id="eval-and-predict" class="level2">
+<h2 class="anchored" data-anchor-id="eval-and-predict">eval and predict</h2>
+<div id="4a508f51" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.051988+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.054853+00:00&quot;,&quot;total&quot;:0.0028686910000033095}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L85" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="predict" class="level3">
+<h3 class="anchored" data-anchor-id="predict">predict</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    model:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354139310</span><span class="op">&gt;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    questions:pathlib.Path<span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139450</span><span class="op">&gt;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    state:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139590</span><span class="op">&gt;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    device:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541396d0</span><span class="op">&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Answer typed questions about one state</em></p>
+</section>
+</div>
+<div id="c47aea90" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.054936+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.058063+00:00&quot;,&quot;total&quot;:0.0031299890000013875}}" data-execution_count="8">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L64" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="eval_" class="level3">
+<h3 class="anchored" data-anchor-id="eval_">eval_</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> eval_(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    model:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354138b90</span><span class="op">&gt;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    data:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138cd0</span><span class="op">&gt;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    split:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138e10</span><span class="op">&gt;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    n:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354138f50</span><span class="op">&gt;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    by:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139090</span><span class="op">&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Score a model on typed decisions or a zero-shot suite</em></p>
+</section>
+</div>
+</section>
+<section id="serve" class="level2">
+<h2 class="anchored" data-anchor-id="serve">serve</h2>
+<p><code>sysone serve my-jev</code> runs the FastAPI app of <code>sysone.inference</code> (<code>POST /v1/systemone</code>, <code>GET /health</code>); it needs <code>sysone[serve]</code>. For Laya-format text exports <code>laya[serve]</code> serves the same route.</p>
+<div id="e118827e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.059085+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.061688+00:00&quot;,&quot;total&quot;:0.0026054689999881475}}" data-execution_count="10">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L99" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="serve-1" class="level3">
+<h3 class="anchored" data-anchor-id="serve-1">serve</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> serve(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    model:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354139a90</span><span class="op">&gt;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    host:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139bd0</span><span class="op">&gt;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    port:<span class="bu">int</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139d10</span><span class="op">&gt;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    device:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139e50</span><span class="op">&gt;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Serve POST /v1/systemone and GET /health</em></p>
+</section>
+</div>
+</section>
+<section id="run-jobs-and-publish" class="level2">
+<h2 class="anchored" data-anchor-id="run-jobs-and-publish">run, jobs and publish</h2>
+<div id="89ac8074" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.071916+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.074065+00:00&quot;,&quot;total&quot;:0.0021525430000082224}}" data-execution_count="12">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L251" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="main" class="level3">
+<h3 class="anchored" data-anchor-id="main">main</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</div>
+<div id="e0e532ac" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.074147+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.077341+00:00&quot;,&quot;total&quot;:0.0031971849999905544}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L237" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="iac" class="level3">
+<h3 class="anchored" data-anchor-id="iac">iac</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> iac(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354141d10</span><span class="op">&gt;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    out:pathlib.Path<span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141e50</span><span class="op">&gt;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    kind:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141f90</span><span class="op">&gt;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    instance:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541420d0</span><span class="op">&gt;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    autoscale:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354142210</span><span class="op">&gt;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    mlflow:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354142350</span><span class="op">&gt;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    image_uri:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354142490</span><span class="op">&gt;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    model_data:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541425d0</span><span class="op">&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Write the infrastructure of a sysone endpoint as a CloudFormation template or a CDK app</em></p>
+</section>
+</div>
+<div id="d1d0161d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.077426+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.080035+00:00&quot;,&quot;total&quot;:0.0026115710000027548}}" data-execution_count="14">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L228" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="undeploy" class="level3">
+<h3 class="anchored" data-anchor-id="undeploy">undeploy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> undeploy(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f8354141950</span><span class="op">&gt;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    on:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141a90</span><span class="op">&gt;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    endpoint_url:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141bd0</span><span class="op">&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Remove an endpoint <code>sysone deploy</code> made</em></p>
+</section>
+</div>
+<div id="e56c4634" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.080114+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.083055+00:00&quot;,&quot;total&quot;:0.002944071999991138}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L215" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="deploy" class="level3">
+<h3 class="anchored" data-anchor-id="deploy">deploy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> deploy(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    model:pathlib.Path<span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f83541411d0</span><span class="op">&gt;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    on:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141310</span><span class="op">&gt;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    hw:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141450</span><span class="op">&gt;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141590</span><span class="op">&gt;</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    endpoint_url:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541416d0</span><span class="op">&gt;</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    serverless_mb:<span class="bu">int</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141810</span><span class="op">&gt;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Serve an export: in Docker here, or as a SageMaker endpoint; prints the endpoint</em></p>
+</section>
+</div>
+<div id="abe0c2c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.083135+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.085658+00:00&quot;,&quot;total&quot;:0.0025260010000067723}}" data-execution_count="16">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L203" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="image" class="level3">
+<h3 class="anchored" data-anchor-id="image">image</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> image(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    gpu:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140e10</span><span class="op">&gt;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    platform:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140f50</span><span class="op">&gt;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    tag:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354141090</span><span class="op">&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Build sysone’s image, which trains SageMaker jobs (<a href="https://sgaseretto.github.io/sysonelib/cli.html#train"><code>train</code></a>) and serves endpoints (<a href="https://sgaseretto.github.io/sysonelib/cli.html#serve"><code>serve</code></a>)</em></p>
+</section>
+</div>
+<div id="edefb2ce" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.085733+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.087943+00:00&quot;,&quot;total&quot;:0.0022122539999998025}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/auth.py#L248" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="whoami" class="level3">
+<h3 class="anchored" data-anchor-id="whoami">whoami</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> whoami():</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>The account each service uses on this machine</em></p>
+</section>
+</div>
+<div id="048f6cd5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.088019+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.090793+00:00&quot;,&quot;total&quot;:0.002776628999995978}}" data-execution_count="18">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/auth.py#L243" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="login" class="level3">
+<h3 class="anchored" data-anchor-id="login">login</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> login(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    service:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f83541407d0</span><span class="op">&gt;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    local:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140910</span><span class="op">&gt;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    profile:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140a50</span><span class="op">&gt;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    full:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140b90</span><span class="op">&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Log in to a service: the browser sign-ins print a URL (Kaggle and Colab then ask for the code it shows)</em></p>
+</section>
+</div>
+<div id="94ee5472" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.090869+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.094364+00:00&quot;,&quot;total&quot;:0.0034976669999906562}}" data-execution_count="19">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L162" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="publish" class="level3">
+<h3 class="anchored" data-anchor-id="publish">publish</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> publish(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    model:pathlib.Path<span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413b890</span><span class="op">&gt;</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    to:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413bb10</span><span class="op">&gt;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    repo:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413bc50</span><span class="op">&gt;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    tag:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413bd90</span><span class="op">&gt;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    revision:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413bed0</span><span class="op">&gt;</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    license:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140050</span><span class="op">&gt;</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    card:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140190</span><span class="op">&gt;</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    owner:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f83541402d0</span><span class="op">&gt;</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140410</span><span class="op">&gt;</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    private:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140550</span><span class="op">&gt;</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    dry_run:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354140690</span><span class="op">&gt;</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Publish an export to the Hub (the default, with a model card) or to Kaggle Models</em></p>
+</section>
+</div>
+<div id="9c49aa25" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.094444+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.096723+00:00&quot;,&quot;total&quot;:0.0022810930000076723}}" data-execution_count="20">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L156" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jobs_stop" class="level3">
+<h3 class="anchored" data-anchor-id="jobs_stop">jobs_stop</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jobs_stop(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    job:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413b9d0</span><span class="op">&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Stop a job</em></p>
+</section>
+</div>
+<div id="5f86e2e1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.096801+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.099330+00:00&quot;,&quot;total&quot;:0.0025309599999872034}}" data-execution_count="21">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L148" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jobs_fetch" class="level3">
+<h3 class="anchored" data-anchor-id="jobs_fetch">jobs_fetch</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jobs_fetch(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    job:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413ae90</span><span class="op">&gt;</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    dest:pathlib.Path <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413b610</span><span class="op">&gt;</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    sync:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413b750</span><span class="op">&gt;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Bring a finished job’s outputs here; prints the export’s folder</em></p>
+</section>
+</div>
+<div id="67709346" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.099397+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.101667+00:00&quot;,&quot;total&quot;:0.0022724269999940816}}" data-execution_count="22">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L142" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jobs_logs" class="level3">
+<h3 class="anchored" data-anchor-id="jobs_logs">jobs_logs</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jobs_logs(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    job:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413b4d0</span><span class="op">&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Print a job’s log</em></p>
+</section>
+</div>
+<div id="91978ede" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.101731+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.104010+00:00&quot;,&quot;total&quot;:0.0022820349999932432}}" data-execution_count="23">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L136" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jobs_watch" class="level3">
+<h3 class="anchored" data-anchor-id="jobs_watch">jobs_watch</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jobs_watch(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    every:<span class="bu">float</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413b390</span><span class="op">&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Refresh the table of running jobs until they end</em></p>
+</section>
+</div>
+<div id="9505f607" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.104084+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.106482+00:00&quot;,&quot;total&quot;:0.002401187999993226}}" data-execution_count="24">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L129" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="jobs_list" class="level3">
+<h3 class="anchored" data-anchor-id="jobs_list">jobs_list</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> jobs_list(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    backend:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413afd0</span><span class="op">&gt;</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    active:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413b110</span><span class="op">&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>List jobs with their latest progress</em></p>
+</section>
+</div>
+<div id="af4fd74c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-10-06T14:12:47.106557+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-10-06T14:12:47.110105+00:00&quot;,&quot;total&quot;:0.0035508360000022776}}" data-execution_count="25">
+<hr>
+<p><a href="https://github.com/sgaseretto/sysonelib/blob/main/sysone/cli.py#L108" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="run" class="level3">
+<h3 class="anchored" data-anchor-id="run">run</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    entry:pathlib.Path<span class="op">=&lt;</span>typer.models.ArgumentInfo <span class="bu">object</span> at <span class="bn">0x7f835413a0d0</span><span class="op">&gt;</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    on:<span class="bu">str</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a210</span><span class="op">&gt;</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    hw:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a350</span><span class="op">&gt;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    data:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a490</span><span class="op">&gt;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    push:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a5d0</span><span class="op">&gt;</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    track:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a710</span><span class="op">&gt;</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    experiment:<span class="bu">str</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a850</span><span class="op">&gt;</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    max_hours:<span class="bu">float</span> <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f8354139950</span><span class="op">&gt;</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    env:<span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413a990</span><span class="op">&gt;</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    arg:<span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413aad0</span><span class="op">&gt;</span>,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    wait:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413ac10</span><span class="op">&gt;</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    dry_run:<span class="bu">bool</span><span class="op">=&lt;</span>typer.models.OptionInfo <span class="bu">object</span> at <span class="bn">0x7f835413ad50</span><span class="op">&gt;</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Run a notebook or script as a job, here in the background or on Colab, Kaggle or SageMaker</em></p>
+</section>
+</div>
+</section>
+<section id="trying-it" class="level2">
+<h2 class="anchored" data-anchor-id="trying-it">Trying it</h2>
+<p>On the fixtures, end to end: train, predict, evaluate, and a dry run of a cloud job:</p>
+<div id="9d2ade46" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>runner <span class="op">=</span> CliRunner()</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"--help"</span>])</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>test_eq(r.exit_code, <span class="dv">0</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(r.output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                                
+ Usage: root [OPTIONS] COMMAND [ARGS]...                                        
+                                                                                
+ Jevify BERT-like encoders with sysone.                                         
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ train    Train a decision model and export it                                │
+│ eval     Score a model on typed decisions or a zero-shot suite               │
+│ predict  Answer typed questions about one state                              │
+│ serve    Serve POST /v1/systemone and GET /health                            │
+│ run      Run a training script on Kaggle or Colab                            │
+│ publish  Publish an export to the Hub (the default) or to Kaggle Models      │
+│ jobs     Cloud jobs submitted with `sysone run`.                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+</code></pre>
+</div>
+</div>
+<div id="46578077" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"cli-jev"</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">"SYSONE_CACHE"</span>] <span class="op">=</span> tempfile.mkdtemp()</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"train"</span>, <span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, <span class="st">"fixtures/tiny-modernbert"</span>, <span class="st">"--output"</span>, <span class="bu">str</span>(out),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"--epochs"</span>, <span class="st">"2"</span>, <span class="st">"--lr"</span>, <span class="st">"3e-3"</span>, <span class="st">"--valid"</span>, <span class="st">"0.25"</span>, <span class="st">"--preset"</span>, <span class="st">"cpu"</span>])</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> r.exit_code <span class="op">!=</span> <span class="dv">0</span>: <span class="bu">print</span>(r.output)<span class="op">;</span> <span class="cf">raise</span> r.exception</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>test_eq((out <span class="op">/</span> <span class="st">"sysone.json"</span>).exists(), <span class="va">True</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(r.output[<span class="op">-</span><span class="dv">400</span>:])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>_per_second': '1977', 'train_steps_per_second': '273.7', 'train_loss': '0.9173', 'epoch': '2'}
+{"accuracy": 0.36, "soft_accuracy": 0.3767, "brier": 0.26, "kl": 0.4434, "tv": 0.366, "ece": 0.1159, "score_mae": 0.8379, "within_one": 0.6, "n": 25, "accuracy_choice": 0.4286, "accuracy_score": 0.3, "accuracy_noul": 0.375}
+exported to /var/folders/ym/y7_gxdb90s312g8bz06h3qqm0000gn/T/tmpcjz36ll1/cli-jev
+</code></pre>
+</div>
+</div>
+<div id="f2a96514" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>qf <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"q.json"</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>qf.write_text(json.dumps({<span class="st">"urgent"</span>: {<span class="st">"type"</span>: <span class="st">"noul"</span>, <span class="st">"instructions"</span>: <span class="st">"This needs attention today."</span>}}))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"predict"</span>, <span class="bu">str</span>(out), <span class="st">"--questions"</span>, <span class="bu">str</span>(qf), <span class="st">"--state"</span>, <span class="st">"The server room is flooding."</span>, <span class="st">"--device"</span>, <span class="st">"cpu"</span>])</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>test_eq(r.exit_code, <span class="dv">0</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">set</span>(json.loads(r.output)[<span class="st">"urgent"</span>]), {<span class="st">"type"</span>, <span class="st">"noul"</span>, <span class="st">"confidence"</span>, <span class="st">"answer_confidence"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="abd4f7e8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"eval"</span>, <span class="bu">str</span>(out), <span class="st">"--data"</span>, <span class="st">"fixtures/typed_decisions_tiny.jsonl"</span>, <span class="st">"--n"</span>, <span class="st">"4"</span>])</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>test_eq((r.exit_code, json.loads(r.output)[<span class="st">"n"</span>]), (<span class="dv">0</span>, <span class="dv">20</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="a0e85607" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">"SYSONE_JOBS"</span>] <span class="op">=</span> <span class="bu">str</span>(Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"jobs.json"</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">"SYSONE_JOBS_DIR"</span>] <span class="op">=</span> tempfile.mkdtemp()</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>script <span class="op">=</span> Path(tempfile.mkdtemp()) <span class="op">/</span> <span class="st">"train.py"</span><span class="op">;</span> script.write_text(<span class="st">"print('hi')</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"run"</span>, <span class="bu">str</span>(script), <span class="st">"--on"</span>, <span class="st">"kaggle"</span>, <span class="st">"--hw"</span>, <span class="st">"t4x2"</span>, <span class="st">"--push"</span>, <span class="st">"me/jev"</span>, <span class="st">"--dry-run"</span>])</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>test_eq((r.exit_code, json.loads(r.output)[<span class="st">"machine"</span>], json.loads(r.output)[<span class="st">"status"</span>]), (<span class="dv">0</span>, <span class="st">"NvidiaTeslaT4"</span>, <span class="st">"dry-run"</span>))</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"run"</span>, <span class="bu">str</span>(script), <span class="st">"--on"</span>, <span class="st">"colab"</span>, <span class="st">"--hw"</span>, <span class="st">"a100"</span>, <span class="st">"--dry-run"</span>, <span class="st">"--env"</span>, <span class="st">"A=1"</span>])</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>test_eq(json.loads(r.output)[<span class="st">"machine"</span>], <span class="st">"--gpu A100"</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"run"</span>, <span class="bu">str</span>(script), <span class="st">"--on"</span>, <span class="st">"colab"</span>, <span class="st">"--hw"</span>, <span class="st">"t4x2"</span>, <span class="st">"--dry-run"</span>])</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>test_eq((r.exit_code, <span class="st">"one GPU"</span> <span class="kw">in</span> <span class="bu">str</span>(r.exception)), (<span class="dv">1</span>, <span class="va">True</span>))</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>test_eq(runner.invoke(app, [<span class="st">"jobs"</span>, <span class="st">"list"</span>]).exit_code, <span class="dv">0</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"publish"</span>, <span class="bu">str</span>(out), <span class="st">"--dry-run"</span>, <span class="st">"--repo"</span>, <span class="st">"me/jev"</span>, <span class="st">"--tag"</span>, <span class="st">"v1"</span>])</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>pub <span class="op">=</span> json.loads(r.output)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>test_eq((pub[<span class="st">"repo"</span>], pub[<span class="st">"private"</span>], pub[<span class="st">"tag"</span>], <span class="st">"README.md"</span> <span class="kw">in</span> pub[<span class="st">"files"</span>]), (<span class="st">"me/jev"</span>, <span class="va">True</span>, <span class="st">"v1"</span>, <span class="va">True</span>))</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>test_eq(runner.invoke(app, [<span class="st">"login"</span>, <span class="st">"aws"</span>, <span class="st">"--local"</span>]).output.splitlines()[<span class="dv">0</span>], <span class="st">"export AWS_ENDPOINT_URL=http://localhost:4566"</span>)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>infra <span class="op">=</span> Path(tempfile.mkdtemp())</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"iac"</span>, <span class="st">"my-jev"</span>, <span class="st">"--out"</span>, <span class="bu">str</span>(infra), <span class="st">"--autoscale"</span>, <span class="st">"1,4,100"</span>, <span class="st">"--mlflow"</span>])</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>test_eq((r.exit_code, Path(r.output.strip()).name), (<span class="dv">0</span>, <span class="st">"my-jev.yaml"</span>))</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"iac"</span>, <span class="st">"my-jev"</span>, <span class="st">"--out"</span>, <span class="bu">str</span>(infra <span class="op">/</span> <span class="st">"cdk"</span>), <span class="st">"--kind"</span>, <span class="st">"cdk"</span>])</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">sorted</span>(p.name <span class="cf">for</span> p <span class="kw">in</span> Path(r.output.strip()).iterdir()), [<span class="st">"app.py"</span>, <span class="st">"cdk.json"</span>, <span class="st">"requirements.txt"</span>, <span class="st">"template.json"</span>])</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> runner.invoke(app, [<span class="st">"publish"</span>, <span class="bu">str</span>(out), <span class="st">"--to"</span>, <span class="st">"kaggle"</span>, <span class="st">"--owner"</span>, <span class="st">"me"</span>, <span class="st">"--name"</span>, <span class="st">"my-jev"</span>, <span class="st">"--dry-run"</span>])</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>test_eq((r.exit_code, json.loads(r.output)[<span class="st">"variation"</span>][:<span class="dv">4</span>]), (<span class="dv">0</span>, [<span class="st">"kaggle"</span>, <span class="st">"models"</span>, <span class="st">"variations"</span>, <span class="st">"create"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/sgaseretto\.github\.io\/sysonelib");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sgaseretto/sysonelib/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
