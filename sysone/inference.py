@@ -6,7 +6,7 @@ Docs: https://sgaseretto.github.io/sysonelib/inference.html.md"""
 
 # %% auto #0
 __all__ = ['DECIDER_BACKENDS', 'default_device', 'Decider', 'export_learner', 'export_spec', 'load_export', 'load_learner',
-           'PositionScores', 'export_onnx', 'OnnxDecider', 'serve_app']
+           'sample', 'adapters_off', 'PositionScores', 'export_onnx', 'OnnxDecider', 'serve_app']
 
 # %% ../nbs/06_inference.ipynb #bb48184b
 import copy, json, math, os, shutil, time, warnings
@@ -196,14 +196,17 @@ def _laya_config(model, template, temperatures, name) -> dict:
             "temperature": [clamp_temperature(t.get(n, 1.0)) for n in ("choice", "score", "noul")],
             "temperature_by_options": {k: v for k, v in t.items() if ":" in k}, "model_name": name, "exported_by": "sysone"}
 
-def export_learner(learn:Learner, path, merge:bool=True, bundle:bool|None=None, laya="auto", dtype=None, name:str|None=None) -> Path:
-    "Write a learner's model, template, transforms and temperatures to `path` (what `learn.export` calls)"
+def export_learner(learn:Learner, path, merge:bool|None=None, bundle:bool|None=None, laya="auto", dtype=None, name:str|None=None) -> Path:
+    "Write a learner's model, template, transforms and temperatures to `path` (what `learn.export` calls); `merge` defaults to the learner's `merge_adapters`"
     self = learn
+    if merge is None: merge = getattr(learn, "merge_adapters", True)       # an application whose model also writes keeps its base model
     path, model, b = Path(path), self.model, self.data.builder
     path.mkdir(parents=True, exist_ok=True)
     spec, ref = model.spec, _encoder_ref(model, model.spec)
     trained_encoder = model.regime != "head" or getattr(model, "encoder_trained", False)   # trained, then frozen again
     local_encoder = ref["id"] is not None and Path(ref["id"]).exists()
+    keep_adapter = not merge and hasattr(model.encoder, "peft_config")
+    if keep_adapter: trained_encoder = getattr(model, "base_trained", False)    # the adapter trained; the weights under it maybe not
     bundle = (trained_encoder or local_encoder) if bundle is None else bundle
     if trained_encoder and not bundle: raise ValueError("the encoder was trained, so its weights must be exported (bundle=True)")
     write_laya = laya is True or (laya == "auto" and bundle and merge and is_laya_compatible(model, b.template, b.tfms, b.tok))
@@ -214,15 +217,16 @@ def export_learner(learn:Learner, path, merge:bool=True, bundle:bool|None=None, 
     for name, s in b.streams.items(): s.tokenizer.save_pretrained(path / "streams" / name)
     # encoder
     enc_dir = path / "encoder"
-    keep_adapter = not merge and hasattr(model.encoder, "peft_config")
     if write_laya:
         merged_encoder(model).config.save_pretrained(enc_dir); weights = "laya"
         from safetensors.torch import save_file
         save_file(laya_state_dict(model, self.temperatures, dtype=dtype), str(path / "model.safetensors"))
         (path / "rl_agent_config.json").write_text(json.dumps(_laya_config(model, b.template, self.temperatures, name or path.name), indent=2))
-    elif keep_adapter:   # the base encoder's own weights, and the adapter beside them
-        copy.deepcopy(model.encoder).unload().save_pretrained(enc_dir)
+    elif keep_adapter:   # the adapter, over the weights under it when they are bundled, or else over the encoder's id at its commit
+        if bundle: copy.deepcopy(model.encoder).unload().save_pretrained(enc_dir)
+        else: ref["revision"] = ref.get("revision") or getattr(model.encoder.get_base_model().config, "_commit_hash", None)
         model.encoder.save_pretrained(path / "adapter"); weights = "adapter"
+        (path / "adapter" / "README.md").unlink(missing_ok=True)            # peft's placeholder card
     elif bundle:
         enc = merged_encoder(model)
         (copy.deepcopy(enc).to(dtype) if dtype is not None else enc).save_pretrained(enc_dir); weights = "encoder"
@@ -262,23 +266,22 @@ def load_export(path, adapter:bool=True) -> tuple:
         tok = AutoProcessor.from_pretrained(path / "processor")
     else: tok = AutoTokenizer.from_pretrained(path / "tokenizer")
     stream_toks = {p.name: AutoTokenizer.from_pretrained(p) for p in sorted((path / "streams").iterdir())} if (path / "streams").exists() else {}
+    ensure_model_type(model_type=ref.get("family"))               # a model type sysone registers loads with sysone's classes
     base = lambda d: load_stream_encoder(d, dt) if (d / "stream_encoder.json").exists() else AutoModel.from_pretrained(d, dtype=dt)
-    if weights == "hub":
+    if weights == "hub" or (weights == "adapter" and not (path / "encoder").exists()):    # by reference (an adapter alone: its encoder)
         if ref["id"] is None or (ref["id"].startswith(("/", ".")) and not Path(ref["id"]).exists()):
             raise FileNotFoundError(f"the export references encoder {ref['id']!r}, which is not available; export with bundle=True")
         if ref.get("source") in (None, "transformers"): enc = AutoModel.from_pretrained(ref["id"], revision=ref.get("revision"), dtype=dt)
         else: enc = EncoderSpec.from_pretrained(ref["id"], revision=ref.get("revision"), source=ref["source"]).load_encoder(dtype=dt)
-    elif weights == "encoder": enc = base(path / "encoder")
-    elif weights == "adapter":
-        enc = base(path / "encoder")
-        if adapter:
-            from peft import PeftModel
-            enc = PeftModel.from_pretrained(enc, path / "adapter")
+    elif weights in ("encoder", "adapter"): enc = base(path / "encoder")
     else:   # "laya": the encoder's tensors live in Laya's single weights file
         from safetensors.torch import load_file
         enc = AutoModel.from_config(AutoConfig.from_pretrained(path / "encoder"), dtype=dt)
         sd = {k[len("encoder."):]: v.to(dt) for k, v in load_file(str(path / "model.safetensors")).items() if k.startswith("encoder.")}
         enc.load_state_dict(sd, strict=False)
+    if weights == "adapter" and adapter:
+        from peft import PeftModel
+        enc = PeftModel.from_pretrained(enc, path / "adapter")
     h = meta["head"]
     head = DecisionHead.from_config(h)
     from safetensors.torch import load_file
@@ -358,14 +361,17 @@ def load_learner(path, data:TypedDecisions, train=None, lora:dict|None=None, sub
         set_regime(model, cfg)
         set_peft_model_state_dict(model.encoder, load_file(str(p / "adapter" / "adapter_model.safetensors")))
         model.regime = model.adapter_regime = regime
+        model.base_trained = (p / "encoder").exists()     # bundled weights under the adapter may have trained: bundled again
         if train not in (None, regime):            # another regime: fold the adapter into the encoder first
             model.encoder = model.encoder.merge_and_unload()
+            model.base_trained = True
             set_regime(model, train, **(lora or {}))
     else:
         train = train if train is not None else regime
         if not (isinstance(train, PeftConfig) or train in ("head", "lora", "mica", "full", "xattn")):
             raise ValueError(f"the export trained with {train!r}: pass train= a regime ('head', 'lora', 'mica', 'full') or a peft config")
         set_regime(model, train, **((lora if lora is not None else _lora_kw(meta)) if train in ("lora", "mica") else {}))
+        model.base_trained = weights != "hub"     # under a new adapter: the export's encoder, trained unless it is the Hub's
     model.encoder_trained = weights != "hub"      # not the Hub's encoder: a later export bundles it
     if not data.tfms: data.tfms = list(builder.tfms)
     elif tfms_to_json(data.tfms) != tfms_to_json(builder.tfms): warnings.warn("the data's transforms differ from the ones the model trained with")
@@ -373,12 +379,83 @@ def load_learner(path, data:TypedDecisions, train=None, lora:dict|None=None, sub
     rec = (meta.get("training") or {}).get("training") or {}
     lr = kw.pop("lr", None)
     if lr is None: lr = tuple(rec["lr"]) if isinstance(rec.get("lr"), list) else rec.get("lr") or 1e-4
-    loss = kw.pop("loss", None) or {"soft_ce": "soft_ce", "RLCD": "rlcd"}.get(rec.get("loss"))
+    name = rec.get("loss")
+    loss = kw.pop("loss", None) or {"soft_ce": "soft_ce", "RLCD": "rlcd"}.get(name, name if str(name).startswith("soft_ce_rps") else None)
     learn = Learner(data, model, loss=loss, lr=lr, **kw)
     learn.temperatures = dict(meta.get("temperature") or {})
     learn.act_threshold, learn.act_score = meta.get("act_threshold"), meta.get("act_score")
     learn.resumed_from = {"name": meta.get("name"), "source": _source(path, subfolder), "training": meta.get("training")}
     return learn
+
+# %% ../nbs/06_inference.ipynb #a54e46fb
+from contextlib import contextmanager, nullcontext
+
+@dispatch
+def sample(config:object, model, ids, **kw):
+    "The ids `(batch, length)` with every mask filled and `max_new_tokens` more written: dispatched on the model's config class"
+    if load_adapter(config): return sample(config, model, ids, **kw)
+    raise ValueError(f"no sampler for a {type(config).__name__}: this model doesn't write text, or its module adds one with `sample.register`")
+
+@contextmanager
+def adapters_off(model):
+    "Run a model's encoder without its peft adapters, as its base model (or as it is, when it has none)"
+    enc = getattr(model, "encoder", model)
+    with (enc.disable_adapter() if hasattr(enc, "peft_config") else nullcontext()): yield model
+
+def _base_config(enc): return (enc.get_base_model() if hasattr(enc, "get_base_model") else enc).config
+
+def _until_stop(tok, ids) -> str:
+    "The text of `ids` up to the first end-of-text or padding token"
+    stop = {i for i in (tok.eos_token_id, tok.pad_token_id) if i is not None}
+    return tok.decode(ids[:next((i for i, t in enumerate(ids) if t in stop), len(ids))], skip_special_tokens=True)
+
+@patch
+def _prompt_ids(self:Decider, prompt, system:str|None=None) -> list:
+    "A prompt's ids in the model's chat format, ready for the answer (plain text when the tokenizer has no chat template)"
+    tok = self.builder.tok
+    if isinstance(prompt, str) and not getattr(tok, "chat_template", None): return tok(prompt, add_special_tokens=False).input_ids
+    msgs = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else list(prompt)
+    if system is not None: msgs = [{"role": "system", "content": system}] + msgs
+    text = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+    return tok(text, add_special_tokens=False).input_ids
+
+@patch
+def _write(self:Decider, ids:list, adapter:bool, **kw) -> list:
+    "`sample` on the decider's encoder, its adapters off unless `adapter`"
+    enc = self.model.encoder
+    amp = torch.autocast(self.device.type, dtype=self.dtype) if self.dtype is not None else nullcontext()
+    with (nullcontext() if adapter else adapters_off(self.model)), amp, torch.no_grad():
+        return sample(_base_config(enc), enc, torch.tensor([ids], device=self.device), tokenizer=self.builder.tok, **kw)[0].tolist()
+
+@patch
+def generate(self:Decider, prompt, max_new_tokens:int=64, adapter:bool=False, system:str|None=None, **kw) -> str:
+    "The text the model writes for `prompt` (a string or chat messages), with its base model unless `adapter`"
+    ids = self._prompt_ids(prompt, system)
+    return _until_stop(self.builder.tok, self._write(ids, adapter, max_new_tokens=max_new_tokens, **kw)[len(ids):])
+
+def _slot_end(before:str, after:str) -> str|None:
+    "Where the text of a slot between `before` and `after` ends: at its closing quote when the template quotes it, else where `after` begins"
+    q = after[:1]
+    if q in ('"', "'") and before.endswith(q): return q
+    return after or None
+
+def _cut(text:str, stop:str|None) -> str:
+    "`text` up to `stop`; a quote ends it only where it is not escaped"
+    if not stop: return text
+    i = text.find(stop)
+    while stop in ('"', "'") and i > 0 and text[i - 1] == "\\": i = text.find(stop, i + 1)
+    return text if i < 0 else text[:i]
+
+@patch
+def fill(self:Decider, prompt, template:str, n:int=16, slot:str="{}", adapter:bool=False, system:str|None=None, stop:str|None=None, **kw) -> list:
+    "The texts the model writes into `template`'s slots (each `slot` becomes `n` masks) after `prompt`, the rest of the template kept as it is; each ends at `stop`, by default at its closing quote or where the template's next text begins"
+    tok, ids, spans = self.builder.tok, self._prompt_ids(prompt, system), []
+    parts = template.split(slot)
+    for i, part in enumerate(parts):
+        ids = ids + tok(part, add_special_tokens=False).input_ids
+        if i < len(parts) - 1: spans.append((len(ids), len(ids) + n)); ids = ids + [tok.mask_token_id] * n
+    out = self._write(ids, adapter, max_new_tokens=0, **kw)
+    return [_cut(_until_stop(tok, out[a:b]), stop if stop is not None else _slot_end(parts[i], parts[i + 1])) for i, (a, b) in enumerate(spans)]
 
 # %% ../nbs/06_inference.ipynb #e33ca674
 class PositionScores(torch.nn.Module):
@@ -428,7 +505,8 @@ class OnnxDecider(Decider):
         for i in range(0, len(rows), self.batch_size):
             b = collate(rows[i:i + self.batch_size], pad)
             s = self.session.run(None, {k: b[k].numpy() for k in ("input_ids", "attention_mask", "qtype")})[0]
-            out.append(np.where(b["marker_mask"].numpy(), np.take_along_axis(s, b["marker_pos"].numpy(), 1), -1e4))
+            z = torch.from_numpy(np.take_along_axis(s, b["marker_pos"].numpy(), 1))
+            out.append(np.where(b["marker_mask"].numpy(), shared_pairs(z, b["marker_pos"], b["marker_mask"]).numpy(), -1e4))
         K = max(z.shape[1] for z in out)
         return np.concatenate([np.pad(z, ((0, 0), (0, K - z.shape[1])), constant_values=-1e4) for z in out])
 

@@ -18,6 +18,9 @@
   (`protein_model.esm`, `protein_model.protein_mlp`, `text_model.bert`, `text_model.text_mlp`, `logit_scale`),
   a 2-layer, 32-wide ESM and BERT, with ESM's 33-token protein tokenizer and a small uncased WordPiece text
   tokenizer beside it. Built offline from `typed_decisions_tiny.jsonl`: `python nbs/fixtures/make_fixtures.py protst`.
+- `tiny-a2d-qwen3/`: a Qwen-shaped BPE (Qwen's pre-tokenizer regex, `<|endoftext|>`, `<|im_start|>`, `<|im_end|>` and `<|mask|>`, and a
+  chat template of Qwen's shape) and a randomly initialised 2-layer, 64-wide a2d-qwen3 (Qwen3 weights, the model type `a2d-qwen3`, and an
+  `auto_map` to remote code that is not there). Built from the cached typed-decisions: `python nbs/fixtures/make_fixtures.py a2d`.
 
 Needs network access once; the notebooks then run offline.
 """
@@ -200,8 +203,50 @@ def tiny_modernvbert(out):
     return proc, model
 
 
+QWEN_SPECIALS = ["<|endoftext|>", "<|im_start|>", "<|im_end|>", "<|mask|>"]
+QWEN_REGEX = r"""(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+"""
+QWEN_CHAT = ("{%- for message in messages %}{{ '<|im_start|>' + message['role'] + '\\n' + message['content'] + '<|im_end|>\\n' }}"
+             "{%- endfor %}{%- if add_generation_prompt %}{{ '<|im_start|>assistant\\n' }}{%- endif %}")
+JEV_TEXT = ("You are a helpful assistant. State: Question: For each option, mark Yes if it answers the question, otherwise No. "
+            "Answer Yes or No. Answer: Yes No Yes No\nYes\nNo\nYes\nNo")
+
+
+def tiny_a2d_qwen3(ds, out, vocab_size=2048):
+    """A Qwen-shaped tokenizer (Qwen's pre-tokenizer regex and special tokens, a chat template of Qwen's shape) and a randomly
+    initialised 2-layer, 64-wide a2d-qwen3, laid out as dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1 is: Qwen3ForCausalLM's weights,
+    the config's model type `a2d-qwen3`, and an `auto_map` to remote code that isn't there, so only sysone's own classes load it"""
+    from tokenizers import Regex
+    from transformers import Qwen3Config, Qwen3ForCausalLM
+    tok = Tokenizer(models.BPE())
+    tok.normalizer = normalizers.NFC()
+    tok.pre_tokenizer = pre_tokenizers.Sequence([pre_tokenizers.Split(Regex(QWEN_REGEX), behavior="isolated"),
+                                                 pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=False)])
+    tok.decoder = decoders.ByteLevel()
+    trainer = trainers.BpeTrainer(vocab_size=vocab_size, special_tokens=QWEN_SPECIALS, initial_alphabet=pre_tokenizers.ByteLevel.alphabet())
+    tok.train_from_iterator(list(corpus(ds)) + [JEV_TEXT] * 200, trainer)
+    fast = PreTrainedTokenizerFast(tokenizer_object=tok, bos_token="<|endoftext|>", eos_token="<|im_end|>", pad_token="<|endoftext|>",
+                                   mask_token="<|mask|>", model_max_length=4096)
+    fast.chat_template = QWEN_CHAT
+    for w in ("Yes", "No"): assert len(fast(w, add_special_tokens=False)["input_ids"]) == 1, w
+    cfg = Qwen3Config(vocab_size=len(fast), hidden_size=64, intermediate_size=128, num_hidden_layers=2, num_attention_heads=4,
+                      num_key_value_heads=2, head_dim=16, max_position_embeddings=4096, tie_word_embeddings=True, rope_theta=1e6,
+                      pad_token_id=fast.pad_token_id, bos_token_id=fast.bos_token_id, eos_token_id=fast.eos_token_id)
+    torch.manual_seed(0)
+    Qwen3ForCausalLM(cfg).save_pretrained(out)
+    fast.save_pretrained(out)
+    c = json.loads((out / "config.json").read_text())
+    c |= {"model_type": "a2d-qwen3", "architectures": ["A2DQwen3LMHeadModel"],
+          "auto_map": {"AutoConfig": "modeling_qwen3.A2DQwen3Config", "AutoModel": "modeling_qwen3.A2DQwen3Model",
+                       "AutoModelForMaskedLM": "modeling_qwen3.A2DQwen3LMHeadModel"}}
+    (out / "config.json").write_text(json.dumps(c, indent=2))
+    return fast
+
+
 if __name__ == "__main__":
     import sys
+    if sys.argv[1:] == ["a2d"]:
+        ds = load_dataset("LocalLLaMA/typed-decisions", "all", split="train")
+        tiny_a2d_qwen3(ds, HERE / "tiny-a2d-qwen3"); print("wrote", HERE / "tiny-a2d-qwen3"); raise SystemExit
     if sys.argv[1:] == ["modernvbert"]:
         tiny_modernvbert(HERE / "tiny-modernvbert"); print("wrote", HERE / "tiny-modernvbert"); raise SystemExit
     if sys.argv[1:] == ["protst"]:

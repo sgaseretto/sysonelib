@@ -7,11 +7,11 @@ Docs: https://sgaseretto.github.io/sysonelib/cloud.html.md"""
 # %% auto #0
 __all__ = ['GPU_NAMES', 'BACKENDS', 'BACKEND_MODULES', 'DONE', 'RUNNER', 'Hardware', 'CPU', 'MPS', 'GPU', 'TPU', 'Neuron',
            'hardware', 'preset_for', 'Backend', 'Local', 'Colab', 'Kaggle', 'SageMaker', 'backend', 'load_backend',
-           'machine', 'default_hardware', 'Data', 'LocalPath', 'HubData', 'KaggleData', 'S3Data', 'as_data', 'data_var',
-           'job_input', 'in_job', 'job_output', 'stage', 'Job', 'jobs_file', 'jobs_dir', 'load_jobs', 'save_job',
-           'get_job', 'source_root', 'build_wheel', 'runner_source', 'pack', 'submit', 'poll', 'cancel', 'collect',
-           'read_from', 'unpack_outputs', 'job_id', 'remote', 'submit_local', 'poll_local', 'cancel_local',
-           'collect_local', 'parse_lines', 'describe', 'JobList', 'jobs', 'watch']
+           'machine', 'default_hardware', 'Data', 'LocalPath', 'HubData', 'KaggleData', 'KaggleOutput', 'S3Data',
+           'as_data', 'data_var', 'job_input', 'in_job', 'job_output', 'stage', 'Job', 'jobs_file', 'jobs_dir',
+           'load_jobs', 'save_job', 'get_job', 'source_root', 'build_wheel', 'runner_source', 'pack', 'submit', 'poll',
+           'cancel', 'collect', 'read_from', 'unpack_outputs', 'job_id', 'remote', 'submit_local', 'poll_local',
+           'cancel_local', 'collect_local', 'parse_lines', 'describe', 'JobList', 'jobs', 'watch']
 
 # %% ../nbs/40_cloud.ipynb #75dcb0ab
 import base64, datetime, io, json, os, re, shutil, signal, subprocess, sys, tarfile, tempfile, time, uuid
@@ -195,18 +195,24 @@ class KaggleData(Data):
     ref:str
 
 @dataclass(frozen=True)
+class KaggleOutput(Data):
+    "The files a Kaggle kernel wrote, `owner/slug`"
+    ref:str
+
+@dataclass(frozen=True)
 class S3Data(Data):
     "An S3 prefix"
     uri:str
 
 def as_data(x) -> Data:
-    "Data from a local path, `hf:owner/name[@revision]`, `kaggle:owner/name` or `s3://bucket/key`"
+    "Data from a local path, `hf:owner/name[@revision]`, `kaggle:owner/name`, `kaggle-output:owner/kernel` or `s3://bucket/key`"
     if isinstance(x, Data): return x
     s = str(x)
     if s.startswith("hf:"):
         repo, _, rev = s[3:].partition("@")
         return HubData(repo, rev or None)
     if s.startswith("kaggle:"): return KaggleData(s[len("kaggle:"):])
+    if s.startswith("kaggle-output:"): return KaggleOutput(s[len("kaggle-output:"):])
     if s.startswith("s3://"): return S3Data(s)
     if Path(s).exists(): return LocalPath(str(Path(s).resolve()))
     raise ValueError(f"{s!r} is no local path; name remote data hf:owner/name, kaggle:owner/name or s3://bucket/key")
@@ -332,6 +338,13 @@ write_nb(nb, sys.argv[2])
 sys.exit(0 if ok else 1)
 """
 
+def peft_ready():
+    "Drop a torchao older than peft supports (Kaggle's image has 0.10): peft refuses one, and does without when there is none"
+    r = subprocess.run([sys.executable, "-c", "from peft.import_utils import is_torchao_available as f; f()"], capture_output=True, text=True)
+    if r.returncode and "torchao" in r.stderr:
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "-q", "torchao"], check=False)
+        say("removed", package="torchao", reason="older than peft supports")
+
 def main():
     os.makedirs(HERE, exist_ok=True)
     if BUNDLE:
@@ -353,6 +366,7 @@ def main():
                 whl = [p for p in pkgs if p.endswith(".whl")]      # pip keeps an installed sysone of the same version (uv does not): replace it
                 if whl: subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--force-reinstall", "--no-deps"] + whl, check=True)
             say("installed", packages=spec["install"])
+            peft_ready()
         env = dict(os.environ, **(spec.get("env") or {}))
         env.update(SYSONE_JOB=json.dumps({"backend": spec["backend"], "job": spec["id"], "machine": spec["machine"]}),
                    SYSONE_PROGRESS="1", SYSONE_OUTPUT=os.path.join(out, "export"), SYSONE_ENTRY=os.path.join(HERE, spec["entry"]))
@@ -378,7 +392,8 @@ def main():
         else: cmd = [sys.executable, entry] + list(spec.get("args") or [])
         say("run", entry=spec["entry"])
         p = subprocess.Popen(cmd, cwd=HERE, env=env, start_new_session=True)
-        try: rc = p.wait(timeout=spec.get("max_seconds"))
+        left = spec["max_seconds"] - (time.time() - t0) if spec.get("max_seconds") else None    # the installs and downloads count
+        try: rc = p.wait(timeout=None if left is None else max(left, 1))
         except subprocess.TimeoutExpired:
             os.killpg(p.pid, signal.SIGTERM)
             try: p.wait(timeout=30)

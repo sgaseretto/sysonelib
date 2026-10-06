@@ -362,6 +362,8 @@ def _run(self:Learner, epochs=None, lr=None, max_steps=None, schedule=None, eval
     enc, head = _lrs(lr if lr is not None else self.lr)
     if record and any(p.requires_grad for p in self.model.encoder.parameters()):
         self.model.encoder_trained = True     # the export must then carry the encoder, whatever the regime is later
+    if record and any(p.requires_grad and n not in getattr(self.model, "adapter_params", ()) for n, p in self.model.encoder.named_parameters()):
+        self.model.base_trained = True        # more than an adapter trained: an export that keeps the adapter carries the weights under it
     t = self.trainer
     t.lr_head, t.lr_encoder, t.schedule, t.optimizer, t.lr_scheduler = head, enc, schedule, None, None
     kw = dict(learning_rate=head, num_train_epochs=epochs or 1, max_steps=max_steps or -1) | args
@@ -620,14 +622,14 @@ def export(self:Learner, path, **kw):
 def decision_learner(data:TypedDecisions, encoder, train="head", cache:str|None=None, template=None, head:str="laya",
                      head_layers:int|None=None, init_from:str|None=None, loss=None, lr=None, preset:str|None=None,
                      dtype=None, lora:dict|None=None, standardize:bool=False, readout:str="anchor", query:str|None=None,
-                     act:bool=False, pair_dim:int=256, **kw) -> Learner:
+                     act:bool=False, pair_dim:int=256, yesno:tuple=("Yes", "No"), **kw) -> Learner:
     "A `Learner` for `data` on the encoder `encoder` (a Hub id, a folder or an `EncoderSpec`), with regime `train`"
     spec = encoder if isinstance(encoder, EncoderSpec) else EncoderSpec.from_pretrained(encoder)
     template = template if template is not None else data.template if data.template is not None else spec.template
     if isinstance(template, str): template = RowTemplate.preset(template, tokenizer=spec.tokenizer)
     data.bind(spec.processor or spec.tokenizer, template, streams=list(spec.streams.values()))
-    scorer = {"laya": "laya", "mlp": "laya", "linear": "linear", "gliner2": "gliner2", "pair": "pair"}[head]
-    layers = head_layers if head_layers is not None else 0 if (head in ("mlp", "linear", "gliner2", "pair") or cache == "masks") else 2
+    scorer = {"laya": "laya", "mlp": "laya", "linear": "linear", "gliner2": "gliner2", "pair": "pair", "yesno": "yesno"}[head]
+    layers = head_layers if head_layers is not None else 0 if (head in ("mlp", "linear", "gliner2", "pair", "yesno") or cache == "masks") else 2
     enc = spec.load_encoder(**({"dtype": dtype} if dtype is not None else {}))    # float32 unless told otherwise
     qw = None
     if query is not None and query.startswith("stream:"):
@@ -636,6 +638,7 @@ def decision_learner(data:TypedDecisions, encoder, train="head", cache:str|None=
         qw = enc.sides[name].out_width
     hd = DecisionHead(spec.width, layers, scorer, init_from=init_from, standardize=standardize, readout=readout, query=query,
                       query_width=qw, pair_dim=pair_dim, act=act)
+    if head == "yesno" and init_from is None: hd.init_yesno(enc, spec.tokenizer, *yesno)      # start as the model's own Yes/No
     model = EncoderDecisionModel(enc, hd, spec)
     set_regime(model, train, **(lora or {}))
     return Learner(data, model, loss=loss, cache=cache, lr=lr if lr is not None else 1e-4, preset=preset, **kw)

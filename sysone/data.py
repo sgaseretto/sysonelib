@@ -246,7 +246,9 @@ def rows(self:TypedDecisions, split:str="train") -> Dataset:
 def _render_text(template:RowTemplate, record:dict, qid:str) -> str:
     "The row as text, before tokenization"
     q = as_questions(record["questions"])[qid]
-    opts = template.option_sep.join(template.option.format(mask=template.mask, text=o) for o in q.options)
+    b = option_block(template, q)
+    opts = b["header"] + (b["option"].format(mask=template.mask, text="") if shared_slot(b["option"]) else
+                          b["sep"].join(b["option"].format(mask=template.mask, text=o) for o in q.options))
     vals = {r: (getattr(template, r) or "") for r in SPECIALS} | {"type": q.type, "instructions": q.instructions,
             "options": opts, "state": render_state(record["state"]), "image": template.image if record.get("images") else ""}
     return template.row.format(**vals)

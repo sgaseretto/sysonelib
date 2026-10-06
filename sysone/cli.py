@@ -45,9 +45,12 @@ def train(data:str = typer.Argument(..., help="a .jsonl file, a registry name (t
     "Train a decision model and export it"
     from sysone.models import EncoderSpec
     d = _data(data, valid, calib)
-    multimodal = EncoderSpec.from_pretrained(encoder).modality == "multimodal"
+    spec = EncoderSpec.from_pretrained(encoder)
+    import importlib
     from sysone import multimodal as mm, text
-    make = mm.decision_learner if multimodal else text.decision_learner
+    from sysone.models import MODEL_TYPES
+    make = importlib.import_module(MODEL_TYPES[spec.family]).decision_learner if spec.family in MODEL_TYPES else \
+           mm.decision_learner if spec.modality == "multimodal" else text.decision_learner      # the application of the model's family
     learn = make(d, encoder, train=regime, cache=None if cache == "none" else cache, loss=loss, preset=preset)
     typer.echo(repr(learn))
     rate = lr if lr is not None else learn.lr_find().valley

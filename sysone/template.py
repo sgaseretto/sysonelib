@@ -6,9 +6,9 @@ Docs: https://sgaseretto.github.io/sysonelib/template.html.md"""
 
 # %% auto #0
 __all__ = ['LAYA_ROW', 'SPECIALS', 'transform', 'Transform', 'tfms_to_json', 'tfms_from_json', 'apply_tfms', 'Regex', 'Lower',
-           'Field', 'Truncate', 'Shuffle', 'load_image', 'Image', 'Stream', 'RowTemplate', 'RowBuilder',
-           'processor_rows', 'default_image_side', 'prepare_processor', 'tile_arrays', 'pixel_tiles', 'TokenStream',
-           'stream_from_json', 'show_row']
+           'Field', 'Truncate', 'Shuffle', 'load_image', 'Image', 'Stream', 'RowTemplate', 'register_preset',
+           'option_block', 'shared_slot', 'RowBuilder', 'processor_rows', 'default_image_side', 'prepare_processor',
+           'tile_arrays', 'pixel_tiles', 'TokenStream', 'stream_from_json', 'show_row']
 
 # %% ../nbs/01_template.ipynb #1d7501af
 import copy, hashlib, importlib, json, random, re, string, warnings
@@ -203,29 +203,38 @@ def _parse(fmt:str, allowed:set):
         out.append(("field", name))
     return out
 
+def _check_option(pieces, fmt):
+    "An option's format has exactly one {mask}: its anchor before the text, or its answer slot after it"
+    n = sum(p == ("field", "mask") for p in pieces)
+    if n != 1: raise ValueError(f"an option needs exactly one {{mask}}, its anchor or answer slot; {fmt!r} has {n}")
+
 class RowTemplate:
     "How a question and a state are laid out as one row, which special tokens it uses, and the token budgets"
     def __init__(self,
                  start:str|None="[CLS]", # token that opens the row
                  sep:str|None="[SEP]", # token between sections
-                 mask:str="[MASK]", # the anchor placed before every option; must be one token
+                 mask:str="[MASK]", # the anchor, or answer slot, of every option; must be one token
                  end:str|None="[SEP]", # token that closes the row
                  image:str|None=None, # image placeholder token, for processor encoders
                  row:str=LAYA_ROW, # the row's format string
-                 option:str="{mask} {text}", # one option's format string; must start with {mask}
+                 option:str="{mask} {text}", # one option's format string, with exactly one {mask}, before or after its {text}
                  max_len:int=512, # tokens per row, image positions included
                  head_max_len:int=192, # tokens for the question and its options
                  option_tokens:int=48, # text tokens per option
                  truncate:str="right", # cut long states on the "right", "left", or "auto" (left for conversation lists, as Laya does)
                  option_sep:str="", # text between options; tokenizer rows concatenate the option chunks
+                 kinds:dict|None=None, # per question type, an options block that replaces the defaults: {"header", "option", "sep"}
                  tfms:list|None=None, # transforms saved with the template
                  name:str|None=None): # preset name, for display
-        store_attr(but="tfms"); self.tfms = list(tfms or [])
+        store_attr(but="tfms,kinds"); self.tfms, self.kinds = list(tfms or []), dict(kinds or {}) or None
         self._row, self._option = _parse(row, _ROW_FIELDS), _parse(option, _OPTION_FIELDS)
         if ("field", "options") not in self._row: raise ValueError("a row needs an {options} field")
         if ("field", "state") not in self._row: raise ValueError("a row needs a {state} field")
-        if not self._option or self._option[0] != ("field", "mask"):
-            raise ValueError("an option must start with {mask}, so truncation never removes the anchor")
+        _check_option(self._option, option)
+        for kind, blk in (self.kinds or {}).items():
+            if kind not in QTYPES: raise ValueError(f"kinds: unknown question type {kind!r}; use {sorted(QTYPES)}")
+            if not set(blk) <= {"header", "option", "sep"}: raise ValueError(f"kinds[{kind!r}] takes 'header', 'option' and 'sep', not {sorted(set(blk))}")
+            if "option" in blk: _check_option(_parse(blk["option"], _OPTION_FIELDS), blk["option"])
         if truncate not in ("right", "left", "auto"): raise ValueError(f"truncate must be 'right', 'left' or 'auto', not {truncate!r}")
 
     def __repr__(self):
@@ -238,18 +247,18 @@ _TEMPLATE_KEYS = ("start", "sep", "end", "mask", "image", "row", "option", "max_
 
 @patch
 def to_json(self:RowTemplate) -> dict:
-    "The template as it is written to `sysone.json` (transforms are written beside it)"
-    return {k: getattr(self, k) for k in _TEMPLATE_KEYS} | ({"name": self.name} if self.name else {})
+    "The template as it is written to `sysone.json` (transforms are written beside it); `kinds` only when set, so older templates keep their hash"
+    return {k: getattr(self, k) for k in _TEMPLATE_KEYS} | ({"kinds": self.kinds} if self.kinds else {}) | ({"name": self.name} if self.name else {})
 
 @patch(cls_method=True)
 def from_json(cls:RowTemplate, d:dict, tfms=None):
     "The template described by a `to_json()` result"
-    return cls(**{k: v for k, v in d.items() if k in _TEMPLATE_KEYS + ("name",)}, tfms=tfms)
+    return cls(**{k: v for k, v in d.items() if k in _TEMPLATE_KEYS + ("kinds", "name")}, tfms=tfms)
 
 @patch
 def replace(self:RowTemplate, **kw):
     "A copy with some fields changed"
-    return RowTemplate(**({k: getattr(self, k) for k in _TEMPLATE_KEYS} | {"tfms": self.tfms, "name": self.name} | kw))
+    return RowTemplate(**({k: getattr(self, k) for k in _TEMPLATE_KEYS} | {"kinds": self.kinds, "tfms": self.tfms, "name": self.name} | kw))
 
 @patch(as_prop=True)
 def hash(self:RowTemplate) -> str:
@@ -275,6 +284,11 @@ _PRESETS = {
                         option="{mask} {text}", max_len=2048, head_max_len=384, option_tokens=48, truncate="right"),
 }
 
+def register_preset(name:str, **fields):
+    "Add a named template, as an application does for its encoder's layout"
+    if name in ("auto",): raise ValueError(f"{name!r} is reserved")
+    _PRESETS[name] = fields
+
 @patch(cls_method=True)
 def preset(cls:RowTemplate, name:str, tokenizer=None, **overrides):
     "A named template (`laya`, `gliner`, `neomme`, `neomme_page_first`, `modernvbert`, `auto`), optionally with fields changed"
@@ -290,6 +304,26 @@ def preset(cls:RowTemplate, name:str, tokenizer=None, **overrides):
     else: raise ValueError(f"unknown preset {name!r}; use one of {sorted(_PRESETS) + ['auto']}")
     return cls(**(kw | overrides), name=name)
 
+# %% ../nbs/01_template.ipynb #7d3fc763
+@dispatch
+def option_block(template:RowTemplate, q:Question) -> dict:
+    "How question `q` lays its options out under `template`: a header, one option's format, the text between options; dispatched on the question's kind"
+    blk = (template.kinds or {}).get(q.type) or {}
+    return {"header": blk.get("header", ""), "option": blk.get("option", template.option), "sep": blk.get("sep", template.option_sep)}
+
+def shared_slot(option:str) -> bool:
+    "Whether an option format with no {text} makes one slot for all of a question's options"
+    return ("field", "text") not in _parse(option, _OPTION_FIELDS)
+
+@patch(cls_method=True)
+def chat(cls:RowTemplate, tokenizer, user:str, system:str|None=None, **kw):
+    "A template whose row is `tokenizer`'s chat template around a `system` message and a `user` message holding the row's fields"
+    hold = lambda s: s.translate({ord("{"): "\x01", ord("}"): "\x02"})          # the fields pass through the chat template untouched
+    msgs = ([{"role": "system", "content": system}] if system is not None else []) + [{"role": "user", "content": hold(user)}]
+    text = tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False, enable_thinking=False)
+    row = text.replace("{", "{{").replace("}", "}}").translate({1: "{", 2: "}"})
+    return cls(**({"start": None, "sep": None, "end": None} | kw), row=row)
+
 # %% ../nbs/01_template.ipynb #80931346
 def _compile(pieces):
     "Group pieces into segments: ('special', role), ('run', [pieces]), ('options',), ('state',)"
@@ -304,6 +338,16 @@ def _compile(pieces):
     flush()
     return segs
 
+def _state_suffix(segs):
+    "The row's segments with the whitespace right after the state moved onto it, and that whitespace"
+    i = next((i for i, s in enumerate(segs) if s == ("state",)), None)
+    if i is None or i + 1 >= len(segs) or segs[i + 1][0] != "run" or segs[i + 1][1][0][0] != "lit": return segs, ""
+    lit = segs[i + 1][1][0][1]
+    ws = lit[:len(lit) - len(lit.lstrip())]
+    if not ws: return segs, ""
+    run = ([("lit", lit[len(ws):])] if lit[len(ws):] else []) + segs[i + 1][1][1:]
+    return segs[:i + 1] + ([("run", run)] if run else []) + segs[i + 2:], ws
+
 def _is_processor(obj):
     "Whether `obj` is a transformers processor (tokenizer plus image processor) rather than a tokenizer"
     from transformers import ProcessorMixin
@@ -317,7 +361,10 @@ class RowBuilder:
         self.tok = tokenizer.tokenizer if self.processor is not None else tokenizer
         self.template, self.tfms = template, list(template.tfms) + list(tfms or [])
         self._row_segs, self._opt_segs = _compile(template._row), _compile(template._option)
+        self._row_segs, self._state_suffix = _state_suffix(self._row_segs)   # tokenized with the state, as one call over the row would
+        self._blocks = {}       # each question kind's compiled options block, made on first use
         self.ids = self._resolve_specials()
+        self._suffix_ids = self._encode([self._state_suffix])[0] if self._state_suffix else []
         self.extra_scrub = []   # further token strings to remove from user text (a multimodal encoder's own markers)
         self.streams = {s.name: s for s in (streams.values() if isinstance(streams, dict) else streams or [])}
         self.stats = {"rows": 0, "state_truncated": 0, "options_cut": 0, "dropped": 0}
@@ -381,34 +428,50 @@ def _encode(self:RowBuilder, texts:list) -> list:
     return out
 
 @patch
+def _block(self:RowBuilder, q:Question) -> tuple:
+    "The compiled options block of `q`'s kind: its header, its option segments, its separator's ids, and whether it is a shared slot"
+    b = option_block(self.template, q)
+    key = (b["header"], b["option"], b["sep"])
+    if key not in self._blocks:
+        self._blocks[key] = (b["header"], _compile(_parse(b["option"], _OPTION_FIELDS)), self._encode([b["sep"]])[0] if b["sep"] else [],
+                             shared_slot(b["option"]))
+    return self._blocks[key]
+
+@patch
 def _question_parts(self:RowBuilder, q:Question):
-    "Texts to tokenize for one question: each run of the row, each option's runs"
+    "Texts to tokenize for one question: each run of the row, the options block's header, each option's runs (one set for a shared slot)"
     q = Question(q.type, self._scrub(q.instructions), q.criteria, q.labels, q.name)
+    header, segs, _, shared = self._block(q)
     runs = [_render_run(s[1], q) for s in self._row_segs if s[0] == "run"]
-    opts = [[_render_run(s[1], q, self._scrub(o)) for s in self._opt_segs if s[0] == "run"] for o in q.options]
-    return runs, opts
+    opts = [[_render_run(s[1], q, self._scrub(o)) for s in segs if s[0] == "run"] for o in (q.options[:1] if shared else q.options)]
+    return runs, opts, header
 
 # %% ../nbs/01_template.ipynb #7aefab2b
 @patch
-def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is_list=False, image_ids=None):
-    "ids, marker positions and the image marker's position for one question, with Laya's budget rules"
-    t, image_ids = self.template, list(image_ids or [])
-    # 1. options: anchor + at most option_tokens text tokens (per text run, literal tail kept)
-    chunks = []
+def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is_list=False, image_ids=None, head_ids=None):
+    "ids, marker positions, the image marker's position and the option spans for one question, with Laya's budget rules"
+    t, image_ids, head_ids = self.template, list(image_ids or []), list(head_ids or [])
+    _, segs, sep_ids, shared = self._block(q)
+    # 1. options: the slot (the anchor) and at most option_tokens text tokens per text run (its literal tail kept)
+    chunks = []      # per option, its pieces in order: ["slot", ids] or ["run", ids, tail]
     for runs in opt_ids:
         c, r = [], iter(runs)
-        for seg in self._opt_segs:
-            if seg[0] == "special": c.append(self.ids[seg[1]])
-            elif seg[0] == "run": ids, tail = next(r); c.extend(_cut(ids, t.option_tokens, tail))
+        for seg in segs:
+            if seg[0] == "special": c.append(["slot", [self.ids[seg[1]]]])
+            elif seg[0] == "run": ids, tail = next(r); c.append(["run", _cut(ids, t.option_tokens, tail), tail])
         chunks.append(c)
-    sep_ids = self._encode([t.option_sep])[0] if t.option_sep else []
-    opt_len = lambda: sum(len(c) for c in chunks) + len(sep_ids) * max(0, len(chunks) - 1)
-    # 2. squeeze the options if they leave the question fewer than 16 tokens
+    size = lambda c: sum(len(p[1]) for p in c)
+    opt_len = lambda: len(head_ids) + sum(size(c) for c in chunks) + len(sep_ids) * max(0, len(chunks) - 1)
+    # 2. squeeze the options if they leave the question fewer than 16 tokens: cut their text, never the slot
     budget = t.head_max_len - opt_len()
     if budget < 16:
-        per = max(4, (t.head_max_len - 16) // max(1, len(chunks)))
-        if any(len(c) > per for c in chunks): self.stats["options_cut"] += 1
-        chunks = [c[:per] for c in chunks]
+        per = max(4, (t.head_max_len - 16 - len(head_ids)) // max(1, len(chunks)))
+        if any(size(c) > per for c in chunks): self.stats["options_cut"] += 1
+        for c in chunks:
+            for p in reversed(c):
+                over = size(c) - per
+                if over <= 0: break
+                if p[0] == "run": p[1] = _cut(p[1], max(len(p[2]), len(p[1]) - over), p[2])
         budget = t.head_max_len - opt_len()
     # 3. the run holding the instructions gets what head_max_len has left
     runs = []
@@ -426,7 +489,7 @@ def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is
     room = max(0, t.max_len - fixed)
     left = t.truncate == "left" or (t.truncate == "auto" and state_is_list)
     if len(state_ids) > room: self.stats["state_truncated"] += 1
-    st = state_ids[max(0, len(state_ids) - room):] if left else state_ids[:room]
+    st = state_ids[max(0, len(state_ids) - room):] if left else _cut(state_ids, room, self._suffix_ids)
     # lay the segments out in template order
     ids, markers, spans, r, image_at = [], [], [], iter(runs), None
     for seg in self._row_segs:
@@ -438,10 +501,16 @@ def _assemble(self:RowBuilder, q:Question, run_ids, opt_ids, state_ids, state_is
                 ids.extend(block)
         elif seg[0] == "run": ids.extend(next(r))
         elif seg[0] == "state": ids.extend(st)
-        else:
+        else:       # the options block: its header, then each option, its slot and its own text recorded
+            ids.extend(head_ids)
             for i, c in enumerate(chunks):
                 if i and sep_ids: ids.extend(sep_ids)
-                markers.append(len(ids)); spans.append((len(ids) + 1, len(ids) + len(c))); ids.extend(c)
+                start, slot = len(ids), None
+                for p in c:
+                    if p[0] == "slot": slot = len(ids)
+                    ids.extend(p[1])
+                markers.append(slot); spans.append((start, slot) if slot > start else (slot + 1, len(ids)))
+            if shared: markers, spans = markers * q.k, [(markers[0], markers[0])] * q.k
     if image_ids and len(ids) > t.max_len:
         raise ValueError(f"the image takes {len(image_ids)} positions and the row does not fit max_len={t.max_len}; resize the image")
     keep = [i for i, m in enumerate(markers) if m < t.max_len]
@@ -493,19 +562,21 @@ def _layout(self:RowBuilder, record:dict, image_ids=None, skip_errors:bool=False
     "(qid, question, ids, markers, image marker position, option spans) for each question of a transformed record"
     qs = as_questions(record["questions"])
     parts = {qid: self._question_parts(q) for qid, q in qs.items()}
-    texts = [self._scrub(render_state(record["state"]))]
-    for runs, opts in parts.values():
+    texts = [self._scrub(render_state(record["state"])) + self._state_suffix]
+    for runs, opts, header in parts.values():
         for s, tail in runs: texts += [s, tail]
+        texts.append(header)
         for o in opts:
             for s, tail in o: texts += [s, tail]
     enc = iter(self._encode(texts))
     state_ids = next(enc)
     out = []
     for qid, q in qs.items():
-        runs, opts = parts[qid]
+        runs, opts, _ = parts[qid]
         run_ids = [(next(enc), next(enc)) for _ in runs]
+        head_ids = next(enc)
         opt_ids = [[(next(enc), next(enc)) for _ in o] for o in opts]
-        ids, markers, image_at, spans = self._assemble(q, run_ids, opt_ids, state_ids, isinstance(record["state"], list), image_ids)
+        ids, markers, image_at, spans = self._assemble(q, run_ids, opt_ids, state_ids, isinstance(record["state"], list), image_ids, head_ids)
         self.stats["rows"] += 1
         if len(markers) != q.k:
             if not skip_errors: raise ValueError(f"question {qid!r}: its {q.k} options do not fit max_len={self.template.max_len}")

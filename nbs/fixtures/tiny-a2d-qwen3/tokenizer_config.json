@@ -1,0 +1,9 @@
+{
+  "backend": "tokenizers",
+  "bos_token": "<|endoftext|>",
+  "eos_token": "<|im_end|>",
+  "mask_token": "<|mask|>",
+  "model_max_length": 4096,
+  "pad_token": "<|endoftext|>",
+  "tokenizer_class": "TokenizersBackend"
+}

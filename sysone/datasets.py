@@ -364,7 +364,8 @@ def _history(reprs):
                     "text": val or None, "page_changed": kind == "CLICK"})
     return out
 
-def mind2web_record(task:dict, ai:int, rng=None, max_neg:int=44, text_chars:int=1200, label_chars:int=50, action=None, reprs=None):
+def mind2web_record(task:dict, ai:int, rng=None, max_neg:int=44, text_chars:int=1200, label_chars:int=50, action=None, reprs=None,
+                    operations:str="offered"):
     "A two-question record (operation, target) from action `ai` of a Mind2Web task, or None if its target is unusable"
     from bs4 import BeautifulSoup
     rng = rng or random.Random(0)
@@ -404,7 +405,7 @@ def mind2web_record(task:dict, ai:int, rng=None, max_neg:int=44, text_chars:int=
         if is_gold: gold_key = str(idx)
     if gold_key is None: return None
     goal = task["confirmed_task"]
-    ops = {k: OPERATIONS[k] for k in OPERATIONS if k in targets} | CONTROLS
+    ops = {k: OPERATIONS[k] for k in OPERATIONS if operations == "all" or k in targets} | CONTROLS
     qt = f"{gold_op.lower()}_target"
     reprs = task["action_reprs"][:ai] if reprs is None else reprs
     return {"id": f"{task.get('annotation_id', 'task')}_{ai:03d}", "website": task.get("website"), "domain": task.get("domain"),
@@ -413,7 +414,14 @@ def mind2web_record(task:dict, ai:int, rng=None, max_neg:int=44, text_chars:int=
             "questions": {"operation": {"type": "choice", "instructions": {"goal": goal, "rules": NEXT_ACTION}, "criteria": ops},
                           qt: {"type": "choice", "instructions": {"goal": goal, "operation": gold_op, "rules": [NEXT_ACTION, TARGET]},
                                "criteria": targets[gold_op]}},
-            "gold": {"operation": {"label": gold_op}, qt: {"label": gold_key}}}
+            "gold": {"operation": {"label": gold_op}, qt: {"label": gold_key}},
+            "typed": _typed(op, gold, goal)}
+
+def _typed(op:dict, el, goal:str):
+    "What a TYPE step typed, into which field, and whether the goal says it (a text a writer could take from the goal); None for other steps"
+    if op["op"] != "TYPE": return None
+    norm = lambda s: " ".join(str(s).casefold().split())
+    return {"field": element_label(el), "value": op["value"], "in_goal": norm(op["value"]) in norm(goal)}
 
 def from_mind2web(tasks, n:int|None=None, seed:int=0, **kw) -> list:
     "Records from Mind2Web tasks (one per usable action)"
@@ -455,10 +463,10 @@ def iter_mm_mind2web(split:str="train", columns=None):
         for g in range(pf.num_row_groups):
             for row in pf.read_row_group(g, columns=columns).to_pylist(): yield row
 
-def from_mm_mind2web(split:str="train", image_dir="shots", n:int|None=None, seed:int=0, **kw) -> list:
-    "Records with screenshots from Multimodal-Mind2Web"
+def from_mm_mind2web(split:str="train", image_dir="shots", n:int|None=None, seed:int=0, screenshots:bool=True, **kw) -> list:
+    "Records from Multimodal-Mind2Web, with their screenshots unless `screenshots=False` (which reads far less of the set)"
     rng, out = random.Random(seed), []
-    for row in iter_mm_mind2web(split, columns=MM_COLUMNS):
+    for row in iter_mm_mind2web(split, columns=MM_COLUMNS if screenshots else [c for c in MM_COLUMNS if c != "screenshot"]):
         r = mm_mind2web_record(row, image_dir, rng, **kw)
         if r is not None: out.append(r)
         if n is not None and len(out) >= n: break

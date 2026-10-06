@@ -29,7 +29,7 @@ _LAZY = {
 }
 
 _SUBMODULES = {"core", "template", "data", "models", "losses", "metrics", "learner", "record", "inference", "cache", "datasets", "evaluate",
-               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "gliner", "cloud", "colab", "kaggle", "aws", "xla", "deploy", "hub", "auth", "track", "cli"}
+               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "mdlm", "gliner", "cloud", "colab", "kaggle", "aws", "xla", "deploy", "hub", "auth", "track", "cli"}
 
 def __getattr__(name):
     import importlib
