@@ -15,7 +15,7 @@ __all__ = ['GPU_NAMES', 'BACKENDS', 'BACKEND_MODULES', 'DONE', 'RUNNER', 'Hardwa
            'JobList', 'jobs', 'watch', 'checkpoint_source']
 
 # %% ../nbs/40_cloud.ipynb #75dcb0ab
-import base64, datetime, io, json, os, re, shutil, signal, subprocess, sys, tarfile, tempfile, time, uuid
+import base64, datetime, io, json, os, re, shutil, signal, subprocess, sys, tarfile, tempfile, time, uuid, warnings
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
@@ -121,14 +121,16 @@ class Kaggle(Backend):
 
 @dataclass
 class Modal(Backend):
-    "A Modal sandbox, with the job's files on the Modal Volume `volume`, `cpu` cores and `memory_gb` beside any GPU; `secrets` names the environment variables passed to it (the Hub token)"
+    "A Modal sandbox, with the job's files on the Modal Volume `volume`, `cpu` cores and `memory_gb` beside any GPU; `secrets` names the environment variables passed to it (the Hub token); a job runs `max_hours` unless told otherwise, and with `budget` (dollars) none starts that could take the month's usage past it"
     app:str = "sysone"
     volume:str = "sysone-jobs"
     python:str = "3.12"
     image:str|None = None
-    cpu:float = 4.0
-    memory_gb:float = 16.0
+    cpu:float = 2.0
+    memory_gb:float = 8.0
     secrets:tuple = ("HF_TOKEN",)
+    max_hours:float|None = 2.0
+    budget:float|None = None
 
 @dataclass
 class SageMaker(Backend):
@@ -543,6 +545,9 @@ def remote(entry, on="local", hw=None, data=None, args:list|None=None, env:dict|
            checkpoints=True, checkpoint_minutes:float|None=30, wrap_up_minutes:float|None=None, resume=None, **backend_kw) -> Job:
     "Run a notebook or script as a job on backend `on` and hardware `hw`; returns the submitted job"
     b = backend(on, **backend_kw)
+    if max_hours is None and getattr(b, "max_hours", None):         # a backend that bills by the second sets a limit of its own
+        max_hours = b.max_hours
+        warnings.warn(f"no max_hours: this {b.name} job stops after {max_hours:g} h (remote(max_hours=...) or {type(b).__name__}(max_hours=...) changes it)")
     hw = hardware(hw) if hw is not None else default_hardware(b)
     mach = machine(b, hw)
     entry = Path(entry)
