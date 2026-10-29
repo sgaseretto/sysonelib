@@ -1,4 +1,4 @@
-"""Log in to Hugging Face, Kaggle, Colab and AWS from a notebook or a terminal: `login("hf")`, `login("kaggle")`, `login("colab")`, `login("aws", local=True)`, and `whoami()` to see which accounts are in use.
+"""Log in to Hugging Face, Kaggle, Colab, Modal and AWS from a notebook or a terminal: `login("hf")`, `login("kaggle")`, `login("colab")`, `login("modal")`, `login("aws", local=True)`, and `whoami()` to see which accounts are in use.
 
 Docs: https://sgaseretto.github.io/sysonelib/auth.html.md"""
 
@@ -9,7 +9,7 @@ __all__ = ['KAGGLE_FILES', 'COLAB_SCOPES', 'COLAB_REDIRECT', 'GOOGLE_AUTH_URI', 
            'COLAB_HINT', 'FLOCI', 'LOGINS', 'AuthError', 'in_colab', 'in_kaggle', 'notebook_secret', 'paste_code_login',
            'hf_user', 'hf_login', 'kaggle_dir', 'kaggle_credentials', 'kaggle_user', 'kaggle_login', 'colab_token',
            'colab_client', 'colab_scoped_login', 'refresh_colab_token', 'colab_user', 'colab_login', 'aws_local',
-           'aws_user', 'aws_login', 'login', 'whoami']
+           'aws_user', 'aws_login', 'modal_config', 'modal_user', 'modal_login', 'login', 'whoami']
 
 # %% ../nbs/43_auth.ipynb #e9558c8c
 import base64, datetime, hashlib, json, os, re, secrets, shutil, subprocess, sys, urllib.parse, urllib.request
@@ -237,14 +237,34 @@ def aws_login(profile:str|None=None, local:bool=False, endpoint:str=FLOCI, regio
         if region: os.environ["AWS_DEFAULT_REGION"] = region
     return aws_user()
 
+# %% ../nbs/43_auth.ipynb #fb20559b
+def modal_config() -> Path: return Path(os.environ.get("MODAL_CONFIG_PATH") or Path.home() / ".modal.toml")
+
+def modal_user() -> str|None:
+    "The Modal profile (your workspace's name) whose token this machine uses, or None without one"
+    if os.environ.get("MODAL_TOKEN_ID") and os.environ.get("MODAL_TOKEN_SECRET"): return os.environ.get("MODAL_PROFILE") or "token from the environment"
+    if not modal_config().exists(): return None
+    import tomllib
+    profiles = {k: v for k, v in tomllib.loads(modal_config().read_text()).items() if isinstance(v, dict)}
+    name = os.environ.get("MODAL_PROFILE") or next((k for k, v in profiles.items() if v.get("active")), None) or next(iter(profiles), None)
+    return name if name and profiles.get(name, {}).get("token_id") else None
+
+def modal_login() -> str|None:
+    "Sign the Modal client in: `modal setup` (a browser sign-in), or in Colab or Kaggle the notebook's MODAL_TOKEN_ID and MODAL_TOKEN_SECRET secrets"
+    if modal_user(): return modal_user()
+    tid, sec = notebook_secret("MODAL_TOKEN_ID"), notebook_secret("MODAL_TOKEN_SECRET")
+    if tid and sec: os.environ.update(MODAL_TOKEN_ID=tid, MODAL_TOKEN_SECRET=sec)
+    else: subprocess.run([sys.executable, "-m", "modal", "setup"], check=True)
+    return modal_user()
+
 # %% ../nbs/43_auth.ipynb #37422450
-LOGINS = {"hf": hf_login, "huggingface": hf_login, "kaggle": kaggle_login, "colab": colab_login, "aws": aws_login}
+LOGINS = {"hf": hf_login, "huggingface": hf_login, "kaggle": kaggle_login, "colab": colab_login, "modal": modal_login, "aws": aws_login}
 
 def login(service:str="hf", **kw):
-    "Log in to `service`: hf, kaggle, colab or aws (see each one's login function for its options)"
+    "Log in to `service`: hf, kaggle, colab, modal or aws (see each one's login function for its options)"
     if service.lower() not in LOGINS: raise ValueError(f"unknown service {service!r}; use one of {sorted(set(LOGINS) - {'huggingface'})}")
     return LOGINS[service.lower()](**kw)
 
 def whoami() -> dict:
     "The account each service uses here, or None where there is no login"
-    return {"hf": hf_user(), "kaggle": kaggle_user() or kaggle_credentials(), "colab": colab_user(), "aws": aws_user()}
+    return {"hf": hf_user(), "kaggle": kaggle_user() or kaggle_credentials(), "colab": colab_user(), "modal": modal_user(), "aws": aws_user()}

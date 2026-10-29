@@ -1,4 +1,4 @@
-"""Run a notebook or a script as a job, in the background here or on Colab, Kaggle or SageMaker, on the hardware you pick; follow its progress beside your other jobs; and bring its model back to this machine.
+"""Run a notebook or a script as a job, in the background here or on Colab, Kaggle, Modal or SageMaker, on the hardware you pick; follow its progress beside your other jobs; and bring its model back to this machine.
 
 Docs: https://sgaseretto.github.io/sysonelib/cloud.html.md"""
 
@@ -6,12 +6,13 @@ Docs: https://sgaseretto.github.io/sysonelib/cloud.html.md"""
 
 # %% auto #0
 __all__ = ['GPU_NAMES', 'BACKENDS', 'BACKEND_MODULES', 'DONE', 'RUNNER', 'Hardware', 'CPU', 'MPS', 'GPU', 'TPU', 'Neuron',
-           'hardware', 'preset_for', 'Backend', 'Local', 'Colab', 'Kaggle', 'SageMaker', 'backend', 'load_backend',
-           'machine', 'default_hardware', 'Data', 'LocalPath', 'HubData', 'KaggleData', 'KaggleOutput', 'S3Data',
-           'as_data', 'data_var', 'job_input', 'in_job', 'job_output', 'stage', 'Job', 'jobs_file', 'jobs_dir',
-           'load_jobs', 'save_job', 'get_job', 'source_root', 'build_wheel', 'runner_source', 'pack', 'submit', 'poll',
-           'cancel', 'collect', 'read_from', 'unpack_outputs', 'job_id', 'remote', 'submit_local', 'poll_local',
-           'cancel_local', 'collect_local', 'parse_lines', 'describe', 'JobList', 'jobs', 'watch']
+           'hardware', 'preset_for', 'Backend', 'Local', 'Colab', 'Kaggle', 'Modal', 'SageMaker', 'backend',
+           'load_backend', 'machine', 'default_hardware', 'Data', 'LocalPath', 'HubData', 'KaggleData', 'KaggleOutput',
+           'ModalVolume', 'S3Data', 'as_data', 'data_ref', 'data_var', 'job_input', 'in_job', 'job_output', 'stage',
+           'Job', 'jobs_file', 'jobs_dir', 'load_jobs', 'save_job', 'get_job', 'source_root', 'build_wheel',
+           'runner_source', 'pack', 'submit', 'poll', 'cancel', 'collect', 'read_from', 'unpack_outputs', 'job_id',
+           'remote', 'submit_local', 'poll_local', 'cancel_local', 'collect_local', 'parse_lines', 'describe',
+           'JobList', 'jobs', 'watch', 'checkpoint_source']
 
 # %% ../nbs/40_cloud.ipynb #75dcb0ab
 import base64, datetime, io, json, os, re, shutil, signal, subprocess, sys, tarfile, tempfile, time, uuid
@@ -40,11 +41,11 @@ class CPU(Hardware):
 class MPS(Hardware):
     "Apple's GPU, on a Mac"
 
-GPU_NAMES = ("T4", "L4", "G4", "A10G", "A100", "H100", "RTX6000")
+GPU_NAMES = ("T4", "L4", "G4", "A10", "A10G", "L40S", "A100", "H100", "H200", "B200", "RTX6000")
 
 @dataclass(frozen=True)
 class GPU(Hardware):
-    "`count` NVIDIA GPUs of model `name`: T4, L4, G4, A10G, A100, H100 or RTX6000 (the RTX PRO 6000)"
+    "`count` NVIDIA GPUs of model `name`: T4, L4, G4, A10, A10G, L40S, A100, H100, H200, B200 or RTX6000 (the RTX PRO 6000)"
     name:str = "T4"
     count:int = 1
     high_mem:bool = False
@@ -66,7 +67,7 @@ class Neuron(Hardware):
     def __str__(self): return f"neuron {self.kind}"
 
 def hardware(spec) -> Hardware:
-    "Hardware from a short name: cpu, mps, t4, t4x2, l4, a100, h100, tpu, v5e-1, tpu:v6e-8, trn1.2xlarge, inf2.xlarge"
+    "Hardware from a short name: cpu, mps, t4, t4x2, l4, a10, l40s, a100, h100, h200, b200, tpu, v5e-1, tpu:v6e-8, trn1.2xlarge, inf2.xlarge"
     if isinstance(spec, Hardware): return spec
     s = str(spec).strip().lower()
     if s in ("cpu", "cpu-highmem"): return CPU(high_mem=s.endswith("highmem"))
@@ -86,7 +87,7 @@ def preset_for(hw:MPS) -> str: return "macbook"
 @dispatch
 def preset_for(hw:GPU) -> str:
     if hw.name == "T4": return "t4x2" if hw.count > 1 else "t4"
-    return "l4" if hw.name in ("L4", "G4", "A10G") else "a100"
+    return "l4" if hw.name in ("L4", "G4", "A10", "A10G") else "a100"
 @dispatch
 def preset_for(hw:TPU) -> str: return "tpu"
 @dispatch
@@ -119,6 +120,17 @@ class Kaggle(Backend):
     internet:bool = True
 
 @dataclass
+class Modal(Backend):
+    "A Modal sandbox, with the job's files on the Modal Volume `volume`, `cpu` cores and `memory_gb` beside any GPU; `secrets` names the environment variables passed to it (the Hub token)"
+    app:str = "sysone"
+    volume:str = "sysone-jobs"
+    python:str = "3.12"
+    image:str|None = None
+    cpu:float = 4.0
+    memory_gb:float = 16.0
+    secrets:tuple = ("HF_TOKEN",)
+
+@dataclass
 class SageMaker(Backend):
     "A SageMaker training job; `endpoint_url` points at an emulator such as floci, `local=True` uses the SDK's local mode"
     role:str|None = None
@@ -128,11 +140,11 @@ class SageMaker(Backend):
     image:str|None = None
     local:bool = False
 
-BACKENDS = {"local": Local, "colab": Colab, "kaggle": Kaggle, "sagemaker": SageMaker}
-BACKEND_MODULES = {"colab": "sysone.colab", "kaggle": "sysone.kaggle", "sagemaker": "sysone.aws"}
+BACKENDS = {"local": Local, "colab": Colab, "kaggle": Kaggle, "modal": Modal, "sagemaker": SageMaker}
+BACKEND_MODULES = {"colab": "sysone.colab", "kaggle": "sysone.kaggle", "modal": "sysone.modal", "sagemaker": "sysone.aws"}
 
 def backend(spec, **kw) -> Backend:
-    "A backend from its name (`local`, `colab`, `kaggle`, `sagemaker`) and settings, or the backend itself"
+    "A backend from its name (`local`, `colab`, `kaggle`, `modal`, `sagemaker`) and settings, or the backend itself"
     if isinstance(spec, Backend): return spec
     if str(spec).lower() not in BACKENDS: raise ValueError(f"unknown backend {spec!r}; one of {sorted(BACKENDS)}")
     return BACKENDS[str(spec).lower()](**kw)
@@ -200,12 +212,17 @@ class KaggleOutput(Data):
     ref:str
 
 @dataclass(frozen=True)
+class ModalVolume(Data):
+    "A file or folder on a Modal Volume, `volume/path`"
+    ref:str
+
+@dataclass(frozen=True)
 class S3Data(Data):
     "An S3 prefix"
     uri:str
 
 def as_data(x) -> Data:
-    "Data from a local path, `hf:owner/name[@revision]`, `kaggle:owner/name`, `kaggle-output:owner/kernel` or `s3://bucket/key`"
+    "Data from a local path, `hf:owner/name[@revision]`, `kaggle:owner/name`, `kaggle-output:owner/kernel`, `modal:volume/path` or `s3://bucket/key`"
     if isinstance(x, Data): return x
     s = str(x)
     if s.startswith("hf:"):
@@ -213,9 +230,18 @@ def as_data(x) -> Data:
         return HubData(repo, rev or None)
     if s.startswith("kaggle:"): return KaggleData(s[len("kaggle:"):])
     if s.startswith("kaggle-output:"): return KaggleOutput(s[len("kaggle-output:"):])
+    if s.startswith("modal:"): return ModalVolume(s[len("modal:"):])
     if s.startswith("s3://"): return S3Data(s)
     if Path(s).exists(): return LocalPath(str(Path(s).resolve()))
     raise ValueError(f"{s!r} is no local path; name remote data hf:owner/name, kaggle:owner/name or s3://bucket/key")
+
+_DATA_REFS = {LocalPath: lambda d: d.path, HubData: lambda d: f"hf:{d.repo}" + (f"@{d.revision}" if d.revision else ""),
+              KaggleData: lambda d: f"kaggle:{d.ref}", KaggleOutput: lambda d: f"kaggle-output:{d.ref}", ModalVolume: lambda d: f"modal:{d.ref}",
+              S3Data: lambda d: d.uri}
+
+def data_ref(d:Data) -> str:
+    "A data source written as `as_data` reads it (what a job keeps to run again)"
+    return _DATA_REFS[type(d)](d)
 
 def data_var(name:str="data") -> str:
     "The environment variable that holds a job's data called `name`"
@@ -248,7 +274,7 @@ def stage(d:HubData, b:Backend, var:str) -> dict: return {"hub": {var: d.repo + 
 def stage(d:LocalPath, b:Local, var:str) -> dict: return {"env": {var: d.path}}
 
 # %% ../nbs/40_cloud.ipynb #6abe306f
-DONE = ("complete", "error", "timeout", "stopped")
+DONE = ("complete", "error", "timeout", "stopped", "paused")
 
 @dataclass
 class Job:
@@ -269,6 +295,7 @@ class Job:
     outputs:str|None = None
     last:dict|None = None                        # the last progress line
     offset:int = 0                               # how much of the log has been read
+    parent:str|None = None                       # the job this one resumed
     @property
     def done(self) -> bool: return self.status in DONE
     @property
@@ -345,6 +372,18 @@ def peft_ready():
         subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "-q", "torchao"], check=False)
         say("removed", package="torchao", reason="older than peft supports")
 
+def resume(env, ckdir):
+    "Copy the checkpoint to resume from into this job's checkpoint folder, and on Kaggle the feature cache beside it"
+    hits = sorted(glob.glob(os.path.join(env["SYSONE_RESUME"], "**", "learner-*", "sysone_state.json"), recursive=True), key=len)
+    if not hits: raise FileNotFoundError(f"no checkpoint to resume from in {env['SYSONE_RESUME']}")
+    src = os.path.dirname(os.path.dirname(hits[0]))
+    shutil.copytree(src, ckdir, dirs_exist_ok=True)
+    feats = os.path.join(os.path.dirname(os.path.dirname(src)), "features")      # <job>/outputs/checkpoint and <job>/features
+    if env.get("SYSONE_CACHE") and os.path.isdir(feats): shutil.copytree(feats, env["SYSONE_CACHE"], dirs_exist_ok=True)
+    st = json.load(open(hits[0]))
+    env["SYSONE_RESUME"] = ckdir
+    say("resume", fit=st.get("fit"), step=st.get("step"), max_steps=st.get("max_steps"), fits_done=st.get("fits_done"), cache=os.path.isdir(feats))
+
 def main():
     os.makedirs(HERE, exist_ok=True)
     if BUNDLE:
@@ -372,6 +411,12 @@ def main():
                    SYSONE_PROGRESS="1", SYSONE_OUTPUT=os.path.join(out, "export"), SYSONE_ENTRY=os.path.join(HERE, spec["entry"]))
         if spec.get("preset"): env["SYSONE_PRESET"] = spec["preset"]
         if spec.get("code"): env["SYSONE_SOURCE"] = json.dumps(spec["code"])      # the checkout the job was sent from
+        ckdir = os.path.join(out, "checkpoint")
+        if spec.get("checkpoint") is not None:          # resumable checkpoints, kept with the outputs (and pushed to the Hub, when asked)
+            env.update(SYSONE_CHECKPOINT=ckdir, SYSONE_CHECKPOINT_EVERY=str(spec["checkpoint"].get("every") or 0))
+            if spec["checkpoint"].get("push"): env["SYSONE_CHECKPOINT_PUSH"] = spec["checkpoint"]["push"]
+        if spec.get("max_seconds"): env.update(SYSONE_DEADLINE=str(t0 + spec["max_seconds"]), SYSONE_WRAP_UP=str(spec.get("wrap_up") or 10))
+        if spec["backend"] in ("kaggle", "modal"): env.setdefault("SYSONE_CACHE", os.path.join(HERE, "features"))    # kept beside the job (a kernel's files, a volume), for the next session
         if spec.get("track") is not None:
             env["SYSONE_TRACK"] = json.dumps(spec["track"])
             env["MLFLOW_TRACKING_URI"] = spec.get("tracking_uri") or "sqlite:///" + os.path.join(out, "mlflow.db")
@@ -385,6 +430,7 @@ def main():
             hits = sorted(glob.glob(pattern, recursive=True))
             if not hits: raise FileNotFoundError(f"no input matches {pattern}")
             env[var] = hits[0]
+        if env.get("SYSONE_RESUME"): resume(env, ckdir)
         entry = os.path.join(HERE, spec["entry"])
         if entry.endswith(".ipynb"): cmd = [sys.executable, "-c", NB, entry, os.path.join(out, os.path.basename(entry))]
         elif int(spec.get("gpus") or 1) > 1:
@@ -396,7 +442,7 @@ def main():
         try: rc = p.wait(timeout=None if left is None else max(left, 1))
         except subprocess.TimeoutExpired:
             os.killpg(p.pid, signal.SIGTERM)
-            try: p.wait(timeout=30)
+            try: p.wait(timeout=60)
             except subprocess.TimeoutExpired: os.killpg(p.pid, signal.SIGKILL)
             rc, result["status"] = None, "timeout"
         result["returncode"] = rc
@@ -411,6 +457,12 @@ def main():
                 res = push_to_hub(exp, spec["push"], private=True)
                 result["url"] = res.get("url")
                 say("pushed", repo=spec["push"], url=res.get("url"))
+        paused = [json.load(open(s)) for s in sorted(glob.glob(os.path.join(ckdir, "learner-*", "sysone_state.json")))]
+        paused = [s for s in paused if s.get("paused")]
+        if paused:                                       # training stopped with a checkpoint: resumable, whatever the entry's exit
+            result["status"] = "paused"
+            result["checkpoint"] = {k: paused[0].get(k) for k in ("fit", "step", "max_steps", "epoch", "reason")}
+        elif rc == 0: shutil.rmtree(ckdir, ignore_errors=True)       # done: the export has the model, and a checkpoint would only weigh down the outputs
     except Exception as e:
         result["error"] = repr(e)[:2000]
         say("job-error", error=repr(e)[:500])
@@ -422,7 +474,7 @@ def main():
         t.add(out, arcname="outputs", filter=lambda ti: None if pushed and ti.name.startswith("outputs/export") else ti)
     os.replace(part, os.path.join(HERE, "outputs.tar.gz"))
     say("job-end", **result)
-    return 0 if result["status"] == "complete" else 1
+    return 0 if result["status"] in ("complete", "paused") else 1        # a paused job is no failure (Kaggle shows a failed kernel as one)
 
 if __name__ == "__main__": sys.exit(main())
 '''
@@ -487,20 +539,26 @@ def job_id(b:Backend) -> str:
     return f"{b.name}-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:4]}"
 
 def remote(entry, on="local", hw=None, data=None, args:list|None=None, env:dict|None=None, push:str|None=None, track=None,
-           max_hours:float|None=None, packages:list|None=None, install:bool=True, name:str|None=None, dry_run:bool=False, **backend_kw) -> Job:
+           max_hours:float|None=None, packages:list|None=None, install:bool=True, name:str|None=None, dry_run:bool=False,
+           checkpoints=True, checkpoint_minutes:float|None=30, wrap_up_minutes:float|None=None, resume=None, **backend_kw) -> Job:
     "Run a notebook or script as a job on backend `on` and hardware `hw`; returns the submitted job"
     b = backend(on, **backend_kw)
     hw = hardware(hw) if hw is not None else default_hardware(b)
     mach = machine(b, hw)
     entry = Path(entry)
     if not entry.is_file(): raise FileNotFoundError(f"no such notebook or script: {entry}")
+    ck_push = checkpoints.removeprefix("hf:") if isinstance(checkpoints, str) else None
+    if ck_push is not None and ck_push.count("/") != 1: raise ValueError(f"checkpoints={checkpoints!r}: name a Hub repo, hf:owner/name")
+    if ck_push and isinstance(b, Kaggle):
+        raise ValueError("a Kaggle kernel gets no secrets, so it cannot push checkpoints to the Hub; they stay in the kernel's files, which a Kaggle job resumed from it reads")
+    src, parent = checkpoint_source(resume, b) if resume is not None else (None, None)
     jid = name or job_id(b)
     folder = jobs_dir() / b.name / jid; folder.mkdir(parents=True, exist_ok=False)
     shutil.copy2(entry, folder / entry.name)
     sources = data if isinstance(data, dict) else ({"data": data} if data is not None else {})
     staged = {"env": {}, "files": {}, "hub": {}}
-    for nm, d in sources.items():
-        for k, v in stage(as_data(d), b, data_var(nm)).items():
+    for var, d in [(data_var(nm), as_data(d)) for nm, d in sources.items()] + ([("SYSONE_RESUME", src)] if src is not None else []):
+        for k, v in stage(d, b, var).items():
             if isinstance(v, dict): staged.setdefault(k, {}).update(v)
             else: staged.setdefault(k, []).extend(v)
     for var, src in staged.get("ship", {}).items():           # files shipped with the job, under data/
@@ -516,12 +574,17 @@ def remote(entry, on="local", hw=None, data=None, args:list|None=None, env:dict|
             "args": list(args or []), "env": {**(env or {}), **staged["env"]}, "files": staged["files"], "hub": staged["hub"],
             "install": pkgs, "push": push, "track": (track if isinstance(track, dict) else {}) if track else None,
             "max_seconds": int(max_hours * 3600) if max_hours else None, "gpus": getattr(hw, "count", 1),
+            "checkpoint": {"every": checkpoint_minutes, "push": ck_push} if checkpoints else None, "parent": parent,
+            "wrap_up": wrap_up_minutes if wrap_up_minutes is not None else min(10.0, max_hours * 15) if max_hours else None,
             "code": {"git": git_info(entry.parent), "sysone_git": git_info(Path(sysone.__file__).parent)}}     # for the training record
     spec |= {k: v for k, v in staged.items() if k not in ("env", "files", "hub", "ship")}
     (folder / "job.json").write_text(json.dumps(spec, indent=1))
     (folder / "sysone_job.py").write_text(runner_source())
     opts = {k: (list(v) if isinstance(v, tuple) else v) for k, v in asdict(b).items()}
-    job = Job(jid, b.name, str(mach), entry.name, options=opts, hardware=str(hw), folder=str(folder), push=push)
+    (folder / "remote.json").write_text(json.dumps({"on": b.name, "options": opts, "hw": {"type": type(hw).__name__} | asdict(hw),     # what job.resume() runs again
+        "data": {nm: data_ref(as_data(d)) for nm, d in sources.items()}, "args": args, "env": env, "push": push, "track": track, "max_hours": max_hours,
+        "packages": packages, "install": install, "checkpoints": checkpoints, "checkpoint_minutes": checkpoint_minutes, "wrap_up_minutes": wrap_up_minutes}, indent=1))
+    job = Job(jid, b.name, str(mach), entry.name, options=opts, hardware=str(hw), folder=str(folder), push=push, parent=parent)
     if dry_run: job.status = "dry-run"; return job
     job = submit(b, job)
     job.submitted = job.submitted or time.time()
@@ -595,6 +658,9 @@ def describe(r:dict) -> str:
         return " · ".join(p for p in parts if p)
     if ev == "eval": return "validation: " + ", ".join(f"{k} {v:.4g}" for k, v in r.items() if k in ("loss", "accuracy", "macro_f1", "ece") and isinstance(v, (int, float)))
     if ev == "vm": return f"machine: GPU {r.get('gpu_util')}% busy, {r.get('gpu_mem_gb')} of {r.get('gpu_total_gb')} GB"
+    if ev == "checkpoint": return f"checkpoint at step {r.get('step')}/{r.get('max_steps')}, epoch {r.get('epoch')}, in {r.get('seconds')} s" + (", pushed" if r.get("pushed") else "")
+    if ev == "paused": return f"paused ({r.get('reason')}) at step {r.get('step')}/{r.get('max_steps')}: job.resume() picks up from there"
+    if ev == "resume": return f"resuming fit {r.get('fit')} at step {r.get('step')}/{r.get('max_steps')}" + (", with the feature cache" if r.get("cache") else "")
     keep = {k: v for k, v in r.items() if k not in ("t", "event")}
     return f"{ev}: " + ", ".join(f"{k} {v}" for k, v in keep.items())
 
@@ -704,3 +770,39 @@ def watch(every:float=30, ids:list|None=None):
         else: print(repr(js), "\n", flush=True)
         if all(j.done for j in js): return js
         time.sleep(every)
+
+# %% ../nbs/40_cloud.ipynb #693b3941
+def _local_checkpoint(job:Job) -> Path|None:
+    "The checkpoint in a job's outputs here (unpacked from its outputs.tar.gz when it has to be), or None"
+    try: out = collect(job.backend_obj, job, Path(job.folder))
+    except Exception: return None
+    ck = Path(out) / "checkpoint"
+    return ck if any(ck.glob("learner-*/sysone_state.json")) else None
+
+def checkpoint_source(src, b:Backend) -> tuple:
+    "What a job on `b` resumes from, and the job it continues: a job (or its id), a checkpoint folder, `hf:owner/name` or `kaggle-output:owner/kernel`"
+    if isinstance(src, str) and not Path(src).exists() and not re.match(r"(hf|kaggle|kaggle-output|s3):", src): src = get_job(src)
+    if not isinstance(src, Job): return as_data(src), None
+    if not src.done: src.refresh()
+    if not src.done: raise RuntimeError(f"{src.id} is {src.status}: resume it once it has ended")
+    pushed = (json.loads((Path(src.folder) / "job.json").read_text()).get("checkpoint") or {}).get("push")
+    if src.backend == "kaggle" and isinstance(b, Kaggle): return KaggleOutput(src.ref), src.id
+    if src.backend == "modal" and isinstance(b, Modal): return ModalVolume(f"{src.options.get('volume', 'sysone-jobs')}/{src.id}/outputs/checkpoint"), src.id
+    if pushed and isinstance(b, Colab): return HubData(pushed), src.id
+    ck = _local_checkpoint(src)
+    if ck is not None: return LocalPath(str(ck.resolve())), src.id
+    if pushed and not isinstance(b, Kaggle): return HubData(pushed), src.id
+    raise FileNotFoundError(f"{src.id} ({src.status}) left no checkpoint here to resume from" +
+                            (": a Colab job keeps its checkpoints past its VM when it pushes them (checkpoints='hf:owner/name')" if src.backend == "colab" and not pushed else ""))
+
+_HARDWARE = {"CPU": CPU, "MPS": MPS, "GPU": GPU, "TPU": TPU, "Neuron": Neuron}
+
+@patch
+def resume(self:Job, **kw) -> Job:
+    "Run the job's entry again from its checkpoint, with what it ran with (backend, hardware, data, settings); `kw` changes any of `remote`'s arguments"
+    f = Path(self.folder or "") / "remote.json"
+    if not f.exists(): raise FileNotFoundError(f"{self.id} has no remote.json (it was made before jobs could resume): use remote(entry, resume=job)")
+    c = json.loads(f.read_text())
+    hw = dict(c.pop("hw")); hw = _HARDWARE[hw.pop("type")](**hw)
+    call = {"on": backend(c.pop("on"), **c.pop("options")), "hw": hw, **c, "data": c["data"] or None}
+    return remote(Path(self.folder) / self.entry, **(call | {"resume": self} | kw))

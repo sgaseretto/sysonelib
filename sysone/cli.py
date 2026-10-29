@@ -6,7 +6,7 @@ Docs: https://sgaseretto.github.io/sysonelib/cli.html.md"""
 
 # %% auto #0
 __all__ = ['app', 'jobs_app', 'train', 'eval_', 'predict', 'serve', 'run', 'jobs_list', 'jobs_watch', 'jobs_logs', 'jobs_fetch',
-           'jobs_stop', 'publish', 'login', 'whoami', 'image', 'deploy', 'undeploy', 'iac', 'main']
+           'jobs_resume', 'jobs_stop', 'publish', 'login', 'whoami', 'image', 'deploy', 'undeploy', 'iac', 'main']
 
 # %% ../nbs/50_cli.ipynb #f98c3c27
 import json, os, sys
@@ -106,22 +106,29 @@ def serve(model:str = typer.Argument(..., help="an export folder, a Laya checkpo
 # %% ../nbs/50_cli.ipynb #7c48549d
 @app.command()
 def run(entry:Path = typer.Argument(..., help="the notebook or script, the same file that runs here"),
-        on:str = typer.Option("local", help="local, colab, kaggle or sagemaker"),
-        hw:Optional[str] = typer.Option(None, help="cpu, mps, t4, t4x2, l4, a100, h100, tpu, v5e-1, v6e-8, trn1.2xlarge ..."),
+        on:str = typer.Option("local", help="local, colab, kaggle, modal or sagemaker"),
+        hw:Optional[str] = typer.Option(None, help="cpu, mps, t4, t4x2, l4, a10, l40s, a100, h100, h200, b200, tpu, v5e-1, v6e-8, trn1.2xlarge ..."),
         data:Optional[str] = typer.Option(None, help="a local path, hf:owner/name, kaggle:owner/name or s3://bucket/key; the job reads it from SYSONE_DATA"),
         push:Optional[str] = typer.Option(None, help="the Hub repo the export is pushed to"),
         track:bool = typer.Option(False, help="log the training to MLflow (the job's runs come back with fetch --sync)"),
         experiment:Optional[str] = typer.Option(None, help="the MLflow experiment, with --track"),
-        max_hours:Optional[float] = typer.Option(None, help="stop the job after this long"),
+        max_hours:Optional[float] = typer.Option(None, help="stop the job after this long; training pauses before it, with a checkpoint"),
+        wrap_up_minutes:Optional[float] = typer.Option(None, help="how long before max_hours training stops (10 minutes, or a quarter of a shorter job)"),
+        checkpoints:bool = typer.Option(True, help="save resumable checkpoints (every epoch's end and every --checkpoint-minutes)"),
+        checkpoint_minutes:float = typer.Option(30, help="minutes between checkpoints within an epoch"),
+        checkpoint_to:Optional[str] = typer.Option(None, help="also upload each checkpoint to this private Hub dataset repo, hf:owner/name (what a Colab job needs to outlive its VM)"),
+        resume:Optional[str] = typer.Option(None, help="pick up from a job (its id) or a checkpoint: a folder, hf:owner/name or kaggle-output:owner/kernel"),
         env:Optional[list[str]] = typer.Option(None, help="KEY=VALUE for the job (repeatable)"),
         arg:Optional[list[str]] = typer.Option(None, help="an argument for a script (repeatable)"),
         wait:bool = typer.Option(False, help="follow the job until it ends"),
         dry_run:bool = typer.Option(False, "--dry-run", help="write the job's files, submit nothing")):
-    "Run a notebook or script as a job, here in the background or on Colab, Kaggle or SageMaker"
+    "Run a notebook or script as a job, here in the background or on Colab, Kaggle, Modal or SageMaker"
     from sysone import cloud
     kv = dict(e.split("=", 1) for e in env or [])
     tr = ({"experiment": experiment} if experiment else True) if track else None
-    job = cloud.remote(entry, on=on, hw=hw, data=data, push=push, track=tr, max_hours=max_hours, env=kv, args=arg, dry_run=dry_run)
+    ck = (checkpoint_to if checkpoint_to.startswith("hf:") else f"hf:{checkpoint_to}") if checkpoints and checkpoint_to else checkpoints
+    job = cloud.remote(entry, on=on, hw=hw, data=data, push=push, track=tr, max_hours=max_hours, env=kv, args=arg, dry_run=dry_run,
+                       checkpoints=ck, checkpoint_minutes=checkpoint_minutes, wrap_up_minutes=wrap_up_minutes, resume=resume)
     typer.echo(json.dumps({k: v for k, v in job.__dict__.items() if k not in ("options", "last")}, indent=1, default=str))
     if wait and not dry_run: job.wait()
 
@@ -151,6 +158,16 @@ def jobs_fetch(job:str = typer.Argument(..., help="a job id, or a unique prefix 
     "Bring a finished job's outputs here; prints the export's folder"
     from sysone import cloud
     typer.echo(str(cloud.get_job(job).fetch(dest, sync=sync)))
+
+@jobs_app.command("resume")
+def jobs_resume(job:str = typer.Argument(..., help="a paused (or stopped) job's id, or a unique prefix of one"),
+                max_hours:Optional[float] = typer.Option(None, help="this session's limit (the old job's by default)"),
+                wait:bool = typer.Option(False, help="follow the new job until it ends")):
+    "Run a job's entry again from its last checkpoint, with what it ran with; prints the new job"
+    from sysone import cloud
+    new = cloud.get_job(job).resume(**({"max_hours": max_hours} if max_hours is not None else {}))
+    typer.echo(json.dumps({k: v for k, v in new.__dict__.items() if k not in ("options", "last")}, indent=1, default=str))
+    if wait: new.wait()
 
 @jobs_app.command("stop")
 def jobs_stop(job:str = typer.Argument(..., help="a job id, or a unique prefix of one")):

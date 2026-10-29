@@ -43,6 +43,7 @@ onnx = ["onnx>=1.20", "onnxscript>=0.5", "onnxruntime>=1.20"]
 cloud = ["kaggle>=2.2", "google-colab-cli>=0.7.4; python_version >= '3.12'"]
 mlflow = ["mlflow>=3.16"]
 aws = ["boto3>=1.43", "sagemaker-mlflow>=0.5"]
+modal = ["modal>=1.6"]
 
 [project.urls]
 Repository = "https://github.com/sgaseretto/sysonelib"
@@ -85,5 +86,5 @@ docs = [
 
 [tool.nbdev]
 title = "sysone"
-tst_flags = "notest slow hub colab kaggle floci mlflow sagemaker xla neuron"
+tst_flags = "notest slow hub colab kaggle modal floci mlflow sagemaker xla neuron"
 cell_timeout = 900
