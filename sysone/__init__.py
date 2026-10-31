@@ -27,10 +27,13 @@ _LAZY = {
     "prepare_xla": "xla", "export_neuron": "xla",
     "SimilarityDecider": "zeroshot", "VerbalizerDecider": "zeroshot", "CachedEmbedder": "zeroshot",
     "ProtST": "protein", "load_protst": "protein",
+    "DistillLearner": "distill", "svd_adapter": "distill", "teacher_answers": "distill",
+    "GlinerLearner": "multitask", "statement_graph": "multitask", "market_rows": "multitask",
+    "market_lists": "markets", "paleka_groups": "markets", "group_lists": "markets",
 }
 
 _SUBMODULES = {"core", "template", "data", "models", "losses", "metrics", "learner", "checkpoint", "record", "inference", "cache", "datasets", "evaluate",
-               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "mdlm", "gliner", "cloud", "colab", "kaggle", "modal", "aws", "xla", "deploy", "hub", "auth", "track", "cli"}
+               "interpret", "text", "zeroshot", "multimodal", "modernvbert", "protein", "mdlm", "gliner", "distill", "multitask", "markets", "cloud", "colab", "kaggle", "modal", "aws", "xla", "deploy", "hub", "auth", "track", "cli"}
 
 def __getattr__(name):
     import importlib

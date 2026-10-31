@@ -7,11 +7,11 @@ Docs: https://sgaseretto.github.io/sysonelib/kaggle.html.md"""
 # %% auto #0
 __all__ = ['KAGGLE_GPUS', 'KAGGLE_TPUS', 'KAGGLE_SHIP_MB', 'KAGGLE_DIR', 'KAGGLE_GRACE', 'KaggleError', 'run_kaggle',
            'kaggle_owner', 'machine_kaggle_cpu', 'machine_kaggle_gpu', 'machine_kaggle_tpu', 'stage_kaggle_dataset',
-           'stage_kaggle_output', 'stage_kaggle_local', 'kaggle_dataset', 'kernel_folder', 'parse_kaggle_status',
-           'submit_kaggle', 'poll_kaggle', 'cancel_kaggle', 'collect_kaggle', 'publish_kaggle']
+           'stage_kaggle_output', 'stage_kaggle_local', 'kaggle_ready', 'kaggle_dataset', 'kernel_folder',
+           'parse_kaggle_status', 'submit_kaggle', 'poll_kaggle', 'cancel_kaggle', 'collect_kaggle', 'publish_kaggle']
 
 # %% ../nbs/46_kaggle.ipynb #05620178
-import json, os, re, shutil, subprocess, sys, tempfile, time, warnings
+import hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, warnings
 from pathlib import Path
 
 from .cloud import (Kaggle, CPU, GPU, TPU, Job, LocalPath, KaggleData, KaggleOutput, HubData, machine, stage, submit, poll, cancel,
@@ -59,7 +59,7 @@ def machine_kaggle_tpu(b:Kaggle, hw:TPU) -> str:
     return KAGGLE_TPUS[hw.kind]
 
 # %% ../nbs/46_kaggle.ipynb #d88a9d8f
-KAGGLE_SHIP_MB = 20
+KAGGLE_SHIP_MB = 0.5            # local data up to this size travels inside the kernel's file: Kaggle refuses a file much over a megabyte
 
 def _slug(s:str) -> str: return re.sub(r"[^a-z0-9-]+", "-", s.lower()).strip("-")[:50]
 
@@ -77,11 +77,22 @@ def stage_kaggle_local(d:LocalPath, b:Kaggle, var:str) -> dict:
     p = Path(d.path)
     size = p.stat().st_size if p.is_file() else sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
     if size <= KAGGLE_SHIP_MB * 2**20: return {"ship": {var: d.path}}
-    ref = kaggle_dataset(p, f"{kaggle_owner(b)}/{_slug('sysone-' + p.stem)}")
-    return stage_kaggle_dataset(KaggleData(ref), b, var)
+    tag = hashlib.sha1(str(p.resolve()).encode()).hexdigest()[:6]          # two folders named alike stay two datasets
+    ref = kaggle_dataset(p, f"{kaggle_owner(b)}/{_slug(f'sysone-{p.stem}-{tag}')}")
+    return stage(KaggleData(ref), b, var)
 
-def kaggle_dataset(path, ref:str, private:bool=True, dry_run:bool=False) -> str:
-    "Upload a file or folder as a Kaggle dataset `owner/slug` (a new version when it exists); returns its ref"
+def kaggle_ready(ref:str, wait:float=1800, every:float=15) -> str:
+    "Wait until Kaggle has processed the dataset `ref` (a kernel that starts sooner finds it missing); returns its last status"
+    t0, status = time.time(), ""
+    while time.time() - t0 < wait:
+        status = (run_kaggle(["datasets", "status", ref], check=False).strip().splitlines() or [""])[-1].strip().lower()
+        if status in ("ready", "error"): return status          # Kaggle's own verdicts; a new dataset first answers 403, so anything else waits
+        time.sleep(every)
+    warnings.warn(f"Kaggle dataset {ref} is still {status or 'processing'} after {wait / 60:.0f} min; a kernel started now may not find it")
+    return status
+
+def kaggle_dataset(path, ref:str, private:bool=True, dry_run:bool=False, wait:float=1800) -> str:
+    "Upload a file or folder as a Kaggle dataset `owner/slug` (a new version when it exists), and wait up to `wait` seconds until Kaggle has processed it; returns its ref"
     path, folder = Path(path), Path(tempfile.mkdtemp(prefix="sysone-kaggle-data-"))
     if path.is_dir(): shutil.copytree(path, folder, dirs_exist_ok=True)
     else: shutil.copy2(path, folder / path.name)
@@ -91,6 +102,7 @@ def kaggle_dataset(path, ref:str, private:bool=True, dry_run:bool=False) -> str:
     except KaggleError as e:                 # not there yet: create it
         if not re.search(r"not found|does not exist|404|403", str(e), re.I): raise
         run_kaggle(["datasets", "create", "-p", folder, "-r", "zip", "-q"] + ([] if private else ["-u"]), timeout=3600)
+    if wait: kaggle_ready(ref, wait)          # a large upload takes Kaggle minutes to process: a kernel started before that cannot mount it
     return ref
 
 # %% ../nbs/46_kaggle.ipynb #3883b20a

@@ -18,6 +18,11 @@
   (`protein_model.esm`, `protein_model.protein_mlp`, `text_model.bert`, `text_model.text_mlp`, `logit_scale`),
   a 2-layer, 32-wide ESM and BERT, with ESM's 33-token protein tokenizer and a small uncased WordPiece text
   tokenizer beside it. Built offline from `typed_decisions_tiny.jsonl`: `python nbs/fixtures/make_fixtures.py protst`.
+- `tiny-gliner2/`: two randomly initialised GLiNER2 boundary checkpoints over the tiny ModernBERT tokenizer, a 2-layer, 32-wide
+  DeBERTa-v2 encoder with every head GLiNER2.5 has (classifier, boundary, record, relation), shrunk. `base/` is the model; `tuned/` is
+  changed the way GLiNER2.5-multi-Decide differs from gliner2.5-multi-v1: every encoder weight moved (a rank-4 change plus noise in each
+  linear, small changes to the norms, biases and embeddings), a new classifier, the record and relation heads scaled by 0.964, and the
+  boundary head untouched. Built offline from `tiny-modernbert/`: `python nbs/fixtures/make_fixtures.py gliner2`.
 - `tiny-a2d-qwen3/`: a Qwen-shaped BPE (Qwen's pre-tokenizer regex, `<|endoftext|>`, `<|im_start|>`, `<|im_end|>` and `<|mask|>`, and a
   chat template of Qwen's shape) and a randomly initialised 2-layer, 64-wide a2d-qwen3 (Qwen3 weights, the model type `a2d-qwen3`, and an
   `auto_map` to remote code that is not there). Built from the cached typed-decisions: `python nbs/fixtures/make_fixtures.py a2d`.
@@ -242,8 +247,42 @@ def tiny_a2d_qwen3(ds, out, vocab_size=2048):
     return fast
 
 
+def tiny_gliner2(out):
+    from transformers import AutoTokenizer, DebertaV2Config
+    from gliner2.configuration import ExtractorConfig
+    from gliner2.models.boundary.model import BoundaryExtractorModel
+    tok = AutoTokenizer.from_pretrained(HERE / "tiny-modernbert")
+    head = dict(boundary_dim=16, content_dim=8, pair_dim=16, record_dim=16, boundary_attention_layers=1, boundary_attention_heads=2,
+                candidate_attention_heads=2, record_instance_queries=4, multihead_pair_compat_heads=2)
+    cfg = ExtractorConfig(architecture="boundary", model_name="tiny", boundary_head=head, token_pooling="first", max_len=512)
+    enc = DebertaV2Config(vocab_size=len(tok), hidden_size=32, num_hidden_layers=2, num_attention_heads=2, intermediate_size=64,
+                          max_position_embeddings=512, relative_attention=True, position_buckets=64, norm_rel_ebd="layer_norm",
+                          share_att_key=True, pos_att_type=["p2c", "c2p"], position_biased_input=False, max_relative_positions=-1,
+                          type_vocab_size=0)
+    torch.manual_seed(0)
+    model = BoundaryExtractorModel(cfg, encoder_config=enc, tokenizer=tok)
+    with torch.no_grad():                                         # trained biases are not zero
+        for name, p in model.named_parameters():
+            if name.startswith("encoder.") and name.endswith(".bias") and "LayerNorm" not in name: p.normal_(0, 0.02)
+    model.save_pretrained(out / "base")
+    g = torch.Generator().manual_seed(1)
+    with torch.no_grad():
+        for name, p in model.named_parameters():
+            if name.startswith("encoder."):
+                if p.dim() == 2 and "embeddings" not in name:      # a linear: a rank-4 change plus noise
+                    u, v = torch.randn(p.shape[0], 4, generator=g), torch.randn(4, p.shape[1], generator=g)
+                    p += 0.05 * p.std() * (u @ v / 2 + 0.3 * torch.randn(p.shape, generator=g))
+                else: p += 0.01 * (p.abs().mean() + 1e-3) * torch.randn(p.shape, generator=g)
+            elif name.startswith("classifier."): p += 0.3 * (p.abs().mean() + 1e-3) * torch.randn(p.shape, generator=g)
+            elif name.startswith(("record_decoder.", "relation_scorer.")): p *= 0.964
+    model.save_pretrained(out / "tuned")
+    return model
+
+
 if __name__ == "__main__":
     import sys
+    if sys.argv[1:] == ["gliner2"]:
+        tiny_gliner2(HERE / "tiny-gliner2"); print("wrote", HERE / "tiny-gliner2"); raise SystemExit
     if sys.argv[1:] == ["a2d"]:
         ds = load_dataset("LocalLLaMA/typed-decisions", "all", split="train")
         tiny_a2d_qwen3(ds, HERE / "tiny-a2d-qwen3"); print("wrote", HERE / "tiny-a2d-qwen3"); raise SystemExit
